@@ -5,7 +5,7 @@ import { redirectIfAuthenticated } from "@/features/auth/lib/redirectServer";
 import { ForgotPasswordView } from "@/modules/auth/forgot-password/forgot-password-view";
 
 export const metadata: Metadata = {
-  title: "Forgot your password? | Turistar App",
+  title: "Forgot your password? | Turistar",
 };
 
 export default async function ForgotPasswordPage({

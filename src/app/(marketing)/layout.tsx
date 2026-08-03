@@ -9,45 +9,34 @@ import { SITE_URL } from "@/shared/utils/siteUrl";
 
 export const dynamic = "force-dynamic";
 
-const previewImage = new URL("/previews/preview_01.png", SITE_URL).toString();
+const siteDescription =
+  "Build a day-by-day itinerary, map every stop, track your budget, and plan with friends in one free, open-source travel planner.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Turistar App",
+    default: "Turistar — Travel planner for itineraries, maps and budgets",
     template: "%s · Turistar",
   },
-  description:
-    "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
+  description: siteDescription,
   applicationName: "Turistar",
   keywords: ["travel planner", "trip planner", "itinerary", "budget travel", "map", "vacation planner"],
   category: "travel",
-  authors: [{ name: "Turistar Team" }],
-  creator: "Turistar",
+  authors: [{ name: "André Marinho", url: "https://andremarinho.me" }],
+  creator: "André Marinho",
   publisher: "Turistar",
-  alternates: {},
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: SITE_URL,
     siteName: "Turistar",
-    title: "Turistar · Plan smarter trips",
-    description:
-      "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
-    images: [
-      {
-        url: previewImage,
-        width: 1200,
-        height: 630,
-        alt: "Turistar travel planner preview",
-      },
-    ],
+    title: "Turistar — Plan the whole trip in one place",
+    description: siteDescription,
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Turistar · Plan smarter trips",
-    description:
-      "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
-    images: [previewImage],
+    card: "summary",
+    title: "Turistar — Plan the whole trip in one place",
+    description: siteDescription,
   },
   robots: {
     index: true,

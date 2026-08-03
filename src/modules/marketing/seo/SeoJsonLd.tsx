@@ -1,26 +1,24 @@
 import { SITE_URL } from "@/shared/utils/siteUrl";
 
-const logoUrl = `${SITE_URL}/favicon.ico`;
-
 export default function SeoJsonLd() {
-  const org = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Turistar",
-    url: SITE_URL,
-    logo: logoUrl,
-  } as const;
-
   const website = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Turistar",
     url: SITE_URL,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+  } as const;
+
+  const application = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Turistar",
+    url: SITE_URL,
+    applicationCategory: "TravelApplication",
+    operatingSystem: "Any",
+    isAccessibleForFree: true,
+    description:
+      "A travel planner for day-by-day itineraries, interactive maps, budgets, and shared planning.",
+    featureList: ["Drag-and-drop itinerary", "Interactive map", "Budget tracking", "Shared planning"],
   } as const;
 
   return (
@@ -28,12 +26,12 @@ export default function SeoJsonLd() {
       <script
         type="application/ld+json"
         /* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD script payload */
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(org) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }}
       />
       <script
         type="application/ld+json"
         /* biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD script payload */
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(website) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(application) }}
       />
     </>
   );

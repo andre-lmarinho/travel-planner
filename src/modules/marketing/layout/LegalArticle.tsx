@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Section } from "@/features/website/ui/wrapper";
+import { Section } from "@/modules/marketing/ui/Section";
 
 interface LegalArticleProps {
   children: ReactNode;

@@ -5,7 +5,7 @@ import { redirectIfAuthenticated } from "@/features/auth/lib/redirectServer";
 import { SignupView } from "@/modules/auth/signup-view";
 
 export const metadata: Metadata = {
-  title: "Sign up | Turistar App",
+  title: "Sign up | Turistar",
 };
 
 export default async function SignupRoute({ searchParams }: { searchParams?: Promise<{ next?: string }> }) {

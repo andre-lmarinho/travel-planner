@@ -14,19 +14,9 @@ const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "js", "jsx", "md", "mdx"],
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "i.pravatar.cc", pathname: "/**" },
       { protocol: "https", hostname: "commons.wikimedia.org", pathname: "/wiki/Special:FilePath/**" },
       { protocol: "https", hostname: "upload.wikimedia.org", pathname: "/wikipedia/**" },
     ],
-  },
-  async redirects() {
-    return [
-      {
-        source: "/planning/group",
-        destination: "/friends",
-        permanent: true,
-      },
-    ];
   },
   async headers() {
     const isDev = process.env.NODE_ENV !== "production";

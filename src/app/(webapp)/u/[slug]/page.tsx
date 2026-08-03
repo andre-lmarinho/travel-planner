@@ -6,7 +6,7 @@ import { requireProfileSlugMatch } from "@/features/profile/lib/requireProfileSl
 import { DashboardView } from "@/modules/user/dashboard-view";
 
 export const metadata: Metadata = {
-  title: "Your travels | Turistar App",
+  title: "Your trips | Turistar",
 };
 
 interface UserDashboardPageProps {

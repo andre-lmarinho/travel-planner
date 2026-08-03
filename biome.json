@@ -18,6 +18,7 @@
       "**/*",
       "!!**/node_modules",
       "!!**/.next",
+      "!!**/graphify-out",
       "!!**/public",
       "!!*.log",
       "!!.gitignore",

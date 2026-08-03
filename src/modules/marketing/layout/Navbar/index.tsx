@@ -1,82 +1,111 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Logo } from "@/shared/ui/logo";
+import { supabase } from "@/shared/lib/supabaseClient";
+import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { Logo } from "@/shared/ui/logo/Logo";
 import { DesktopActions } from "./components/DesktopActions";
 import { DesktopNavigation } from "./components/DesktopNavigation";
 import { MenuToggleButton } from "./components/MenuToggleButton";
 import { MobileMenu } from "./components/MobileMenu";
 
+type Profile = { slug: string | null };
+
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSolutionsOpen, setIsMobileSolutionsOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-    setIsMobileSolutionsOpen(false);
-  };
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-    setIsMobileSolutionsOpen(false);
-  };
+  useEffect(() => {
+    let active = true;
+
+    async function loadProfile(userId: string | null | undefined) {
+      if (!userId) {
+        if (active) setProfile(null);
+        return;
+      }
+
+      const { data, error } = await supabase.from("profiles").select("slug").eq("id", userId).maybeSingle();
+      if (error) {
+        console.error(
+          formatSupabaseError({
+            operation: "Navbar.loadProfile:selectProfile",
+            identifiers: { userId },
+            error,
+          })
+        );
+        if (active) setProfile(null);
+        return;
+      }
+
+      if (active) setProfile({ slug: data?.slug ?? null });
+    }
+
+    void supabase.auth.getSession().then(({ data }) => loadProfile(data.session?.user?.id));
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      void loadProfile(session?.user?.id);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
 
     const handleResize = () => {
-      if (window.innerWidth >= 1024) {
-        setIsMobileMenuOpen(false);
-        setIsMobileSolutionsOpen(false);
-      }
+      if (window.innerWidth >= 1024) setIsMobileMenuOpen(false);
     };
 
     window.addEventListener("resize", handleResize);
     handleResize();
 
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, [isMobileMenuOpen]);
 
-  const shellRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const el = shellRef.current;
+    const element = shellRef.current;
+    if (!element) return;
 
-    if (!el) return;
-    const getScrollY = () =>
-      window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0;
-    const set = () => el.setAttribute("data-elevated", getScrollY() > 0 ? "true" : "false");
-    set();
-    window.addEventListener("scroll", set, { passive: true });
-    return () => window.removeEventListener("scroll", set);
+    const updateElevation = () => {
+      const scrollY = window.scrollY ?? document.documentElement.scrollTop ?? document.body.scrollTop ?? 0;
+      element.setAttribute("data-elevated", scrollY > 0 ? "true" : "false");
+    };
+
+    updateElevation();
+    window.addEventListener("scroll", updateElevation, { passive: true });
+    return () => window.removeEventListener("scroll", updateElevation);
   }, []);
 
+  const plannerHref = profile?.slug ? `/u/${profile.slug}` : null;
+
   return (
-    <header className="bg-background fixed top-0 z-50 my-0 w-full lg:px-6 py-2 lg:my-2 lg:mb-0 lg:bg-transparent lg:py-0">
+    <header className="bg-background fixed top-0 z-50 my-0 w-full py-2 lg:my-2 lg:mb-0 lg:bg-transparent lg:px-6 lg:py-0">
       <div
         ref={shellRef}
         data-elevated="false"
-        className="data-[elevated=true]:bg-background data-[elevated=true]:lg:border-border mx-auto max-w-6xl rounded-2xl border border-transparent bg-transparent px-2 transition-[background-color,border-color] duration-300 ease-out lg:px-8 data-[elevated=true]:lg:border">
+        className="data-[elevated=true]:bg-background data-[elevated=true]:lg:border-border mx-auto max-w-6xl rounded-2xl border border-transparent bg-transparent px-2 transition-[background-color,border-color] duration-300 ease-out data-[elevated=true]:lg:border lg:px-8">
         <div className="flex items-center justify-between gap-3 md:gap-8 lg:grid lg:grid-cols-[1fr_auto]">
           <div className="flex items-center gap-2 lg:gap-4">
             <Logo href="/" />
             <DesktopNavigation />
           </div>
-          <DesktopActions />
-          <MenuToggleButton isOpen={isMobileMenuOpen} onToggle={toggleMobileMenu} />
+          <DesktopActions plannerHref={plannerHref} />
+          <MenuToggleButton
+            isOpen={isMobileMenuOpen}
+            onToggle={() => setIsMobileMenuOpen((current) => !current)}
+          />
         </div>
       </div>
 
-      {isMobileMenuOpen ? (
-        <MobileMenu
-          onClose={closeMobileMenu}
-          isSolutionsOpen={isMobileSolutionsOpen}
-          onToggleSolutions={() => setIsMobileSolutionsOpen((prev) => !prev)}
-          onSelectSolution={closeMobileMenu}
-        />
-      ) : null}
+      {isMobileMenuOpen ? <MobileMenu plannerHref={plannerHref} onClose={closeMobileMenu} /> : null}
     </header>
   );
 }

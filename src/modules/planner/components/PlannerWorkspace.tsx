@@ -90,7 +90,7 @@ function PlannerWorkspaceContent({
   );
 
   useEffect(() => {
-    document.title = `${title} | Turistar App`;
+    document.title = `${title} | Turistar`;
   }, [title]);
 
   const handleTitleBlur = async () => {

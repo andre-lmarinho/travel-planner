@@ -1,53 +1,43 @@
 import Link from "next/link";
-
-import { ChevronDown } from "@/shared/ui/icon";
-import { cn } from "@/shared/utils/cn";
-
+import { Button } from "@/shared/ui/button/Button";
 import { NAV_LINKS } from "../data";
-import { SolutionsContent } from "./SolutionsContent";
 
 const MOBILE_MENU_LINK_CLASS =
-  "text-foreground hover:text-primary flex w-full items-center justify-between text-left p-4 text-[15px] font-semibold transition-colors";
+  "text-foreground hover:text-primary focus-visible:ring-primary/60 flex w-full rounded-lg p-4 text-[15px] font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none";
 
-type MobileMenuProps = {
+interface MobileMenuProps {
+  plannerHref: string | null;
   onClose: () => void;
-  isSolutionsOpen: boolean;
-  onToggleSolutions: () => void;
-  onSelectSolution: () => void;
-};
+}
 
-export function MobileMenu({
-  onClose,
-  isSolutionsOpen,
-  onToggleSolutions,
-  onSelectSolution,
-}: MobileMenuProps) {
+export function MobileMenu({ plannerHref, onClose }: MobileMenuProps) {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="bg-background fixed inset-x-0 top-12 z-40 h-dvh overflow-y-auto pt-6 pb-10">
+      className="bg-background fixed inset-x-0 top-14 z-40 overflow-y-auto border-b px-3 pt-4 pb-6 lg:hidden">
       <div className="mx-auto flex w-full max-w-6xl flex-col">
-        <button
-          type="button"
-          className={MOBILE_MENU_LINK_CLASS}
-          onClick={onToggleSolutions}
-          aria-expanded={isSolutionsOpen}>
-          Explore
-          <ChevronDown
-            aria-hidden="true"
-            className={cn("size-5 origin-center transition-transform duration-200 ease-out", {
-              "-scale-y-100": isSolutionsOpen,
-            })}
-          />
-        </button>
-
-        {isSolutionsOpen ? <SolutionsContent onSelect={onSelectSolution} /> : null}
-
         {NAV_LINKS.map((link) => (
           <Link key={link.href} href={link.href} className={MOBILE_MENU_LINK_CLASS} onClick={onClose}>
             {link.label}
           </Link>
         ))}
+
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t pt-4">
+          {plannerHref ? (
+            <Button className="col-span-2" href={plannerHref} variant="accent" onClick={onClose}>
+              Go to planner
+            </Button>
+          ) : (
+            <>
+              <Button href="/login" variant="ghost" onClick={onClose}>
+                Log in
+              </Button>
+              <Button href="/signup" onClick={onClose}>
+                Get started
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

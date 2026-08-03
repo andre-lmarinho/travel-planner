@@ -1,8 +1,8 @@
 # Turistar: Drag-and-Drop Travel Planner
 
-A simple travel planner built with Next.js, React, and drag-and-drop. Select any city to generate a starter itinerary you can rearrange and edit. Plans persist via Supabase so they stick around between visits.
+A free, open-source travel planner built with Next.js and React. Create a trip from a destination and dates, arrange activities with drag-and-drop, view stops on a map, track costs, and plan with friends.
 
-- Live Demo: https://travel-planner-orpin.vercel.app/
+- Live App: https://turistar.me
 
 ## Table of Contents
 
@@ -40,8 +40,9 @@ A Map View lets you preview your itinerary locations on an interactive map.
 - Destination Search: quickly find attractions with Geoapify-powered search and autocomplete.
 - Map View: see all planned attractions on an interactive map.
 - Persistent Storage: all planner changes, including budget, are saved to Supabase.
-- Accessibility & Responsive Design: keyboard-accessible and optimized for mobile and desktop.
-- Sample Plans: try the interactive sample itineraries from the home page.
+- Responsive Design: use the planner across mobile and desktop layouts.
+- Shared Planning: invite members to collaborate and publish read-only itineraries when they are ready.
+- Public Trips: browse itineraries that travelers have chosen to publish.
 
 ---
 
@@ -61,15 +62,15 @@ A Map View lets you preview your itinerary locations on an interactive map.
 
 ## Project Structure
 
-- `/docs`: Project notes and guidelines (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow)
+- `ARCHITECTURE.md`: architecture notes and data flow.
 - `/src`: Application source code
   - `/app`: Next.js app directory with pages and API routes
-  - `/features`: Feature modules such as home, planner, and onboarding (budget is part of planner)
+  - `/features`: Product capabilities such as plans, activities, budgets, members, and search
   - `/shared`: Shared UI components, hooks, utilities, and types
-  - `/modules`: Route-level UI composition
+  - `/modules`: Route-level UI composition, including the marketing site
 - `/public`: Static assets served directly
 
-Routes live in `src/app`; shareable plans use `/p/{identifier}` and inspiration plans use `/p/inspiration/{city}`.
+Routes live in `src/app`; authenticated dashboards use `/u/{slug}` and plans use `/p/{identifier}`.
 
 ---
 
@@ -97,6 +98,7 @@ Prerequisites: Node.js v24+ and pnpm (`corepack enable`)
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY` (server-side secret used by actions that require privileged Supabase access)
    - `GEOAPIFY_KEY` (server-only)
+   - `NEXT_PUBLIC_SITE_URL` (`https://turistar.me` in production)
 
    ### Supabase Auth configuration
 
@@ -116,11 +118,9 @@ Prerequisites: Node.js v24+ and pnpm (`corepack enable`)
 
    Visit http://localhost:3000
 
-   Authenticated users land on the dashboard at `/u/{yourSlug}/planners`, which lists every owned itinerary and exposes quick
-   actions for opening the secure editor at `/p/{planId}`. Attempts to visit `/login` or `/signup` while already signed
-   in automatically redirect back to that dashboard entry point, while unauthenticated visitors who follow `/u/...` links are
-   sent to `/login`. Public viewers (or collaborators with edit tokens) continue to use the shareable `/planner/{publicSlug}`
-   URLs under `/p/{identifier}`.
+   Authenticated users land on `/u/{yourSlug}`, which lists their itineraries and links to the planner at `/p/{planId}`.
+   Signed-in users who visit `/login` or `/signup` return to their dashboard. Unauthenticated visitors following private
+   dashboard links are sent to `/login`; published plans remain available as read-only pages under `/p/{publicSlug}`.
 
 ### Development Workflow
 
@@ -187,6 +187,7 @@ Deploy to Vercel or Netlify:
    - `GEOAPIFY_KEY`
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SITE_URL` (`https://turistar.me` in production)
 4. Click "Deploy" – the platform will build and preview automatically.
 
 References:
