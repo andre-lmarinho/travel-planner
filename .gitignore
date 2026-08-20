@@ -30,6 +30,7 @@ next-env.d.ts
 # IA
 .claude/
 .opencode/
+graphify-out
 
 # Editors / OS
 .vscode/
