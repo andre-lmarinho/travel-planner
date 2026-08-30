@@ -4,13 +4,9 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
 
-export type MapPin = { name: string; lat: number; lng: number };
+import { tileAttribution, tileUrl } from "./geoapifyTiles";
 
-// Same CARTO Voyager basemap as the planner MapBoard, so the two maps read as one lib.
-const TILES = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png";
-const LABELS = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png";
-const SUBDOMAINS = ["a", "b", "c", "d"];
-const ATTRIBUTION = "&copy; OpenStreetMap contributors &copy; CARTO";
+export type MapPin = { name: string; lat: number; lng: number };
 
 const pinIcon = L.divIcon({
   html: `<div style="
@@ -50,8 +46,7 @@ export function DestinationsMap({ pins }: { pins: MapPin[] }) {
       scrollWheelZoom
       style={{ width: "100%", height: "100%" }}>
       <FitToPins pins={pins} />
-      <TileLayer url={TILES} subdomains={SUBDOMAINS} attribution={ATTRIBUTION} />
-      <TileLayer url={LABELS} subdomains={SUBDOMAINS} attribution={ATTRIBUTION} opacity={0.9} />
+      <TileLayer url={tileUrl} attribution={tileAttribution} maxZoom={20} />
       {pins.map((pin) => (
         <Marker key={pin.name} position={[pin.lat, pin.lng]} icon={pinIcon} title={pin.name}>
           <Tooltip direction="top">{pin.name}</Tooltip>

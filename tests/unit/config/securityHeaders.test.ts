@@ -38,7 +38,7 @@ describe("security headers", () => {
   it("allows only the external origins used by the browser", () => {
     const csp = buildCsp({ isDev: false, nonce: "test" });
     expect(csp).toContain("img-src 'self' data: blob: https://i.pravatar.cc");
-    expect(csp).toContain("https://*.basemaps.cartocdn.com");
+    expect(csp).not.toContain("geoapify.com");
     expect(csp).toContain("frame-src https://vercel.live https://www.youtube-nocookie.com");
     expect(csp).toContain("connect-src 'self' https://*.supabase.co wss://*.supabase.co");
     const imageSrc = csp.split("; ").find((directive) => directive.startsWith("img-src")) ?? "";
