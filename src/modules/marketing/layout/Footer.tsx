@@ -41,7 +41,7 @@ export function Footer() {
             </a>
           </p>
           <a
-            href="https://github.com/andre-lmarinho/travel-planner"
+            href="https://github.com/andre-lmarinho/turistar"
             className={`px-2 ${EXTERNAL_LINK_CLASS}`}
             target="_blank"
             rel="noopener noreferrer">

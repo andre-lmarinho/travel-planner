@@ -1,212 +1,172 @@
-# Turistar: Drag-and-Drop Travel Planner
+# Turistar
 
-A simple travel planner built with Next.js, React, and drag-and-drop. Select any city to generate a starter itinerary you can rearrange and edit. Plans persist via Supabase so they stick around between visits.
+**Plan trips together with a visual itinerary, an interactive map, and a shared budget.**
 
-- Live Demo: https://travel-planner-orpin.vercel.app/
+Turistar is a free, open-source travel planner for turning ideas into a day-by-day plan. Organize
+activities with drag and drop, map every stop, keep trip costs visible, invite collaborators, and
+publish a read-only itinerary when it is ready to share.
 
-## Table of Contents
+[Open Turistar](https://turistar.me) ·
+[Explore a public itinerary](https://turistar.me/p/xGAJQ3na6Zlh) ·
+[Read the architecture guide](ARCHITECTURE.md)
 
-- [About the Project](#about-the-project)
-- [Snapshots](#snapshots-of-the-project)
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Scripts](#scripts)
-- [Testing](#testing)
-- [Health Endpoint](#health-endpoint)
-- [Deployment](#deployment)
-- [Developer Guide](#developer-guide)
-- [License](#license)
+![Turistar planner with a day-by-day itinerary, map, and budget](./.github/assets/preview_01.png)
 
-## About the Project
+## What you can do
 
-Turistar is a UX-focused travel planner built with DnD Kit, Base UI and the Next.js 16 App Router.
+| Capability | What it provides |
+| --- | --- |
+| Visual itineraries | Arrange activities by day and drag them within or between days as plans change. |
+| Place search and maps | Find destinations with Geoapify and see geocoded activities as markers on an interactive map. |
+| Trip budgets | Set a total budget, add expenses by category, and see spending and the remaining amount. |
+| Realtime collaboration | Add existing Turistar users to a plan and sync day and activity edits through Supabase Realtime. |
+| Controlled sharing | Keep plans private by default, then publish a read-only itinerary under a public URL. |
+| Responsive, accessibility-aware UI | Use semantic controls, keyboard-managed dialogs, and layouts designed for mobile and desktop. |
 
-A Map View lets you preview your itinerary locations on an interactive map.
+## Architecture highlights
 
----
+Turistar keeps the product experience simple while using a versioned collaboration model behind the
+planner:
 
-## Snapshots of the Project
+- **Vertical slices** keep UI, domain logic, services, repositories, and tests close to each feature.
+- **Versioned event log** records day and activity mutations as immutable planner events.
+- **Materialized snapshots** hydrate the latest itinerary without replaying the full history on every load.
+- **Optimistic updates** apply local edits immediately, with rollback and refetch when persistence fails.
+- **Version gap detection** reloads state when a client misses an event or receives an unexpected version.
+- **Supabase Realtime** delivers new planner events to authenticated editors.
+- **RLS-backed permissions** separate owners, admins, members, and anonymous readers; plans are private by default.
 
-![Turistar Planner Screenshot](./.github/assets/preview_01.png)
+See [ARCHITECTURE.md](ARCHITECTURE.md) and the feature documentation under
+[`src/features`](src/features/README.md) for the detailed data flow.
 
----
+## Engineering quality
 
-## Key Features
+- TypeScript runs in strict mode.
+- Biome handles linting and formatting.
+- Vitest covers components, hooks, services, repositories, and route handlers.
+- Playwright exercises the core planner, drag and drop, map, budget, members, sharing, and auth flows.
+- GitHub Actions runs lint, typecheck, unit tests, coverage upload, and the production build.
+- CodeQL and Dependency Review provide automated security checks.
+- Lighthouse CI checks the public homepage for performance, accessibility, best practices, and SEO.
 
-- Welcome Form: enter your trip dates to start a new plan.
-- Planner Board: drag activities between days or add blank cards to build your schedule.
-- Destination Search: quickly find attractions with Geoapify-powered search and autocomplete.
-- Map View: see all planned attractions on an interactive map.
-- Persistent Storage: all planner changes, including budget, are saved to Supabase.
-- Accessibility & Responsive Design: keyboard-accessible and optimized for mobile and desktop.
-- Sample Plans: try the interactive sample itineraries from the home page.
+## Tech stack
 
----
+- Next.js 16 and React 19
+- TypeScript, Tailwind CSS, and Base UI
+- Supabase Auth, PostgreSQL, Row Level Security, and Realtime
+- TanStack Query and Zod
+- DnD Kit
+- Leaflet and React Leaflet
+- Geoapify place search
+- Vitest and Playwright
 
-## Tech Stack
+## Getting started
 
-- Next.js 16 (App Router)
-- React & TypeScript
-- Tailwind CSS for styling
-- @dnd-kit/core & @dnd-kit/sortable for drag-and-drop
-- Base UI primitives wrapped by shared UI components
-- TanStack Query for data fetching
-- date-fns and react-day-picker for date handling
-- leaflet & react-leaflet for the map view
-- Vercel or Netlify for hosting
+### Prerequisites
 
----
+- Node.js 24
+- pnpm 10 or newer (`corepack enable`)
 
-## Project Structure
+### Local setup
 
-- `/docs`: Project notes and guidelines (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for data flow)
-- `/src`: Application source code
-  - `/app`: Next.js app directory with pages and API routes
-  - `/features`: Feature modules such as home, planner, and onboarding (budget is part of planner)
-  - `/shared`: Shared UI components, hooks, utilities, and types
-  - `/modules`: Route-level UI composition
-- `/public`: Static assets served directly
-
-Routes live in `src/app`; shareable plans use `/p/{identifier}` and inspiration plans use `/p/inspiration/{city}`.
-
----
-
-## Getting Started
-
-Prerequisites: Node.js v24+ and pnpm (`corepack enable`)
-
-1. Clone the repo
+1. Clone the repository:
 
    ```bash
-   git clone https://github.com/andre-lmarinho/travel-planner.git
-   cd travel-planner
+   git clone https://github.com/andre-lmarinho/turistar.git
+   cd turistar
    ```
 
-2. Install dependencies
+2. Install dependencies:
 
    ```bash
    pnpm install
    ```
 
-3. Configure environment
+3. Create your local environment file from [`.env.example`](.env.example) and configure:
 
-   Copy `.env.example` to `.env.local` and set:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY` (server-side secret used by actions that require privileged Supabase access)
-   - `GEOAPIFY_KEY` (server-only)
+   | Variable | Scope | Purpose |
+   | --- | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Client and server | Supabase project URL. |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client and server | Public key used by browser and server clients under RLS. |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Server only | Privileged operations that must bypass RLS. Never expose it to the browser or logs. |
+   | `GEOAPIFY_KEY` | Server only | Place search, details, and geocoding requests. |
 
-   ### Supabase Auth configuration
-
-   Supabase Auth depends on the following variables:
-
-   | Variable                        | Scope           | Purpose                                                                                                                                                              |
-   | ------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `NEXT_PUBLIC_SUPABASE_URL`      | Client & Server | Base URL for your Supabase project.                                                                                                                                  |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client & Server | Public anon key that allows the browser client to authenticate.                                                                                                      |
-   | `SUPABASE_SERVICE_ROLE_KEY`     | Server only     | Optional service role key for server actions that need to call privileged RPCs (e.g., inserting server-generated plans). Keep this secret out of the browser bundle. |
-
-4. Start the dev server
+4. Start the development server:
 
    ```bash
    pnpm dev
    ```
 
-   Visit http://localhost:3000
+5. Open [http://localhost:3000](http://localhost:3000).
 
-   Authenticated users land on the dashboard at `/u/{yourSlug}/planners`, which lists every owned itinerary and exposes quick
-   actions for opening the secure editor at `/p/{planId}`. Attempts to visit `/login` or `/signup` while already signed
-   in automatically redirect back to that dashboard entry point, while unauthenticated visitors who follow `/u/...` links are
-   sent to `/login`. Public viewers (or collaborators with edit tokens) continue to use the shareable `/planner/{publicSlug}`
-   URLs under `/p/{identifier}`.
+## Development commands
 
-### Development Workflow
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Start the Next.js development server. |
+| `pnpm build` | Create a production build. |
+| `pnpm start` | Run the production build locally. |
+| `pnpm lint` | Check the repository with Biome. |
+| `pnpm lint:fix` | Apply Biome-safe lint and formatting fixes. |
+| `pnpm typecheck:ci` | Generate Next.js route types and run TypeScript without emitting files. |
+| `pnpm test` | Run the Vitest suite. |
+| `pnpm e2e` | Run the Playwright suite. |
 
-1. Install dependencies with `pnpm install`.
-2. Start the dev server using `pnpm dev`.
-3. Run the linter and formatter via `pnpm lint:fix`.
-4. Run the type checker with `pnpm typecheck`.
-5. Ensure all tests pass with `pnpm test`.
+Before opening a pull request, run:
 
----
+```bash
+pnpm lint
+pnpm typecheck:ci
+pnpm test
+```
 
-## Scripts
+Run Playwright separately when changing an end-to-end product flow:
 
-- `pnpm dev` – start development server
-- `pnpm build` – compile for production
-- `pnpm start` – run production build locally
-- `pnpm lint` – run Biome lint
-- `pnpm lint:fix` – run Biome lint and format
-- `pnpm format` – format repository files
-- `pnpm test` – run unit tests
+```bash
+pnpm e2e
+```
 
-### Local Vercel build
+## Project structure
+
+```text
+src/app/       Next.js routes and route handlers
+src/features/  Feature-oriented product slices
+src/modules/   Route-level UI composition
+src/shared/    Shared UI, adapters, types, and utilities
+supabase/      Database schema, migrations, RPCs, and RLS policies
+tests/e2e/     Playwright end-to-end coverage
+```
+
+Repository conventions live in [AGENTS.md](AGENTS.md), with the modular rules under
+[`agents/rules`](agents/rules/README.md).
+
+## Testing and coverage
+
+Vitest enables V8 coverage in CI and writes `coverage/lcov.info` for Codecov. To reproduce that
+locally:
+
+```bash
+CI=true pnpm test
+```
+
+The health endpoint is available at `GET /health` and returns the application status plus the
+version from `package.json`.
+
+## Deployment
+
+Turistar is a standard Next.js application and can be deployed to Vercel or another compatible
+platform. Configure the Supabase and Geoapify environment variables above, and set the deployment's
+public domain to `https://turistar.me`.
+
+For a local Vercel build:
 
 ```bash
 pnpm vercel:pull
 pnpm vercel:build
 ```
 
----
-
-## Testing
-
-Vitest runs unit tests with `pnpm test`; Playwright runs E2E tests with `pnpm e2e`.
-
-### Coverage reporting
-
-- The Vitest configuration enables coverage automatically in CI, so `pnpm test` on GitHub Actions produces the `coverage/` directory with `lcov.info`.
-- To generate coverage locally, run `CI=true pnpm test` (or export `CI=true` in your shell) to mirror the CI environment.
-- Private forks need to create a Codecov token from [Codecov repository settings](https://app.codecov.io/) and add it as `CODECOV_TOKEN` in their fork's GitHub repository secrets so the CI job can upload coverage results.
-
----
-
-## Health Endpoint
-
-- Path: `/health`
-- Method: `GET`
-- Response: `{ "status": "ok", "version": "<package.json version>" }`
-
-Example:
-
-```bash
-curl -s http://localhost:3000/health
-```
-
----
-
-## Deployment
-
-Deploy to Vercel or Netlify:
-
-1. Push your code to GitHub.
-2. Import the repository in your hosting service (https://vercel.com/new or https://app.netlify.com/start).
-3. Add the required environment variables:
-   - `GEOAPIFY_KEY`
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Click "Deploy" – the platform will build and preview automatically.
-
-References:
-
-- Next.js Deployment Docs: https://nextjs.org/docs/app/building-your-application/deploying
-- Vercel Docs: https://vercel.com/docs
-- Netlify Docs: https://docs.netlify.com/
-
----
-
-## Developer Guide
-
-For project conventions, see [AGENTS.md](AGENTS.md), [ARCHITECTURE.md](ARCHITECTURE.md) and [agents/commands.md](agents/commands.md).
-
----
-
 ## License
 
-This project is open-source under the [GNU Affero General Public License v3.0](LICENSE).
+Turistar is open source under the [GNU Affero General Public License v3.0](LICENSE).
 
----
-
-Built by André Marinho. Feel free to star this repo if you find it useful!
+Built by [André Marinho](https://andremarinho.me/).

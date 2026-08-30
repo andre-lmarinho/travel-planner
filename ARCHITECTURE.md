@@ -20,9 +20,9 @@ Turistar follows a **vertical slice** approach. Each feature (or slice) owns its
 
 - **State ownership** – Each slice owns its local state and business rules. Cross-slice state is synchronized via shared adapters only when necessary.
 
-- **Collaboration model** – Planner edits flow through an event-driven, realtime model with optimistic updates and snapshots. A monotonic version counter detects conflicts. This model scales to multi‑user collaboration and supports offline recovery.
+- **Collaboration model** – Day and activity edits flow through an event-driven, realtime model with optimistic updates and snapshots. A monotonic version counter detects version gaps; clients recover by fetching the latest snapshot and replaying newer events.
 
-- **Sharing and access control** – Plans can be shared via email invitations or share links that add members. Membership tiers are `admin` and `member` (owner lives on `plans.user_id`), with public plans readable via `public_slug` and edit access optionally granted via `edit_token`. Permission checks are enforced in the UI, server/RPCs, and RLS (including realtime).
+- **Sharing and access control** – Existing Turistar users can be added to a plan by email. Membership tiers are `admin` and `member` (the owner lives on `plans.user_id`). Published plans are readable through `public_slug`; editing requires ownership or membership. Permission checks are enforced in the UI, server/RPCs, and RLS (including realtime).
 
 - **Drag and drop** – Drag-and-drop interactions use DnD Kit. The logic for sensors, drag handles and sortable lists is encapsulated inside planner feature hooks and composition components.
 

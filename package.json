@@ -1,9 +1,9 @@
 {
-  "name": "travel-planner",
+  "name": "turistar",
   "version": "0.1.0",
   "private": true,
   "license": "AGPL-3.0",
-  "repository": "https://github.com/andre-lmarinho/travel-planner",
+  "repository": "https://github.com/andre-lmarinho/turistar",
   "engines": {
     "node": ">=24.11.1 <25",
     "pnpm": ">=10"
