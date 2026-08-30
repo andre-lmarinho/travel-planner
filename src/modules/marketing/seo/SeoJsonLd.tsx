@@ -16,11 +16,6 @@ export default function SeoJsonLd() {
     "@type": "WebSite",
     name: "Turistar",
     url: SITE_URL,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   } as const;
 
   return (

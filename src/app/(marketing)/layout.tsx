@@ -7,47 +7,33 @@ import SeoJsonLd from "@/modules/marketing/seo/SeoJsonLd";
 
 import { SITE_URL } from "@/shared/utils/siteUrl";
 
-export const dynamic = "force-dynamic";
-
-const previewImage = new URL("/previews/preview_01.png", SITE_URL).toString();
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Turistar App",
+    default: "Plan trips together, all in one place",
     template: "%s · Turistar",
   },
   description:
-    "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
+    "Build a day-by-day itinerary, see every stop on the map, and track the budget with your travel companions.",
   applicationName: "Turistar",
   keywords: ["travel planner", "trip planner", "itinerary", "budget travel", "map", "vacation planner"],
   category: "travel",
-  authors: [{ name: "Turistar Team" }],
+  authors: [{ name: "Turistar" }],
   creator: "Turistar",
   publisher: "Turistar",
-  alternates: {},
   openGraph: {
     type: "website",
     url: SITE_URL,
     siteName: "Turistar",
-    title: "Turistar · Plan smarter trips",
+    title: "Turistar · Plan trips together",
     description:
-      "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
-    images: [
-      {
-        url: previewImage,
-        width: 1200,
-        height: 630,
-        alt: "Turistar travel planner preview",
-      },
-    ],
+      "Build a day-by-day itinerary, see every stop on the map, and track the budget with your travel companions.",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Turistar · Plan smarter trips",
+    card: "summary",
+    title: "Turistar · Plan trips together",
     description:
-      "Plan trips with drag-and-drop cards, maps, and budget tracking. Create, organize, and share itineraries effortlessly.",
-    images: [previewImage],
+      "Build a day-by-day itinerary, see every stop on the map, and track the budget with your travel companions.",
   },
   robots: {
     index: true,

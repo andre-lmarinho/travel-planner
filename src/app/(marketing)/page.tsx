@@ -4,24 +4,21 @@ export default function MarketingHomePage() {
   return (
     <HomeView
       keyBenefits={{
-        title: "Planner. Map. Budget.",
+        title: "Plan together. See the route. Track the budget.",
         description:
-          "Great trips start with a plan you can see, a map that makes sense, and a budget that keeps choices real. Turistar brings these together so decisions are faster and planning feels simple.",
+          "Build a day-by-day itinerary, see every stop on the map, and keep the shared budget clear while you plan with your companions.",
         benefits: [
           {
-            title: "Drag. Drop. Done.",
-            description:
-              "View stops by day, check distances at a glance, and move between pins and cards with context intact.",
+            title: "Visual itinerary",
+            description: "Arrange activities by day and move them as plans change.",
           },
           {
-            title: "See your trip on the map",
-            description:
-              "View stops by day, check distances at a glance, and move between pins and cards with context intact.",
+            title: "Interactive map",
+            description: "See each stop in context and understand the route at a glance.",
           },
           {
-            title: "Built-in budget",
-            description:
-              "Track costs as you go. See daily and trip totals, adjust with ease, and stay on budget.",
+            title: "Shared budget",
+            description: "Set a total, record expenses by category, and see what remains.",
           },
         ],
       }}

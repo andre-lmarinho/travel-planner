@@ -113,6 +113,5 @@ Plan Access → Member Check → Permission Context → Feature Authorization
 | `search` | None | External Service |
 | `shareLink` | `auth`, `plan` | UI - Public Sharing |
 | `snapshots` | `activity`, `events` | Infrastructure - State Persistence |
-| `website` | `inspirations` | Marketing - Landing Pages |
 
 This architecture enables scalable development with clear ownership, type safety, and sophisticated real-time collaboration capabilities.
