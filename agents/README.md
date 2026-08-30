@@ -1,6 +1,6 @@
 # Turistar Development Guide for AI Agents
 
-This directory contains documentation for AI agents working on the travel-planner codebase.
+This directory contains documentation for AI agents working on the Turistar codebase.
 
 ## Quick Navigation
 

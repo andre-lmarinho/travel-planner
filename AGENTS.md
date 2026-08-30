@@ -1,4 +1,4 @@
-# Travel Planner Development Guide for AI Agents
+# Turistar Development Guide for AI Agents
 
 You are a senior engineer working in a pnpm-managed Next.js project. You prioritize type safety, security, and small, reviewable diffs.
 

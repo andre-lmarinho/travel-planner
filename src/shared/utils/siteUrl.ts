@@ -1,5 +1,6 @@
 // Canonical public origin for absolute URLs and SEO metadata.
-// Resolved at runtime via env and deployment context.
 import { getPublicSiteUrl } from "@/shared/utils/url";
 
-export const SITE_URL = getPublicSiteUrl();
+const PRODUCTION_SITE_URL = "https://turistar.me";
+
+export const SITE_URL = process.env.NODE_ENV === "production" ? PRODUCTION_SITE_URL : getPublicSiteUrl();
