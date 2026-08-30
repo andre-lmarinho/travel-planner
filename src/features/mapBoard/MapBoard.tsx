@@ -8,6 +8,8 @@ import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { getDefaultColor } from "@/features/activity/constants";
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
 
+import { tileAttribution, tileUrl } from "./geoapifyTiles";
+
 // Extract the CSS color from a Tailwind class like "bg-[var(--color-X)]"
 const getCssColor = (cls?: string): string | undefined => {
   if (!cls) return undefined;
@@ -71,18 +73,7 @@ export const MapBoard = React.memo(function MapBoard() {
         style={{ width: "100%", height: "100%" }}
         aria-label="Itinerary map">
         <FitAllMarkers coords={allCoords} />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png"
-          subdomains={["a", "b", "c", "d"]}
-          attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-          opacity={1}
-        />
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png"
-          subdomains={["a", "b", "c", "d"]}
-          attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-          opacity={0.9}
-        />
+        <TileLayer url={tileUrl} attribution={tileAttribution} maxZoom={20} />
         {dayPaths.map(({ day, dayIdx, coords, acts }) => (
           <React.Fragment key={day.id}>
             {coords.map((pos, i) => {
