@@ -7,6 +7,7 @@ import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 
 import { getDefaultColor } from "@/features/activity/constants";
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
+import { cn } from "@/shared/utils/cn";
 
 import { tileAttribution, tileUrl } from "./geoapifyTiles";
 
@@ -43,7 +44,11 @@ function FitAllMarkers({ coords }: { coords: LatLngExpression[] }) {
   return null;
 }
 
-export const MapBoard = React.memo(function MapBoard() {
+interface MapBoardProps {
+  className?: string;
+}
+
+export const MapBoard = React.memo(function MapBoard({ className }: MapBoardProps) {
   const { days, setSelectedActivity, destCoords } = usePlannerContext();
   const centerCoords = destCoords ?? undefined;
   const defaultBg = useMemo(() => getCssColor(getDefaultColor()) ?? "var(--color-0)", []);
@@ -66,10 +71,15 @@ export const MapBoard = React.memo(function MapBoard() {
       ? [centerCoords.lat, centerCoords.lng]
       : [0, 0];
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-xl border">
+    <div
+      className={cn(
+        "relative isolate w-full overflow-hidden rounded-xl border",
+        className ?? "h-full min-h-[calc(100dvh-12rem)]"
+      )}>
       <MapContainer
         center={center}
         zoom={13}
+        zoomControl={false}
         style={{ width: "100%", height: "100%" }}
         aria-label="Itinerary map">
         <FitAllMarkers coords={allCoords} />

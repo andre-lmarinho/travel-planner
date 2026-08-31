@@ -24,6 +24,7 @@ export {
   EyeOff,
   FileText,
   Flame,
+  GripVertical,
   HandCoins,
   Hotel,
   Hourglass,

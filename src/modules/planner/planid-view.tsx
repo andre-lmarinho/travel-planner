@@ -34,7 +34,6 @@ export function PlanIdView({ experience }: PlanIdViewProps) {
       isOwner={experience.isOwner}
       canManageMembers={experience.canManageMembers}
       isPublic={experience.isPublic}
-      authorName={experience.authorName}
     />
   );
 }

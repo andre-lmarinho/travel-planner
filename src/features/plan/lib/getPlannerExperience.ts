@@ -7,7 +7,6 @@ import { buildInitialDays } from "@/features/activity/lib/dayOperations";
 import type { DayPlan } from "@/features/activity/types";
 import { fetchPlanBudgetEntries } from "@/features/budget/repositories/BudgetRepository";
 import { CATEGORIES, type CategoryKey, type Entry } from "@/features/budget/types";
-import { fetchProfileByUserId } from "@/features/profile/repositories/ProfileRepository";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/services/snapshotsSchemas";
 import { getCurrentUser } from "@/shared/lib/auth/session";
 import { isUuid } from "@/shared/lib/uuid";
@@ -16,9 +15,6 @@ import {
   fetchLatestSnapshot,
   fetchPlanByIdWithMembers,
   fetchPlanBySlug,
-  fetchPublicPlanById,
-  fetchPublicPlanBySlug,
-  type PlanRecord,
 } from "../repositories/PlanRepository";
 
 const VALID_CATEGORY_KEYS = CATEGORIES.map((c) => c.key) as readonly CategoryKey[];
@@ -36,7 +32,6 @@ export interface PlannerExperience {
   initialDays?: DayPlan[];
   initialBudget?: number;
   initialEntries?: Entry[];
-  authorName?: string;
 }
 
 interface GetPlannerExperienceArgs {
@@ -55,83 +50,41 @@ export async function getPlannerExperience({
   const bySlug = !isUuid(trimmed);
   const user = await getCurrentUser();
 
-  // Anonymous viewers see only public plans (RLS enforces is_public). The members-free fetch
-  // keeps anon off plan_members entirely; a null result means private-or-missing -> login.
-  if (!user) {
-    const plan = bySlug ? await fetchPublicPlanBySlug(trimmed) : await fetchPublicPlanById(trimmed);
-    if (!plan) redirect("/login");
-    return buildReadOnlyExperience(plan, { slug: bySlug ? trimmed : undefined, dest, viewerUserId: null });
-  }
+  // Only the owner and invited members may access a shared planner. Anonymous
+  // visitors are sent to login so a member can authenticate; RLS keeps private
+  // plans hidden from them regardless.
+  if (!user) return redirect("/login");
 
-  // Authenticated: RLS also exposes public plans to non-members, so one fetch covers both
-  // members (edit) and non-members of a public plan (read-only). Private + non-member -> notFound.
   const plan = bySlug ? await fetchPlanBySlug(trimmed) : await fetchPlanByIdWithMembers(trimmed);
   if (!plan) return notFound();
 
   const isOwner = Boolean(plan.ownerId && user.id === plan.ownerId);
   const memberRow = plan.members.find((m) => m.userId === user.id);
 
-  if (isOwner || memberRow) {
-    const isAdmin = isOwner || memberRow?.tier === "admin";
-    const [snapshotRow, entryRows] = await Promise.all([
-      fetchLatestSnapshot(plan.id),
-      fetchPlanBudgetEntries(plan.id),
-    ]);
-    const snapshotDays = snapshotRow ? mapSnapshot(SnapshotRowSchema.parse(snapshotRow)).days : [];
+  // Authenticated but not a member: no access to this shared planner.
+  if (!isOwner && !memberRow) return notFound();
 
-    return {
-      planId: plan.id,
-      slug: bySlug ? trimmed : undefined,
-      destination: dest ?? plan.destinationName ?? "Destination TBD",
-      title: plan.title ?? undefined,
-      viewerUserId: user.id,
-      // Reaching this branch requires ownership or membership, which is exactly edit access.
-      canEdit: true,
-      isOwner,
-      canManageMembers: isAdmin,
-      isPublic: plan.isPublic,
-      initialDays: snapshotDays.length > 0 ? snapshotDays : buildDaysFromRange(plan.startDate, plan.endDate),
-      initialBudget: plan.budget ?? undefined,
-      initialEntries: entryRows.length > 0 ? entryRows.map(mapBudgetEntry) : undefined,
-    };
-  }
-
-  // Authenticated non-member: read-only when the plan is public, otherwise hidden.
-  if (!plan.isPublic) return notFound();
-  return buildReadOnlyExperience(plan, { slug: bySlug ? trimmed : undefined, dest, viewerUserId: user.id });
-}
-
-interface ReadOnlyArgs {
-  slug?: string;
-  dest?: string;
-  viewerUserId: string | null;
-}
-
-async function buildReadOnlyExperience(
-  plan: PlanRecord,
-  { slug, dest, viewerUserId }: ReadOnlyArgs
-): Promise<PlannerExperience> {
-  const [snapshotRow, entryRows, author] = await Promise.all([
+  const isAdmin = isOwner || memberRow?.tier === "admin";
+  const [snapshotRow, entryRows] = await Promise.all([
     fetchLatestSnapshot(plan.id),
     fetchPlanBudgetEntries(plan.id),
-    plan.ownerId ? fetchProfileByUserId(plan.ownerId) : Promise.resolve(null),
   ]);
   const snapshotDays = snapshotRow ? mapSnapshot(SnapshotRowSchema.parse(snapshotRow)).days : [];
 
   return {
     planId: plan.id,
-    slug,
+    slug: bySlug ? trimmed : undefined,
     destination: dest ?? plan.destinationName ?? "Destination TBD",
     title: plan.title ?? undefined,
-    viewerUserId,
-    canEdit: false,
-    isOwner: false,
-    canManageMembers: false,
+    viewerUserId: user.id,
+    // Reaching this branch requires ownership or membership, which is exactly edit access.
+    canEdit: true,
+    isOwner,
+    canManageMembers: isAdmin,
     isPublic: plan.isPublic,
     initialDays: snapshotDays.length > 0 ? snapshotDays : buildDaysFromRange(plan.startDate, plan.endDate),
     initialBudget: plan.budget ?? undefined,
     initialEntries: entryRows.length > 0 ? entryRows.map(mapBudgetEntry) : undefined,
-    authorName: author?.displayName ?? undefined,
   };
 }
 

@@ -11,7 +11,6 @@ import type { AutocompletePlace } from "@/features/search/types";
 import { Button } from "@/shared/ui/button/Button";
 import { DateRangePicker } from "@/shared/ui/calendar/DateRangePicker";
 import { LoadingScreen } from "@/shared/ui/loading/LoadingScreen";
-import { SelectMenu, type SelectMenuOption } from "@/shared/ui/select/SelectMenu";
 
 import type { CreatePlannerPlanResult } from "../lib/createUserPlan";
 import { createUserPlan } from "../lib/createUserPlan";
@@ -27,20 +26,12 @@ function getDefaultRange(): DateRange {
   };
 }
 
-type Visibility = "private" | "public";
-
-const VISIBILITY_OPTIONS: ReadonlyArray<SelectMenuOption<Visibility>> = [
-  { value: "private", label: "Private" },
-  { value: "public", label: "Public" },
-];
-
 export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps) {
   const [range, setRange] = useState<DateRange | undefined>(getDefaultRange());
   const [dest, setDest] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [destCountry, setDestCountry] = useState<string | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
-  const [visibility, setVisibility] = useState<Visibility>("private");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -92,7 +83,7 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
         },
         startDate: range.from.toISOString(),
         endDate: range.to.toISOString(),
-        isPublic: visibility === "public",
+        isPublic: false,
       });
 
       onPlanCreated(planResult);
@@ -142,21 +133,8 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
           />
         </fieldset>
 
-        <fieldset className="grid gap-2" aria-labelledby="visibility-label">
-          <legend id="visibility-label" className="text-muted-foreground text-sm">
-            Visibility
-          </legend>
-          <SelectMenu
-            value={visibility}
-            options={VISIBILITY_OPTIONS}
-            onChange={setVisibility}
-            ariaLabel="Plan visibility"
-            triggerClassName="w-full"
-          />
-        </fieldset>
-
         <Button type="submit" disabled={loading} className="w-full">
-          Start Your Planning
+          Create trip
         </Button>
 
         {error ? (

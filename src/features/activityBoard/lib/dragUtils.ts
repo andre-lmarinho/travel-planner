@@ -1,4 +1,5 @@
-import type { DragOverEvent } from "@dnd-kit/core";
+import type { CollisionDetection, DragOverEvent } from "@dnd-kit/core";
+import { closestCenter, pointerWithin } from "@dnd-kit/core";
 
 import type { DayPlan } from "@/features/activity/types";
 
@@ -111,3 +112,20 @@ export function applyDragMove(
 
   return result;
 }
+
+/**
+ * Collision detection that prefers the container the pointer is over,
+ * then falls back to closest-center among sortables in that container.
+ */
+export const containerCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) {
+    const containerId = pointerCollisions[0].id;
+    const centerCollisions = closestCenter(args);
+    const sortablesInContainer = centerCollisions.filter(
+      (collision) => collision.data?.droppableContainer?.data?.current?.sortable?.containerId === containerId
+    );
+    return sortablesInContainer.length > 0 ? sortablesInContainer : pointerCollisions;
+  }
+  return closestCenter(args);
+};

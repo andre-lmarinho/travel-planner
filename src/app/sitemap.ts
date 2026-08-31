@@ -2,19 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { SITE_URL } from "@/shared/utils/siteUrl";
 
-const MARKETING_ROUTES = [
-  "/",
-  "/friends",
-  "/planning",
-  "/planning/adventure",
-  "/planning/digital-nomad",
-  "/planning/event-based",
-  "/planning/family",
-  "/planning/road-trip",
-  "/planning/vacation",
-  "/privacy",
-  "/terms",
-] as const;
+const MARKETING_ROUTES = ["/", "/privacy", "/terms"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
