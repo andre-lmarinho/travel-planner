@@ -6,6 +6,7 @@ import { memo, useCallback, useEffect, useId, useState } from "react";
 import { ACTIVITY_COLORS } from "@/features/activity/constants";
 import { useActivityColors } from "@/features/activity/hooks/useActivityColors";
 import type { Activity } from "@/features/activity/types";
+import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogHeader } from "@/shared/ui/dialog";
 import { ChevronDown, Palette, Trash2, X } from "@/shared/ui/icon";
 import { Popover, PopoverContent, PopoverTriggerButton } from "@/shared/ui/popover";
@@ -143,7 +144,7 @@ export const ActivityDialog = memo(function ActivityDialog({
 
         {/* Header */}
         <div
-          className={`group relative mb-4 rounded-t-lg ${
+          className={`group relative rounded-t-lg ${
             editedImageUrl ? "h-32" : ""
           } ${!editedImageUrl && !bg.startsWith("#") ? bg : ""}`}
           style={bg.startsWith("#") ? { backgroundColor: bg } : undefined}>
@@ -335,6 +336,14 @@ export const ActivityDialog = memo(function ActivityDialog({
           onFieldChange={setHasChanges}
           destCoords={destCoords}
         />
+        <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={onClose}>
+            Done
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
