@@ -13,7 +13,6 @@ import { SharePlannerDialog } from "@/features/members/SharePlannerDialog";
 import { DeletePlanDialog } from "@/features/plan/components/DeletePlanDialog";
 import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
 import { updatePlanTitle } from "@/features/plan/lib/updatePlanTitle";
-import { Avatar } from "@/shared/ui/avatar/Avatar";
 import { DateRangePickerIcon } from "@/shared/ui/calendar";
 
 import type { PlannerMode } from "./ModeToggleButton";
@@ -36,7 +35,6 @@ export interface PlannerWorkspaceProps {
   isPublic?: boolean;
   initialBudget?: number;
   initialEntries?: Entry[];
-  authorName?: string;
 }
 
 type PlannerWorkspaceContentProps = {
@@ -44,7 +42,6 @@ type PlannerWorkspaceContentProps = {
   canEdit: boolean;
   initialBudget?: number;
   initialEntries?: Entry[];
-  authorName?: string;
 };
 
 function PlannerWorkspaceContent({
@@ -52,7 +49,6 @@ function PlannerWorkspaceContent({
   canEdit,
   initialBudget,
   initialEntries,
-  authorName,
 }: PlannerWorkspaceContentProps) {
   const [mode, setMode] = useState<PlannerMode>("overview");
   const {
@@ -140,13 +136,6 @@ function PlannerWorkspaceContent({
         </div>
       </div>
 
-      {!canEdit && authorName ? (
-        <div className="text-muted-foreground mb-2 flex w-full items-center gap-2 text-sm">
-          <Avatar displayName={authorName} />
-          <span>Shared by {authorName}</span>
-        </div>
-      ) : null}
-
       <div className="relative w-full flex-1 overflow-visible">
         {mode === "overview" || mode === "map" ? (
           <div className={`absolute inset-0 z-0 ${mode === "overview" ? "invisible xl:visible" : ""}`}>
@@ -228,7 +217,6 @@ export function PlannerWorkspace({
   isPublic = false,
   initialBudget,
   initialEntries,
-  authorName,
 }: PlannerWorkspaceProps) {
   return (
     <PlannerProvider
@@ -245,7 +233,6 @@ export function PlannerWorkspace({
         canEdit={canEdit}
         initialBudget={initialBudget}
         initialEntries={initialEntries}
-        authorName={authorName}
       />
     </PlannerProvider>
   );

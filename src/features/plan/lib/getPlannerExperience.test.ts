@@ -62,44 +62,15 @@ const PLAN = {
 // Same plan, published, with no membership for the viewer.
 const PUBLIC_PLAN = { ...(PLAN as object), members: [], isPublic: true } as unknown as typeof PLAN;
 
-// Members-free record returned to anonymous viewers.
-const PUBLIC_RECORD = {
-  id: "plan-1",
-  ownerId: "owner-1",
-  destinationName: "Rome",
-  title: "Trip",
-  budget: null,
-  startDate: null,
-  endDate: null,
-  isPublic: true,
-} as unknown as Awaited<ReturnType<typeof fetchPublicPlanBySlug>>;
-
-describe("getPlannerExperience — public + membership access", () => {
+describe("getPlannerExperience — membership-only access", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("serves a public plan read-only to anonymous visitors (slug)", async () => {
+  it("redirects anonymous visitors to /login (public or not)", async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
-    vi.mocked(fetchPublicPlanBySlug).mockResolvedValueOnce(PUBLIC_RECORD);
-
-    const result = await getPlannerExperience({ identifier: SLUG });
-
-    expect(result).toMatchObject({
-      planId: "plan-1",
-      slug: SLUG,
-      canEdit: false,
-      viewerUserId: null,
-      isPublic: true,
-      authorName: "Owner",
-    });
-    expect(fetchPlanBySlug).not.toHaveBeenCalled();
-  });
-
-  it("redirects anonymous visitors to /login when the plan is not public", async () => {
-    vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
-    vi.mocked(fetchPublicPlanBySlug).mockResolvedValueOnce(null);
 
     await expect(getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({ url: "/login" });
     expect(fetchPlanBySlug).not.toHaveBeenCalled();
+    expect(fetchPublicPlanBySlug).not.toHaveBeenCalled();
   });
 
   it("grants a member edit access via slug", async () => {
@@ -123,13 +94,11 @@ describe("getPlannerExperience — public + membership access", () => {
     expect(fetchPublicPlanById).not.toHaveBeenCalled();
   });
 
-  it("serves a public plan read-only to a logged-in non-member", async () => {
+  it("returns notFound for a logged-in non-member even on a public plan", async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "stranger" });
     vi.mocked(fetchPlanBySlug).mockResolvedValueOnce(PUBLIC_PLAN);
 
-    const result = await getPlannerExperience({ identifier: SLUG });
-
-    expect(result).toMatchObject({ canEdit: false, viewerUserId: "stranger", isPublic: true });
+    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   it("returns notFound for a logged-in non-member on a private plan", async () => {
