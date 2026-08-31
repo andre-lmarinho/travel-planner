@@ -1,17 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Logo } from "@/shared/ui/logo";
 import { DesktopActions } from "./components/DesktopActions";
-import { DesktopNavigation } from "./components/DesktopNavigation";
-import { MenuToggleButton } from "./components/MenuToggleButton";
-import { MobileMenu } from "./components/MobileMenu";
 
 export function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
-
-  const closeMobileMenu = useCallback(() => setIsMobileMenuOpen(false), []);
 
   useEffect(() => {
     const el = shellRef.current;
@@ -26,42 +20,17 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", set);
   }, []);
 
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMobileMenu();
-    };
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) closeMobileMenu();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [isMobileMenuOpen, closeMobileMenu]);
-
   return (
     <header className="bg-background fixed top-0 z-50 my-0 w-full py-2 lg:my-2 lg:mb-0 lg:bg-transparent lg:px-6 lg:py-0">
       <div
         ref={shellRef}
         data-elevated="false"
         className="data-[elevated=true]:bg-background data-[elevated=true]:lg:border-border mx-auto max-w-6xl rounded-2xl border border-transparent bg-transparent px-2 transition-[background-color,border-color] duration-300 ease-out data-[elevated=true]:lg:border lg:px-8">
-        <div className="flex items-center justify-between gap-3 md:gap-8 lg:grid lg:grid-cols-[1fr_auto] lg:py-2">
-          <div className="flex items-center gap-2 lg:gap-4">
-            <Logo href="/" />
-            <DesktopNavigation />
-          </div>
+        <div className="flex items-center justify-between gap-3 lg:py-2">
+          <Logo href="/" />
           <DesktopActions />
-          <MenuToggleButton isOpen={isMobileMenuOpen} onToggle={() => setIsMobileMenuOpen((open) => !open)} />
         </div>
       </div>
-
-      {isMobileMenuOpen ? <MobileMenu onClose={closeMobileMenu} /> : null}
     </header>
   );
 }

@@ -5,7 +5,7 @@ export function resolveNextPath(next: unknown): string | null {
 }
 
 export function buildSignupHref(nextPath: string | null): string {
-  return nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : "/signup";
+  return nextPath ? `/?next=${encodeURIComponent(nextPath)}` : "/";
 }
 
 export function buildLoginHref(nextPath: string | null): string {

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { ClientProviders } from "@/app/providers";
+
 import "@/shared/utils/theme.css";
 import "leaflet/dist/leaflet.css";
 
@@ -14,7 +16,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:bg-background focus:p-2">
           Skip to content
         </a>
-        {children}
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );

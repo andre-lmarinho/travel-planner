@@ -55,7 +55,7 @@ export async function AppBar() {
             <Button href="/login" variant="ghost">
               Log in
             </Button>
-            <Button href="/signup">Get started</Button>
+            <Button href="/">Get started</Button>
           </div>
         )}
       </nav>

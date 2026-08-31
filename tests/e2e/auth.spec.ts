@@ -10,7 +10,7 @@ test.describe("Auth", () => {
       });
     });
 
-    await page.goto("/signup");
+    await page.goto("/");
 
     await page.getByRole("textbox", { name: "Username" }).fill("e2e-owner");
     await Promise.all([

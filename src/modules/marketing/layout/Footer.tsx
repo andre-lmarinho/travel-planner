@@ -2,14 +2,7 @@ import Link from "next/link";
 
 import { Logo } from "@/shared/ui/logo";
 
-const FOOTER_LINK_CLASS = "hover:opacity-70";
 const EXTERNAL_LINK_CLASS = "underline underline-offset-2 hover:opacity-70";
-
-const PRODUCT_LINKS = [
-  { href: "/#features", label: "Features" },
-  { href: "/#inspiration", label: "Inspiration" },
-  { href: "/#faq", label: "FAQ" },
-] as const;
 
 const RESOURCE_LINKS = [
   { href: "/privacy", label: "Privacy" },
@@ -49,19 +42,10 @@ export function Footer() {
           </a>
         </div>
         <div className="grid grid-cols-2 gap-6 px-2">
-          <nav aria-label="Product" className="flex flex-col gap-2">
-            <p className="font-semibold">Product</p>
-            {PRODUCT_LINKS.map((link) => (
-              <Link key={link.href} className={FOOTER_LINK_CLASS} href={link.href}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
           <nav aria-label="Resources" className="flex flex-col gap-2">
             <p className="font-semibold">Resources</p>
             {RESOURCE_LINKS.map((link) => (
-              <Link key={link.href} className={FOOTER_LINK_CLASS} href={link.href}>
+              <Link key={link.href} className="hover:opacity-70" href={link.href}>
                 {link.label}
               </Link>
             ))}
