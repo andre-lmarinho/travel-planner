@@ -15,13 +15,24 @@ type Row = {
   longitude: number | null;
 };
 
-function buildSupabase(result: { data: Row[] | null; error: unknown }) {
-  const not = vi.fn().mockResolvedValue(result);
-  const eq = vi.fn().mockReturnValue({ not });
-  const select = vi.fn().mockReturnValue({ eq });
-  const from = vi.fn().mockReturnValue({ select });
+function buildSupabase({
+  memberships = { data: [], error: null },
+  plans,
+}: {
+  memberships?: { data: { plan_id: string }[] | null; error: unknown };
+  plans: { data: Row[] | null; error: unknown };
+}) {
+  const not = vi.fn().mockResolvedValue(plans);
+  const or = vi.fn().mockReturnValue({ not });
+  const plansEq = vi.fn().mockReturnValue({ not });
+  const plansSelect = vi.fn().mockReturnValue({ eq: plansEq, or });
+  const membersEq = vi.fn().mockResolvedValue(memberships);
+  const membersSelect = vi.fn().mockReturnValue({ eq: membersEq });
+  const from = vi.fn((table: string) =>
+    table === "plan_members" ? { select: membersSelect } : { select: plansSelect }
+  );
   const supabase = { from } as unknown as ReturnType<typeof createSupabaseServerClient>;
-  return { supabase, from, select, eq, not };
+  return { supabase, from, membersEq, not, or, plansEq };
 }
 
 describe("getUserDestinations", () => {
@@ -30,21 +41,24 @@ describe("getUserDestinations", () => {
   });
 
   it("returns an empty array when there is no data", async () => {
-    const { supabase } = buildSupabase({ data: null, error: null });
+    const { supabase } = buildSupabase({ plans: { data: null, error: null } });
     vi.mocked(createSupabaseServerClient).mockReturnValueOnce(supabase);
 
     await expect(getUserDestinations("user-1")).resolves.toEqual([]);
   });
 
   it("dedupes by name and keeps country + (nullable) coordinates", async () => {
-    const { supabase } = buildSupabase({
-      data: [
-        { destination_name: "Paris", destination_country: "FR", latitude: 48.8, longitude: 2.3 },
-        { destination_name: "Tokyo", destination_country: "JP", latitude: 35.6, longitude: 139.7 },
-        { destination_name: "Paris", destination_country: "FR", latitude: 48.8, longitude: 2.3 }, // dup
-        { destination_name: "Lisbon", destination_country: "PT", latitude: null, longitude: null }, // no pin
-      ],
-      error: null,
+    const { supabase, or } = buildSupabase({
+      memberships: { data: [{ plan_id: "shared-plan" }], error: null },
+      plans: {
+        data: [
+          { destination_name: "Paris", destination_country: "FR", latitude: 48.8, longitude: 2.3 },
+          { destination_name: "Tokyo", destination_country: "JP", latitude: 35.6, longitude: 139.7 },
+          { destination_name: "Paris", destination_country: "FR", latitude: 48.8, longitude: 2.3 }, // dup
+          { destination_name: "Lisbon", destination_country: "PT", latitude: null, longitude: null }, // no pin
+        ],
+        error: null,
+      },
     });
     vi.mocked(createSupabaseServerClient).mockReturnValueOnce(supabase);
 
@@ -55,10 +69,11 @@ describe("getUserDestinations", () => {
       { name: "Tokyo", country: "JP", lat: 35.6, lng: 139.7 },
       { name: "Lisbon", country: "PT", lat: null, lng: null },
     ]);
+    expect(or).toHaveBeenCalledWith("user_id.eq.user-1,id.in.(shared-plan)");
   });
 
   it("throws a descriptive error when Supabase fails", async () => {
-    const { supabase } = buildSupabase({ data: null, error: { message: "boom" } });
+    const { supabase } = buildSupabase({ plans: { data: null, error: { message: "boom" } } });
     vi.mocked(createSupabaseServerClient).mockReturnValueOnce(supabase);
 
     await expect(getUserDestinations("user-1")).rejects.toThrow(/getUserDestinations.*userId=user-1.*boom/s);

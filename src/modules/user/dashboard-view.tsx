@@ -3,6 +3,7 @@ import type { UserPlannerSummary } from "@/features/plan/lib/getUserPlanners";
 import { DashboardMap } from "@/modules/user/components/DashboardMap";
 import { InspirationsSection } from "@/modules/user/components/InspirationsSection";
 import { PlannersSection } from "@/modules/user/components/PlannersSection";
+import { getUpcomingPlan, UpcomingTripSection } from "@/modules/user/components/UpcomingTripSection";
 import { MapPin } from "@/shared/ui/icon";
 
 interface DashboardViewProps {
@@ -27,13 +28,16 @@ export function DashboardView({ displayName, plans, destinations }: DashboardVie
       ? [{ name: destination.name, lat: destination.lat, lng: destination.lng }]
       : []
   );
+  const upcomingPlan = getUpcomingPlan(plans);
 
   return (
     <main id="main-content" className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
-      <header className="space-y-1">
+      <section className="space-y-1">
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">{greeting}</h1>
         <p className="text-muted-foreground text-sm">{stats}</p>
-      </header>
+      </section>
+
+      {upcomingPlan ? <UpcomingTripSection plan={upcomingPlan} /> : null}
 
       <section aria-labelledby="map-heading" className="space-y-3">
         <div className="flex items-center gap-2">
