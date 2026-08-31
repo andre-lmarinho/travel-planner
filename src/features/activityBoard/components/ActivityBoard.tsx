@@ -1,34 +1,16 @@
 "use client";
 
-import type { CollisionDetection } from "@dnd-kit/core";
-import { closestCenter, DndContext, DragOverlay, pointerWithin } from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { getActivity } from "@/features/activity/lib/activityOperations";
 
 import { useDragHandlers } from "../hooks/useDragHandlers";
+import { containerCollisionDetection } from "../lib/dragUtils";
 import type { BoardProps } from "../types";
 import { DayColumn } from "./DayColumn";
 import { DraggableCard } from "./DraggableCard";
-
-const customCollisionDetection: CollisionDetection = (args) => {
-  const pointerCollisions = pointerWithin(args);
-  if (pointerCollisions.length > 0) {
-    const containerId = pointerCollisions[0].id;
-    const centerCollisions = closestCenter(args);
-
-    // Find sortables that belong to the same container we're hovering over
-    const sortablesInContainer = centerCollisions.filter((collision) => {
-      const sortable = collision.data?.droppableContainer?.data?.current?.sortable;
-      return sortable?.containerId === containerId;
-    });
-
-    // Return sortables in this container if found, otherwise return the container itself
-    return sortablesInContainer.length > 0 ? sortablesInContainer : pointerCollisions;
-  }
-  return closestCenter(args);
-};
 
 const isInteractiveElement = (el: EventTarget | null): boolean =>
   el instanceof Element &&
@@ -103,7 +85,7 @@ export const ActivityBoard = memo(function Board({
     <DndContext
       id="activity-board"
       sensors={sensors}
-      collisionDetection={customCollisionDetection}
+      collisionDetection={containerCollisionDetection}
       modifiers={[restrictToWindowEdges]}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}

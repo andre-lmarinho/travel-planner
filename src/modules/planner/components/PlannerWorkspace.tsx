@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import type { FocusEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -18,14 +17,12 @@ import { Avatar } from "@/shared/ui/avatar/Avatar";
 import { DateRangePickerIcon } from "@/shared/ui/calendar";
 
 import type { PlannerMode } from "./ModeToggleButton";
-import { ModeToggleButton, modeOrder } from "./ModeToggleButton";
+import { ModeToggleButton } from "./ModeToggleButton";
+import { TripOverview } from "./TripOverview";
 
 const MapBoard = dynamic(() => import("@/features/mapBoard/MapBoard"), {
   ssr: false,
 });
-
-const offsetMap = [0, 6, 10];
-const scaleMap = [1, 0.92, 0.87];
 
 export interface PlannerWorkspaceProps {
   initialDays?: DayPlan[];
@@ -57,7 +54,7 @@ function PlannerWorkspaceContent({
   initialEntries,
   authorName,
 }: PlannerWorkspaceContentProps) {
-  const [mode, setMode] = useState<PlannerMode>("planner");
+  const [mode, setMode] = useState<PlannerMode>("overview");
   const {
     planId,
     days,
@@ -104,13 +101,11 @@ function PlannerWorkspaceContent({
     }
   };
 
-  const activeIdx = modeOrder.indexOf(mode);
-
   return (
     <main
       id="main-content"
-      className="bg-card relative flex flex-1 flex-col overflow-hidden p-4 md:pb-12 lg:px-12">
-      <div className="mx-auto flex w-full max-w-7xl flex-row justify-between gap-4 pb-4 md:items-center">
+      className="bg-card relative flex flex-1 flex-col overflow-hidden p-4 md:px-6 md:pb-8 xl:px-8">
+      <div className="flex w-full flex-row justify-between gap-4 pb-4 md:items-center">
         <h1 className="bg-card py-2 relative inline-block min-w-[1ch] flex-none cursor-pointer rounded-md text-xl font-semibold whitespace-nowrap capitalize hover:bg-[color-mix(in_oklch,var(--card)_75%,var(--card-foreground)_5%)]">
           <span
             aria-hidden="true"
@@ -128,66 +123,73 @@ function PlannerWorkspaceContent({
             onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
             readOnly={!canEdit}
             disabled={!canEdit}
-            className="focus:border-border focus:bg-background absolute inset-0 cursor-pointer rounded-md border-2 border-transparent bg-transparent px-2 py-1 transition-colors outline-none focus:cursor-text"
+            className="focus-visible:border-border focus-visible:bg-background focus-visible:ring-ring absolute inset-0 cursor-pointer rounded-md border-2 border-transparent bg-transparent px-2 py-1 transition-colors outline-none focus:cursor-text focus-visible:ring-2 focus-visible:ring-offset-2"
           />
         </h1>
         <div className="flex flex-none items-center gap-1 self-end md:self-end">
           <DateRangePickerIcon value={currentRange} onChange={handleRangeChange} disabled={!canEdit} />
           {canEdit ? <SharePlannerDialog planId={planId} /> : null}
           <DeletePlanDialog />
-          <div className="hidden pl-2 md:inline">
-            <ModeToggleButton value={mode} onChange={setMode} />
+          <div className="hidden pl-2 xl:inline">
+            <ModeToggleButton
+              value={mode === "map" ? "overview" : mode}
+              onChange={setMode}
+              modes={["overview", "kanban", "budget"]}
+            />
           </div>
         </div>
       </div>
 
       {!canEdit && authorName ? (
-        <div className="text-muted-foreground mx-auto mb-2 flex w-full max-w-7xl items-center gap-2 text-sm">
+        <div className="text-muted-foreground mb-2 flex w-full items-center gap-2 text-sm">
           <Avatar displayName={authorName} />
           <span>Shared by {authorName}</span>
         </div>
       ) : null}
 
-      <div className="relative mx-auto w-full max-w-7xl flex-1 overflow-visible">
-        {modeOrder.map((currentMode, idx) => {
-          const relativeIndex = idx - activeIdx;
-          const distance = Math.abs(relativeIndex);
-          const zIndex = modeOrder.length - distance;
-          const offset = (offsetMap[distance] ?? 0) * Math.sign(relativeIndex);
-          const scale = scaleMap[distance] ?? 0.7;
-          const rotateZ = relativeIndex * 2;
-          const isActive = relativeIndex === 0;
-
-          const content =
-            currentMode === "planner" ? (
+      <div className="relative w-full flex-1 overflow-visible">
+        {mode === "overview" || mode === "map" ? (
+          <div className={`absolute inset-0 z-0 ${mode === "overview" ? "invisible xl:visible" : ""}`}>
+            <MapBoard className="h-full" />
+          </div>
+        ) : null}
+        {mode === "overview" || mode === "map" ? (
+          <>
+            <div className={`absolute inset-0 z-10 xl:hidden ${mode === "map" ? "hidden" : ""}`}>
               <ActivityBoard
                 days={days}
                 canEdit={canEdit}
                 onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
                 onDaysChange={setDays}
-                onAddActivity={addActivityWithTitle}
                 onFallbackAdd={handleFallbackAdd}
               />
-            ) : currentMode === "budget" ? (
-              <BudgetBoard initialBudget={initialBudget} initialEntries={initialEntries} canEdit={canEdit} />
-            ) : (
-              <MapBoard />
-            );
-
-          return (
-            <motion.div
-              key={currentMode}
-              data-testid={`mode-card-${currentMode}`}
-              className={`absolute inset-0 ${!isActive ? "cursor-pointer" : ""}`}
-              style={{ zIndex }}
-              initial={false}
-              animate={{ x: `${offset}%`, scale, rotateZ }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              onClick={() => !isActive && setMode(currentMode)}>
-              {content}
-            </motion.div>
-          );
-        })}
+            </div>
+            <div className="absolute inset-0 z-10 pointer-events-none hidden xl:block">
+              <TripOverview
+                days={days}
+                canEdit={canEdit}
+                onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
+                onDaysChange={setDays}
+                onFallbackAdd={handleFallbackAdd}
+              />
+            </div>
+          </>
+        ) : mode === "kanban" ? (
+          <div className="absolute inset-0">
+            <ActivityBoard
+              days={days}
+              canEdit={canEdit}
+              onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
+              onDaysChange={setDays}
+              onAddActivity={addActivityWithTitle}
+              onFallbackAdd={handleFallbackAdd}
+            />
+          </div>
+        ) : (
+          <div className="absolute inset-0">
+            <BudgetBoard initialBudget={initialBudget} initialEntries={initialEntries} canEdit={canEdit} />
+          </div>
+        )}
       </div>
 
       <ActivityDialog
@@ -203,8 +205,12 @@ function PlannerWorkspaceContent({
         destCoords={destCoords}
       />
 
-      <div className="flex flex-none items-center gap-2 self-center p-6 md:hidden">
-        <ModeToggleButton value={mode} onChange={setMode} />
+      <div className="flex flex-none items-center gap-2 self-center p-6 xl:hidden">
+        <ModeToggleButton
+          value={mode === "overview" ? "kanban" : mode}
+          onChange={setMode}
+          modes={["kanban", "map", "budget"]}
+        />
       </div>
     </main>
   );
