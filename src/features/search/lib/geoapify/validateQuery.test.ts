@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GEOAPIFY_MIN_QUERY_LENGTH } from "@/shared/lib/geoapify/config";
+import { GEOAPIFY_MIN_QUERY_LENGTH } from "@/features/search/lib/geoapify/config";
 import { validateGeoapifyQuery } from "./validateQuery";
 
 describe("validateGeoapifyQuery", () => {

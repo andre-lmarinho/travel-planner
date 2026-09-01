@@ -9,9 +9,9 @@ const { mockValidateGeoapifyQuery, mockFetchGeoapifyAddressAutocomplete } = vi.h
   mockFetchGeoapifyAddressAutocomplete: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/server/geoapify/validateQuery", async () => {
-  const actual = await vi.importActual<typeof import("@/shared/lib/server/geoapify/validateQuery")>(
-    "@/shared/lib/server/geoapify/validateQuery"
+vi.mock("@/features/search/lib/geoapify/validateQuery", async () => {
+  const actual = await vi.importActual<typeof import("@/features/search/lib/geoapify/validateQuery")>(
+    "@/features/search/lib/geoapify/validateQuery"
   );
   return { ...actual, validateGeoapifyQuery: mockValidateGeoapifyQuery };
 });

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { format } from "date-fns";
+import { getCurrentUser, requireUser } from "@/features/auth/lib/session";
 import type { BudgetEntryRow } from "@/features/budget/repositories/BudgetRepository";
 import { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
 import type { Entry } from "@/features/budget/types";
@@ -10,7 +11,6 @@ import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifySe
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/repositories/snapshotSchemas";
 import { ApplicationError } from "@/lib/errors";
-import { getCurrentUser, requireUser } from "@/shared/lib/auth/session";
 import { isUuid } from "@/shared/lib/uuid";
 
 import { buildDaysFromRange } from "../lib/helpers";

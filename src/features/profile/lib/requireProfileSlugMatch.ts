@@ -1,9 +1,9 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import type { SupabaseUser } from "@/features/auth/lib/session";
+import { requireUser, UnauthorizedError } from "@/features/auth/lib/session";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
-import type { SupabaseUser } from "@/shared/lib/auth/session";
-import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 import type { ProfileRecord } from "../types";

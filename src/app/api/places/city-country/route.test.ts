@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { vi } from "vitest";
 
-import { GEOAPIFY_MIN_QUERY_LENGTH } from "@/shared/lib/geoapify/config";
+import { GEOAPIFY_MIN_QUERY_LENGTH } from "@/features/search/lib/geoapify/config";
 
 import { GET } from "./route";
 

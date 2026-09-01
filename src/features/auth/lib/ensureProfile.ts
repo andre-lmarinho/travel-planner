@@ -3,11 +3,10 @@ import "server-only";
 import slugify from "@sindresorhus/slugify";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
-
+import type { SupabaseUser } from "@/features/auth/lib/session";
+import { requireUser } from "@/features/auth/lib/session";
 import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
-import type { SupabaseUser } from "@/shared/lib/auth/session";
-import { requireUser } from "@/shared/lib/auth/session";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import { isRecord, readString } from "@/shared/lib/typeGuards";
 import type { Database } from "@/shared/types/supabase";
