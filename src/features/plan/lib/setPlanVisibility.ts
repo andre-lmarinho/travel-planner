@@ -1,6 +1,6 @@
 "use server";
 
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { formatSupabaseError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 // Publish/unpublish a plan. Authorized by the "Members can update editable plan fields" RLS

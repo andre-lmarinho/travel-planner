@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { formatSupabaseError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export async function updatePlanTitle(planId: string, newTitle: string) {

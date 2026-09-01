@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { formatSupabaseError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export async function updatePlanDates(planId: string, from: Date, to: Date) {

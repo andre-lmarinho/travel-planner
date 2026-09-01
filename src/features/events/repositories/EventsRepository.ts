@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { EventInsert } from "@/features/events/types";
 import type { SnapshotRow } from "@/features/snapshots/repositories/SnapshotsRepository";
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { formatSupabaseError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import type { Database, Json } from "@/shared/types/supabase";
 

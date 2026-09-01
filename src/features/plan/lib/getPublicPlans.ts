@@ -1,6 +1,6 @@
 import "server-only";
 
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
+import { formatSupabaseError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export type PublicPlanSummary = {
