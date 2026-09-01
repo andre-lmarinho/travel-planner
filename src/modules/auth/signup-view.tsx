@@ -16,6 +16,7 @@ import { getAuthErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { validEmail } from "@/features/auth/utils/validEmail";
 import { MIN_PASSWORD_LENGTH, validPassword } from "@/features/auth/utils/validPassword";
 import { normalizeUsername, validUsername } from "@/features/auth/utils/validUsername";
+import { demoSignIn } from "@/features/demo/lib/demoSignIn";
 import { Button } from "@/shared/ui/button/Button";
 import { EmailField, Form, PasswordField, TextField } from "@/shared/ui/form";
 import type { LucideIcon } from "@/shared/ui/icon/lucide-icons";
@@ -176,6 +177,17 @@ export function SignupView({ finalizeProfile, nextPath }: SignupViewProps) {
     usernameStatus === "invalid" ||
     usernameStatus === "error";
 
+  const handleDemo = async () => {
+    setFormError(null);
+    try {
+      const slug = await demoSignIn(finalizeProfile);
+      router.push(`/u/${slug}`);
+      router.refresh();
+    } catch (error) {
+      setFormError(getAuthErrorMessage(error, SIGN_UP_FALLBACK));
+    }
+  };
+
   const usernameField = register("username", {
     onBlur: () => {
       void checkUsername(getValues("username") ?? "");
@@ -218,6 +230,14 @@ export function SignupView({ finalizeProfile, nextPath }: SignupViewProps) {
               {formState.isSubmitting ? "Creating account..." : "Create account"}
             </Button>
           </Form>
+          <div className="mt-5">
+            <Button
+              variant="accent"
+              onClick={handleDemo}
+              className="w-full py-3 text-base font-semibold shadow-sm transition-colors">
+              Explore the demo — no account needed
+            </Button>
+          </div>
           <div className="text-muted-foreground mt-10 flex h-full flex-col justify-end pb-6 text-sm">
             <p>
               {"Already have an account? "}

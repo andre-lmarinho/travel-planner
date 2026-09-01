@@ -32,6 +32,7 @@ export interface EditorDialogProps {
   onPositionChange?: (index: number) => void;
   onImageChange?: (url: string) => void;
   destCoords?: { lat: number; lng: number } | null;
+  isDemo?: boolean;
 }
 
 /** Props for the inline editor */

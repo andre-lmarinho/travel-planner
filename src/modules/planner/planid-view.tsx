@@ -30,6 +30,7 @@ export function PlanIdView({ experience }: PlanIdViewProps) {
       initialBudget={experience.initialBudget}
       initialEntries={experience.initialEntries}
       canEdit={experience.canEdit}
+      isDemo={experience.isDemo}
       viewerUserId={experience.viewerUserId}
       isOwner={experience.isOwner}
       canManageMembers={experience.canManageMembers}

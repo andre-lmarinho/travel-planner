@@ -27,6 +27,7 @@ export const ActivityDialog = memo(function ActivityDialog({
   onPositionChange,
   onImageChange,
   destCoords,
+  isDemo,
 }: EditorDialogProps) {
   const uploadInputId = useId();
   const [activePopup, setActivePopup] = useState<"color" | "day" | null>(null);
@@ -77,6 +78,7 @@ export const ActivityDialog = memo(function ActivityDialog({
   };
 
   const handleUploadImage = (file: File) => {
+    if (isDemo) return; // demo guard, see DemoGuideDialog
     if (file.size > MAX_FILE_SIZE) return;
 
     const reader = new FileReader();
@@ -288,27 +290,29 @@ export const ActivityDialog = memo(function ActivityDialog({
                       </div>
                     </div>
                     <hr />
-                    <div>
-                      <label
-                        htmlFor={uploadInputId}
-                        className="border-border bg-background text-foreground hover:bg-muted/60 inline-flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm font-medium transition-colors">
-                        Upload image
-                      </label>
-                      <input
-                        id={uploadInputId}
-                        name={uploadInputId}
-                        type="file"
-                        accept="image/png,image/jpeg"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            handleUploadImage(file);
-                            e.target.value = "";
-                          }
-                        }}
-                        className="sr-only"
-                      />
-                    </div>
+                    {!isDemo && (
+                      <div>
+                        <label
+                          htmlFor={uploadInputId}
+                          className="border-border bg-background text-foreground hover:bg-muted/60 inline-flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm font-medium transition-colors">
+                          Upload image
+                        </label>
+                        <input
+                          id={uploadInputId}
+                          name={uploadInputId}
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleUploadImage(file);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                      </div>
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>

@@ -7,6 +7,7 @@ import { buildInitialDays } from "@/features/activity/lib/dayOperations";
 import type { DayPlan } from "@/features/activity/types";
 import { fetchPlanBudgetEntries } from "@/features/budget/repositories/BudgetRepository";
 import { CATEGORIES, type CategoryKey, type Entry } from "@/features/budget/types";
+import { isDemoUser } from "@/features/demo/lib/demo";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/services/snapshotsSchemas";
 import { getCurrentUser } from "@/shared/lib/auth/session";
 import { isUuid } from "@/shared/lib/uuid";
@@ -25,6 +26,7 @@ export interface PlannerExperience {
   destination: string;
   title?: string;
   viewerUserId: string | null;
+  isDemo: boolean;
   canEdit: boolean;
   isOwner: boolean;
   canManageMembers: boolean;
@@ -77,6 +79,7 @@ export async function getPlannerExperience({
     destination: dest ?? plan.destinationName ?? "Destination TBD",
     title: plan.title ?? undefined,
     viewerUserId: user.id,
+    isDemo: isDemoUser(user.email),
     // Reaching this branch requires ownership or membership, which is exactly edit access.
     canEdit: true,
     isOwner,

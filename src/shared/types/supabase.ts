@@ -298,6 +298,7 @@ export type Database = {
       is_plan_admin: { Args: { _plan_id: string }; Returns: boolean };
       is_plan_member: { Args: { _plan_id: string }; Returns: boolean };
       leave_plan: { Args: { _plan_id: string }; Returns: undefined };
+      maybe_reset_demo: { Args: never; Returns: boolean };
       plan_admin_count: { Args: { _plan_id: string }; Returns: number };
       remove_plan_member: {
         Args: { _plan_id: string; _user_id: string };

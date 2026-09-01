@@ -68,3 +68,15 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
+CREATE TABLE public.demo_baseline (
+  plan_id uuid NOT NULL,
+  plan jsonb NOT NULL,
+  snapshot jsonb NOT NULL,
+  budget jsonb NOT NULL DEFAULT '[]'::jsonb,
+  CONSTRAINT demo_baseline_pkey PRIMARY KEY (plan_id)
+);
+CREATE TABLE public.demo_reset_state (
+  id boolean NOT NULL DEFAULT true CHECK (id),
+  last_reset_at timestamp with time zone NOT NULL,
+  CONSTRAINT demo_reset_state_pkey PRIMARY KEY (id)
+);

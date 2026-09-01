@@ -12,14 +12,15 @@ import { deletePlan } from "../lib/deletePlan";
 
 type DeletePlanDialogProps = {
   className?: string;
+  isDemo?: boolean;
 };
 
-export function DeletePlanDialog({ className }: DeletePlanDialogProps) {
+export function DeletePlanDialog({ className, isDemo = false }: DeletePlanDialogProps) {
   const { planId, isOwner } = usePlannerContext();
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
-  if (!isOwner) {
+  if (!isOwner || isDemo) {
     return null;
   }
 

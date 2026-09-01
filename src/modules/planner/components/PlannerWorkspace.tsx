@@ -29,6 +29,7 @@ export interface PlannerWorkspaceProps {
   title: string;
   dest?: string;
   canEdit?: boolean;
+  isDemo?: boolean;
   viewerUserId?: string | null;
   isOwner?: boolean;
   canManageMembers?: boolean;
@@ -40,6 +41,7 @@ export interface PlannerWorkspaceProps {
 type PlannerWorkspaceContentProps = {
   title: string;
   canEdit: boolean;
+  isDemo: boolean;
   initialBudget?: number;
   initialEntries?: Entry[];
 };
@@ -47,6 +49,7 @@ type PlannerWorkspaceContentProps = {
 function PlannerWorkspaceContent({
   title: initialTitle,
   canEdit,
+  isDemo,
   initialBudget,
   initialEntries,
 }: PlannerWorkspaceContentProps) {
@@ -124,8 +127,8 @@ function PlannerWorkspaceContent({
         </h1>
         <div className="flex flex-none items-center gap-1 self-end md:self-end">
           <DateRangePickerIcon value={currentRange} onChange={handleRangeChange} disabled={!canEdit} />
-          {canEdit ? <SharePlannerDialog planId={planId} /> : null}
-          <DeletePlanDialog />
+          {canEdit && !isDemo ? <SharePlannerDialog planId={planId} /> : null}
+          <DeletePlanDialog isDemo={isDemo} />
           <div className="hidden pl-2 xl:inline">
             <ModeToggleButton
               value={mode === "map" ? "overview" : mode}
@@ -192,6 +195,7 @@ function PlannerWorkspaceContent({
         onDayChange={changeDay}
         onPositionChange={changePosition}
         destCoords={destCoords}
+        isDemo={isDemo}
       />
 
       <div className="flex flex-none items-center gap-2 self-center p-6 xl:hidden">
@@ -211,6 +215,7 @@ export function PlannerWorkspace({
   title,
   dest,
   canEdit = true,
+  isDemo = false,
   viewerUserId = null,
   isOwner = false,
   canManageMembers = false,
@@ -231,6 +236,7 @@ export function PlannerWorkspace({
       <PlannerWorkspaceContent
         title={title}
         canEdit={canEdit}
+        isDemo={isDemo}
         initialBudget={initialBudget}
         initialEntries={initialEntries}
       />
