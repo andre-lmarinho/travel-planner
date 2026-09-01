@@ -11,22 +11,22 @@ const trpcMocks = vi.hoisted(() => ({
   mutateAsync: vi.fn().mockResolvedValue("new-entry"),
   setData: vi.fn(),
 }));
-
 vi.mock("@/trpc/react", () => ({
   trpc: {
-    budget: {
-      createEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
-      deleteEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
-      get: { useQuery: () => ({ data: null, isSuccess: true }) },
-      updateEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
-      updatePlan: { useMutation: () => ({ mutate: trpcMocks.mutate }) },
+    viewer: {
+      budget: {
+        createEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+        deleteEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+        get: { useQuery: () => ({ data: null, isSuccess: true }) },
+        updateEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+        updatePlan: { useMutation: () => ({ mutate: trpcMocks.mutate }) },
+      },
     },
     useUtils: () => ({
-      budget: { get: { invalidate: trpcMocks.invalidate, setData: trpcMocks.setData } },
+      viewer: { budget: { get: { invalidate: trpcMocks.invalidate, setData: trpcMocks.setData } } },
     }),
   },
 }));
-
 describe("BudgetContext", () => {
   it("is exported as a function (useBudgetContext)", () => {
     expect(typeof useBudgetContext).toBe("function");

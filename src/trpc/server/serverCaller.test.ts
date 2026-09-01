@@ -12,7 +12,9 @@ describe("serverCaller", () => {
   it("keeps protected budget procedures unavailable to public server calls", async () => {
     const caller = getPublicServerCaller(createMockSupabaseClient());
 
-    await expect(caller.budget.get({ planId: "plan-1" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.viewer.budget.get({ planId: "plan-1" })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   it("uses the injected request-scoped Supabase client for authenticated calls", async () => {

@@ -19,6 +19,7 @@ export interface QueryChain<T> {
   delete: Mock<() => QueryChain<T>>;
   upsert: Mock<(...args: unknown[]) => QueryChain<T>>;
   eq: Mock<(...args: unknown[]) => QueryChain<T>>;
+  gt: Mock<(...args: unknown[]) => QueryChain<T>>;
   neq: Mock<(...args: unknown[]) => QueryChain<T>>;
   in: Mock<(...args: unknown[]) => QueryChain<T>>;
   order: Mock<(...args: unknown[]) => QueryChain<T>>;
@@ -46,6 +47,7 @@ export function createQueryChain<T>(data: T | null, error: Error | null = null):
     delete: vi.fn(() => chain),
     upsert: vi.fn(() => chain),
     eq: vi.fn(() => chain),
+    gt: vi.fn(() => chain),
     neq: vi.fn(() => chain),
     in: vi.fn(() => chain),
     order: vi.fn(() => chain),

@@ -7,42 +7,44 @@ import type { Snapshot } from "@/features/snapshots/types";
 
 import { usePlanCollaboration } from "./usePlanCollaboration";
 
-const supabaseMocks = vi.hoisted(() => {
+const trpcMocks = vi.hoisted(() => {
   const fetchSnapshot = vi.fn<() => Promise<Snapshot>>();
-  const fetchEvents = vi.fn<(planId: string, version: number) => Promise<EventRecord[]>>();
+  const fetchEvents = vi.fn<(input: { planId: string; sinceVersion: number }) => Promise<EventRecord[]>>();
   const appendEvents =
     vi.fn<
-      (
-        planId: string,
-        baseVersion: number,
-        events: EventInsert[]
-      ) => Promise<{
-        version: number;
-        events: EventRecord[];
-      }>
+      (input: {
+        planId: string;
+        baseVersion: number;
+        events: EventInsert[];
+      }) => Promise<{ version: number; events: EventRecord[] }>
     >();
   const subscribeToPlan =
     vi.fn<(planId: string, handler: (event: EventRecord) => void) => { unsubscribe: () => void }>();
-  return { fetchSnapshot, fetchEvents, appendEvents, subscribeToPlan };
+  const utils = {
+    viewer: {
+      snapshots: { get: { fetch: fetchSnapshot } },
+      events: { list: { fetch: fetchEvents } },
+    },
+  };
+  const appendMutation = { mutateAsync: appendEvents };
+  return { fetchSnapshot, fetchEvents, appendEvents, subscribeToPlan, utils, appendMutation };
 });
 
-vi.mock("@/features/events/services/eventsClient", () => ({
-  __esModule: true,
-  fetchEvents: supabaseMocks.fetchEvents,
-  appendEvents: supabaseMocks.appendEvents,
-}));
-
-vi.mock("@/features/snapshots/services/snapshotsClient", () => ({
-  __esModule: true,
-  fetchSnapshot: supabaseMocks.fetchSnapshot,
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    useUtils: () => trpcMocks.utils,
+    viewer: {
+      events: { append: { useMutation: () => trpcMocks.appendMutation } },
+    },
+  },
 }));
 
 vi.mock("@/features/events/services/eventsRealtimeClient", () => ({
   __esModule: true,
-  subscribeToEvents: supabaseMocks.subscribeToPlan,
+  subscribeToEvents: trpcMocks.subscribeToPlan,
 }));
 
-const { fetchSnapshot, fetchEvents, appendEvents, subscribeToPlan } = supabaseMocks;
+const { fetchSnapshot, fetchEvents, appendEvents, subscribeToPlan } = trpcMocks;
 
 describe("usePlanCollaboration", () => {
   const baseDay: DayPlan = {
@@ -121,14 +123,16 @@ describe("usePlanCollaboration", () => {
       updatedAt: new Date().toISOString(),
     });
     fetchEvents.mockResolvedValue([]);
-    appendEvents.mockImplementation(async (_planId: string, _base: number, events: EventInsert[]) => ({
-      version: 2,
-      events: events.map((event) => ({
-        ...event,
+    appendEvents.mockImplementation(
+      async ({ events }: { planId: string; baseVersion: number; events: EventInsert[] }) => ({
         version: 2,
-        createdAt: new Date().toISOString(),
-      })) as EventRecord[],
-    }));
+        events: events.map((event) => ({
+          ...event,
+          version: 2,
+          createdAt: new Date().toISOString(),
+        })) as EventRecord[],
+      })
+    );
     const wrapper = renderHook(() => usePlanCollaboration("p1"));
     await waitFor(() => expect(wrapper.result.current.data).toBeTruthy());
 
@@ -149,7 +153,7 @@ describe("usePlanCollaboration", () => {
     });
 
     expect(appendEvents).toHaveBeenCalled();
-    const eventsArg = appendEvents.mock.calls[0][2] as EventInsert[];
+    const eventsArg = appendEvents.mock.calls[0][0].events;
     expect(eventsArg[0].type).toBe("activity.updated");
     expect(eventsArg[0].payload).toMatchObject({ activityId: "a1" });
   });
@@ -185,14 +189,16 @@ describe("usePlanCollaboration", () => {
     fetchSnapshot.mockResolvedValueOnce(initialSnapshot);
     fetchSnapshot.mockResolvedValueOnce(resyncedSnapshot);
     fetchEvents.mockResolvedValue([]);
-    appendEvents.mockImplementation(async (_planId: string, _base: number, events: EventInsert[]) => ({
-      version: 4,
-      events: events.map((event) => ({
-        ...event,
+    appendEvents.mockImplementation(
+      async ({ events }: { planId: string; baseVersion: number; events: EventInsert[] }) => ({
         version: 4,
-        createdAt: new Date().toISOString(),
-      })) as EventRecord[],
-    }));
+        events: events.map((event) => ({
+          ...event,
+          version: 4,
+          createdAt: new Date().toISOString(),
+        })) as EventRecord[],
+      })
+    );
 
     const { result } = renderHook(() => usePlanCollaboration("plan-resync"));
     await waitFor(() => expect(result.current.data).toBeTruthy());

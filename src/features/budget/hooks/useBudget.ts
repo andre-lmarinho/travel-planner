@@ -30,14 +30,14 @@ export function useBudget(
   // persistence follows edit access: a read-only viewer never fetches or writes, and renders
   // the initialEntries/initialBudget passed in from the snapshot.
   const persistEnabled = canEdit && Boolean(planId);
-  const budgetQuery = trpc.budget.get.useQuery({ planId }, { enabled: persistEnabled });
+  const budgetQuery = trpc.viewer.budget.get.useQuery({ planId }, { enabled: persistEnabled });
   const loaded = budgetQuery.data;
   const hasLoaded = !persistEnabled || budgetQuery.isSuccess;
 
-  const saveBudgetMutation = trpc.budget.updatePlan.useMutation({
+  const saveBudgetMutation = trpc.viewer.budget.updatePlan.useMutation({
     onSuccess: (budget) => {
       initialBudgetRef.current = budget;
-      utils.budget.get.setData({ planId }, (previous) =>
+      utils.viewer.budget.get.setData({ planId }, (previous) =>
         previous ? { ...previous, budget } : { budget, entries: [] }
       );
     },
@@ -88,9 +88,9 @@ export function useBudget(
     [categoryTotals]
   );
 
-  const addEntryMutation = trpc.budget.createEntry.useMutation({
+  const addEntryMutation = trpc.viewer.budget.createEntry.useMutation({
     onSuccess: () => {
-      utils.budget.get.invalidate({ planId });
+      utils.viewer.budget.get.invalidate({ planId });
     },
     onError: (_error, input) =>
       setPersistError(`Failed to create budget entry: planId=${planId} category=${input.payload.category}`),
@@ -119,9 +119,9 @@ export function useBudget(
     setAmount(0);
   };
 
-  const updateEntryMutation = trpc.budget.updateEntry.useMutation({
+  const updateEntryMutation = trpc.viewer.budget.updateEntry.useMutation({
     onSuccess: () => {
-      utils.budget.get.invalidate({ planId });
+      utils.viewer.budget.get.invalidate({ planId });
     },
     onError: (_error, input) =>
       setPersistError(`Failed to update budget entry: planId=${planId} entryId=${input.entry.id}`),
@@ -145,9 +145,9 @@ export function useBudget(
     }
   };
 
-  const deleteEntryMutation = trpc.budget.deleteEntry.useMutation({
+  const deleteEntryMutation = trpc.viewer.budget.deleteEntry.useMutation({
     onSuccess: () => {
-      utils.budget.get.invalidate({ planId });
+      utils.viewer.budget.get.invalidate({ planId });
     },
     onError: (_error, input) =>
       setPersistError(`Failed to delete budget entry: planId=${planId} entryId=${input.entryId}`),

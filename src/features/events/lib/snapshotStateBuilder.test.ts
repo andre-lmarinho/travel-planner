@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { DayPlan } from "@/features/activity/types";
 import type { EventInsert } from "@/features/events/types";
-import type { Snapshot } from "../types";
+import type { Snapshot } from "@/features/snapshots/types";
 import { buildSnapshotStateForAppend } from "./snapshotStateBuilder";
 
 const createMockDay = (): DayPlan => ({

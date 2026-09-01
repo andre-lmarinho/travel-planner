@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/shared/types/supabase";
+import { SnapshotsRepository } from "./SnapshotsRepository";
 
 function createMockSupabaseClient(snapshotData: { data: unknown; error: Error | null }) {
   const selectMock = vi.fn().mockReturnThis();
@@ -36,9 +37,8 @@ describe("SnapshotsRepository", () => {
       };
 
       const mockClient = createMockSupabaseClient({ data: mockSnapshot, error: null });
-      const { fetchSnapshot } = await import("../repositories/SnapshotsRepository");
 
-      const result = await fetchSnapshot("plan-1", { client: mockClient });
+      const result = await new SnapshotsRepository(mockClient).fetchSnapshot("plan-1");
 
       expect(result).toEqual(mockSnapshot);
       expect(mockClient._selectMock).toHaveBeenCalledWith("plan_id, version, state, updated_at");
@@ -46,9 +46,8 @@ describe("SnapshotsRepository", () => {
 
     it("returns null when not found", async () => {
       const mockClient = createMockSupabaseClient({ data: null, error: null });
-      const { fetchSnapshot } = await import("../repositories/SnapshotsRepository");
 
-      const result = await fetchSnapshot("plan-new", { client: mockClient });
+      const result = await new SnapshotsRepository(mockClient).fetchSnapshot("plan-new");
 
       expect(result).toBeNull();
       expect(mockClient._selectMock).toHaveBeenCalledWith("plan_id, version, state, updated_at");
@@ -56,9 +55,8 @@ describe("SnapshotsRepository", () => {
 
     it("throws error with context when fetch fails", async () => {
       const mockClient = createMockSupabaseClient({ data: null, error: new Error("DB error") });
-      const { fetchSnapshot } = await import("../repositories/SnapshotsRepository");
 
-      await expect(fetchSnapshot("plan-1", { client: mockClient })).rejects.toThrow(
+      await expect(new SnapshotsRepository(mockClient).fetchSnapshot("plan-1")).rejects.toThrow(
         /fetchSnapshot.*plan-1|plan-1.*fetchSnapshot/
       );
     });

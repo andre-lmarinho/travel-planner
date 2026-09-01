@@ -8,7 +8,7 @@ import { isDemoUser } from "@/features/demo/lib/demo";
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
-import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/services/snapshotsSchemas";
+import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/repositories/snapshotSchemas";
 import { ApplicationError } from "@/lib/errors";
 import { getCurrentUser, requireUser } from "@/shared/lib/auth/session";
 import { isUuid } from "@/shared/lib/uuid";
