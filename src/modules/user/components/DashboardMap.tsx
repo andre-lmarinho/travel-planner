@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 
 import type { MapPin as MapPinType } from "@/features/mapBoard/DestinationsMap";
-import { MapPin } from "@/shared/ui/icon";
+import { MapPin } from "@/ui/components/icon";
 
 // react-leaflet touches window on import, so the map is client-only. Fixed height
 // reserves space (no CLS) and the skeleton fills it while the chunk loads.

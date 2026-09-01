@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { ClientProviders } from "@/app/providers";
 
-import "@/shared/utils/theme.css";
+import "@/ui/theme.css";
 import "leaflet/dist/leaflet.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Logo } from "@/shared/ui/logo";
+import { Logo } from "@/ui/components/logo";
 import { DesktopActions } from "./components/DesktopActions";
 
 export function Navbar() {

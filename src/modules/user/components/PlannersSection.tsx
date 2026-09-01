@@ -7,9 +7,9 @@ import { PlannerCreationForm } from "@/features/plan/components/PlannerCreationF
 import type { UserPlannerSummary } from "@/features/plan/repositories/PlanRepository";
 import type { CreatePlannerPlanResult } from "@/features/plan/services/PlanService";
 import { DEFAULT_PLAN_COVER_IMAGE } from "@/features/search/config";
-import { Card, CardGrid } from "@/shared/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTriggerButton } from "@/shared/ui/dialog";
-import { Plane, Plus } from "@/shared/ui/icon";
+import { Card, CardGrid } from "@/ui/components/card";
+import { Dialog, DialogContent, DialogHeader, DialogTriggerButton } from "@/ui/components/dialog";
+import { Plane, Plus } from "@/ui/components/icon";
 
 interface PlannersSectionProps {
   plans: UserPlannerSummary[];

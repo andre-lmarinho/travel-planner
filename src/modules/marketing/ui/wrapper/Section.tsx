@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 import { PlusDivider } from "./Divider";
 
 type SectionVariant = "transparent" | "card" | "flush";

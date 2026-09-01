@@ -12,8 +12,8 @@ import type { Entry } from "@/features/budget/types";
 import { SharePlannerDialog } from "@/features/members/SharePlannerDialog";
 import { DeletePlanDialog } from "@/features/plan/components/DeletePlanDialog";
 import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { DateRangePickerIcon } from "@/shared/ui/calendar";
 import { trpc } from "@/trpc/react";
+import { DateRangePickerIcon } from "@/ui/components/calendar";
 
 import type { PlannerMode } from "./ModeToggleButton";
 import { ModeToggleButton } from "./ModeToggleButton";

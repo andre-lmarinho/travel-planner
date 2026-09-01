@@ -1,4 +1,4 @@
-import { Plus } from "@/shared/ui/icon";
+import { Plus } from "@/ui/components/icon";
 
 export const PlusDivider = () => (
   <span className="before:bg-border relative flex h-8 w-full items-center before:absolute before:inset-x-0 before:top-1/2 before:h-px before:-translate-y-1/2">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Logo } from "@/shared/ui/logo";
+import { Logo } from "@/ui/components/logo";
 
 const EXTERNAL_LINK_CLASS = "underline underline-offset-2 hover:opacity-70";
 

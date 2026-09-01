@@ -1,7 +1,7 @@
 import { createPlanService } from "@/features/plan/services/createPlanService";
-import { Card } from "@/shared/ui/card/Card";
-import { CardGrid } from "@/shared/ui/card/CardGrid";
-import { Sparkles } from "@/shared/ui/icon";
+import { Card } from "@/ui/components/card/Card";
+import { CardGrid } from "@/ui/components/card/CardGrid";
+import { Sparkles } from "@/ui/components/icon";
 
 export async function InspirationsSection({ excludePlanIds = [] }: { excludePlanIds?: string[] }) {
   const exclude = new Set(excludePlanIds);

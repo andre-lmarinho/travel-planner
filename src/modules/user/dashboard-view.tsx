@@ -4,7 +4,7 @@ import { DashboardMap } from "@/modules/user/components/DashboardMap";
 import { InspirationsSection } from "@/modules/user/components/InspirationsSection";
 import { PlannersSection } from "@/modules/user/components/PlannersSection";
 import { getUpcomingPlan, UpcomingTripSection } from "@/modules/user/components/UpcomingTripSection";
-import { MapPin } from "@/shared/ui/icon";
+import { MapPin } from "@/ui/components/icon";
 
 interface DashboardViewProps {
   displayName: string | null;

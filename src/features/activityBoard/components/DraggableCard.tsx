@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { memo } from "react";
 import type { Activity } from "@/features/activity/types";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 
 import { ActivityCard } from "./ActivityCard";
 

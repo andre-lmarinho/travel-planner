@@ -1,7 +1,7 @@
 import type { ChangeEvent, FocusEvent } from "react";
 import { useRef, useState } from "react";
 
-import { DollarSign } from "@/shared/ui/icon";
+import { DollarSign } from "@/ui/components/icon";
 
 import { normalizeAmount } from "../lib/normalizeAmount";
 

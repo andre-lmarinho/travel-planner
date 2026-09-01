@@ -157,11 +157,11 @@ const { data: bad } = await supabase.from('planners').select('*').eq('id', planI
 ```typescript
 // Good - Type imports and direct paths
 import type { Planner } from '@/shared/types/planner';
-import { Button } from '@/shared/ui/button';
+import { Button } from '@/ui/components/button';
 
 // Bad - Regular import for types, barrel imports
 import { Planner } from '@/shared/types';
-import { Button } from '@/shared/ui';
+import { Button } from '@/ui/components';
 ```
 
 ## PR Checklist

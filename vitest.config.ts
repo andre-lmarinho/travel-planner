@@ -7,7 +7,7 @@ export default defineConfig({
       "@": resolve(__dirname, "./src"),
       "@tests": resolve(__dirname, "./tests"),
       "@supabase/ssr": resolve(__dirname, "./tests/__mocks__/supabaseSsr.ts"),
-      "@/shared/utils/theme.css": resolve(__dirname, "./tests/__mocks__/empty.css"),
+      "@/ui/theme.css": resolve(__dirname, "./tests/__mocks__/empty.css"),
       "leaflet/dist/leaflet.css": resolve(__dirname, "./tests/__mocks__/empty.css"),
       "server-only": resolve(__dirname, "./tests/__mocks__/serverOnly.ts"),
     },

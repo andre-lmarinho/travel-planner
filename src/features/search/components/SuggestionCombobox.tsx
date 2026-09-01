@@ -2,8 +2,8 @@
 
 import React from "react";
 
-import { Spinner } from "@/shared/ui/loading";
-import { cn } from "@/shared/utils/cn";
+import { Spinner } from "@/ui/components/loading";
+import { cn } from "@/ui/utils/cn";
 
 export interface SuggestionOption<T> {
   id: string;

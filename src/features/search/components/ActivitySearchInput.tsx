@@ -5,7 +5,7 @@ import React from "react";
 import type { SuggestionHook } from "@/features/search/hooks/createGeoapifySuggestionHook";
 import { useDebouncedQuery } from "@/features/search/hooks/useDebouncedQuery";
 import type { ActivitySuggestion, PlaceSelection } from "@/features/search/types";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 
 import type { SuggestionOption } from "./SuggestionCombobox";
 import { SuggestionCombobox } from "./SuggestionCombobox";

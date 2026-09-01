@@ -1,11 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-import { ConfirmationDialog } from "@/shared/ui/dialog/ConfirmationDialog";
-import { Trash2 } from "@/shared/ui/icon";
-import { cn } from "@/shared/utils/cn";
 import { trpc } from "@/trpc/react";
+import { ConfirmationDialog } from "@/ui/components/dialog/ConfirmationDialog";
+import { Trash2 } from "@/ui/components/icon";
+import { cn } from "@/ui/utils/cn";
 import { usePlannerContext } from "../hooks/PlannerContext";
 
 type DeletePlanDialogProps = {

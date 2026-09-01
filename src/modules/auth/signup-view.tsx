@@ -16,11 +16,11 @@ import { validEmail } from "@/features/auth/utils/validEmail";
 import { MIN_PASSWORD_LENGTH, validPassword } from "@/features/auth/utils/validPassword";
 import { normalizeUsername, validUsername } from "@/features/auth/utils/validUsername";
 import { demoSignIn } from "@/features/demo/lib/demoSignIn";
-import { Button } from "@/shared/ui/button/Button";
-import { EmailField, Form, PasswordField, TextField } from "@/shared/ui/form";
-import type { LucideIcon } from "@/shared/ui/icon/lucide-icons";
-import { Kanban, LandPlot, Plane } from "@/shared/ui/icon/lucide-icons";
 import { trpc } from "@/trpc/react";
+import { Button } from "@/ui/components/button/Button";
+import { EmailField, Form, PasswordField, TextField } from "@/ui/components/form";
+import type { LucideIcon } from "@/ui/components/icon/lucide-icons";
+import { Kanban, LandPlot, Plane } from "@/ui/components/icon/lucide-icons";
 
 import mock from "./media/app-mock.webp";
 

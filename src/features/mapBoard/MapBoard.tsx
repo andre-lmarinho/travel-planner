@@ -7,7 +7,7 @@ import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 
 import { getDefaultColor } from "@/features/activity/constants";
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 
 import { tileAttribution, tileUrl } from "./geoapifyTiles";
 

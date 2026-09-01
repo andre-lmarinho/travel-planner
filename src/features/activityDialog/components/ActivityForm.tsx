@@ -9,7 +9,7 @@ import { LocationSearchInput } from "@/features/search/components/LocationSearch
 import { useActivitySuggestions } from "@/features/search/hooks/useActivitySuggestions";
 import { useAddressAutocomplete } from "@/features/search/hooks/useAddressAutocomplete";
 import type { ActivitySuggestion, PlaceSelection } from "@/features/search/types";
-import { AlignLeft, DollarSign, Hourglass, MapPin } from "@/shared/ui/icon";
+import { AlignLeft, DollarSign, Hourglass, MapPin } from "@/ui/components/icon";
 
 import { useSuggestionSelect } from "../hooks/useSuggestionSelect";
 

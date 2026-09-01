@@ -8,11 +8,10 @@ import type { DateRange } from "react-day-picker";
 import { LocationSearchInput } from "@/features/search/components/LocationSearchInput";
 import { useDestinationAutocomplete } from "@/features/search/hooks/useDestinationAutocomplete";
 import type { AutocompletePlace } from "@/features/search/types";
-import { Button } from "@/shared/ui/button/Button";
-import { DateRangePicker } from "@/shared/ui/calendar/DateRangePicker";
-import { LoadingScreen } from "@/shared/ui/loading/LoadingScreen";
-
 import { trpc } from "@/trpc/react";
+import { Button } from "@/ui/components/button/Button";
+import { DateRangePicker } from "@/ui/components/calendar/DateRangePicker";
+import { LoadingScreen } from "@/ui/components/loading/LoadingScreen";
 
 import type { CreatePlannerPlanResult } from "../services/PlanService";
 
