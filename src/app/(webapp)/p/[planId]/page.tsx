@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 
 import { generatePlannerMetadata } from "@/features/plan/lib/generatePlannerMetadata";
-import { getPlannerExperience } from "@/features/plan/lib/getPlannerExperience";
+import { getPlannerExperience, type PlannerExperience } from "@/features/plan/lib/getPlannerExperience";
+import { ApplicationError } from "@/lib/errors";
 import { PlanIdView } from "@/modules/planner/planid-view";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +22,19 @@ export default async function PlannerPlanPage({ params, searchParams }: PageProp
   const { planId } = await params;
   const { dest } = await searchParams;
 
-  const experience = await getPlannerExperience({
-    identifier: planId,
-    dest,
-  });
+  let experience: PlannerExperience;
+  try {
+    experience = await getPlannerExperience({
+      identifier: planId,
+      dest,
+    });
+  } catch (error) {
+    if (error instanceof ApplicationError) {
+      if (error.code === "UNAUTHORIZED") redirect("/login");
+      notFound();
+    }
+    throw error;
+  }
 
   return <PlanIdView experience={experience} />;
 }

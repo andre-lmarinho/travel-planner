@@ -1,5 +1,6 @@
 "use server";
 
+import { ApplicationError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 import * as BudgetRepository from "../repositories/BudgetRepository";
@@ -23,7 +24,7 @@ export async function getPlanBudget(planId: string): Promise<BudgetQueryResult> 
 
 export async function updatePlanBudget(planId: string, newBudget: number): Promise<number> {
   if (newBudget < 0) {
-    throw new Error("Budget cannot be negative");
+    throw new ApplicationError("BAD_REQUEST", "Budget cannot be negative");
   }
   const client = createSupabaseServerClient();
   const data = await BudgetRepository.updatePlanBudget(planId, newBudget, { client });

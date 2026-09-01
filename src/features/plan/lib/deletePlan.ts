@@ -1,7 +1,7 @@
 "use server";
 
 import { fetchProfileSlugByUserId } from "@/features/profile/repositories/ProfileRepository";
-import { formatSupabaseError } from "@/lib/errors";
+import { ApplicationError, formatSupabaseError } from "@/lib/errors";
 import { requireUser } from "@/shared/lib/auth/session";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
@@ -14,21 +14,23 @@ type DeletePlanResult = {
 export async function deletePlan(planId: string): Promise<DeletePlanResult> {
   const normalizedPlanId = planId.trim();
   if (!normalizedPlanId) {
-    throw new Error("deletePlan: missing planId.");
+    throw new ApplicationError("BAD_REQUEST", "deletePlan: missing planId.");
   }
 
   const user = await requireUser();
   const plan = await fetchPlanByIdWithMembers(normalizedPlanId);
 
   if (!plan) {
-    throw new Error(
+    throw new ApplicationError(
+      "NOT_FOUND",
       `Unable to delete plan: operation=deletePlan planId=${normalizedPlanId} userId=${user.id} reason=not-found`
     );
   }
 
   const isOwner = plan.ownerId === user.id;
   if (!isOwner) {
-    throw new Error(
+    throw new ApplicationError(
+      "FORBIDDEN",
       `Unable to delete plan: operation=deletePlan planId=${normalizedPlanId} userId=${user.id} reason=unauthorized`
     );
   }

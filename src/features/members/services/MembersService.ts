@@ -2,18 +2,29 @@
 
 import { resolvePlanIdentity } from "@/features/plan/repositories/PlanRepository";
 import { fetchProfileByUserId } from "@/features/profile/repositories/ProfileRepository";
+import type { ApplicationErrorOptions } from "@/lib/errors";
+import { ApplicationError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 import * as MembersRepository from "../repositories/MembersRepository";
 import type { AddMemberResult, ShareMembersData, ShareTier } from "../types";
 
+type ResolvedPlan = NonNullable<Awaited<ReturnType<typeof resolvePlanIdentity>>>;
+
+function assertPlanFound(
+  plan: ResolvedPlan | null,
+  operation: string,
+  options?: ApplicationErrorOptions
+): asserts plan is ResolvedPlan {
+  if (!plan) {
+    throw new ApplicationError("NOT_FOUND", `${operation}: plan not found`, options);
+  }
+}
+
 export async function getMembers(planIdOrSlug: string): Promise<ShareMembersData> {
   const client = createSupabaseServerClient();
   const plan = await resolvePlanIdentity(planIdOrSlug, { client });
-
-  if (!plan) {
-    throw new Error("getMembers: plan not found");
-  }
+  assertPlanFound(plan, "getMembers", { cause: { planIdOrSlug } });
 
   const members = await MembersRepository.fetchMembers(plan.id, { client });
   const ownerId = plan.ownerId ?? members.find((member) => member.tier === "admin")?.userId ?? null;
@@ -41,9 +52,7 @@ export async function addMember(
   const client = createSupabaseServerClient();
   const plan = await resolvePlanIdentity(planIdOrSlug, { client });
 
-  if (!plan) {
-    throw new Error("addMember: plan not found");
-  }
+  assertPlanFound(plan, "addMember", { cause: { planIdOrSlug } });
 
   return MembersRepository.addMemberByEmail(plan.id, email, tier, { client });
 }
@@ -52,9 +61,7 @@ export async function updateMemberTier(planIdOrSlug: string, userId: string, tie
   const client = createSupabaseServerClient();
   const plan = await resolvePlanIdentity(planIdOrSlug, { client });
 
-  if (!plan) {
-    throw new Error("updateMemberTier: plan not found");
-  }
+  assertPlanFound(plan, "updateMemberTier", { cause: { planIdOrSlug } });
 
   await MembersRepository.updateMemberTier(plan.id, userId, tier, { client });
 }
@@ -63,9 +70,7 @@ export async function removeMember(planIdOrSlug: string, userId: string): Promis
   const client = createSupabaseServerClient();
   const plan = await resolvePlanIdentity(planIdOrSlug, { client });
 
-  if (!plan) {
-    throw new Error("removeMember: plan not found");
-  }
+  assertPlanFound(plan, "removeMember", { cause: { planIdOrSlug } });
 
   await MembersRepository.removeMember(plan.id, userId, { client });
 }
@@ -74,9 +79,7 @@ export async function leavePlan(planIdOrSlug: string): Promise<void> {
   const client = createSupabaseServerClient();
   const plan = await resolvePlanIdentity(planIdOrSlug, { client });
 
-  if (!plan) {
-    throw new Error("leavePlan: plan not found");
-  }
+  assertPlanFound(plan, "leavePlan", { cause: { planIdOrSlug } });
 
   await MembersRepository.leavePlan(plan.id, { client });
 }

@@ -1,7 +1,6 @@
 import "server-only";
 
 import { eachDayOfInterval } from "date-fns";
-import { notFound, redirect } from "next/navigation";
 
 import { buildInitialDays } from "@/features/activity/lib/dayOperations";
 import type { DayPlan } from "@/features/activity/types";
@@ -9,6 +8,7 @@ import { fetchPlanBudgetEntries } from "@/features/budget/repositories/BudgetRep
 import { CATEGORIES, type CategoryKey, type Entry } from "@/features/budget/types";
 import { isDemoUser } from "@/features/demo/lib/demo";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/services/snapshotsSchemas";
+import { ApplicationError } from "@/lib/errors";
 import { getCurrentUser } from "@/shared/lib/auth/session";
 import { isUuid } from "@/shared/lib/uuid";
 
@@ -46,7 +46,9 @@ export async function getPlannerExperience({
   dest,
 }: GetPlannerExperienceArgs): Promise<PlannerExperience> {
   const trimmed = identifier?.trim();
-  if (!trimmed) return notFound();
+  if (!trimmed) {
+    throw new ApplicationError("NOT_FOUND", "Planner not found.");
+  }
 
   // UUID = direct id; anything else = public_slug. Both resolve here.
   const bySlug = !isUuid(trimmed);
@@ -54,17 +56,23 @@ export async function getPlannerExperience({
 
   // Only the owner and invited members may access a shared planner. Anonymous
   // visitors are sent to login so a member can authenticate; RLS keeps private
-  // plans hidden from them regardless.
-  if (!user) return redirect("/login");
+  // plans hidden from them regardless. The adapter maps UNAUTHORIZED to /login.
+  if (!user) {
+    throw new ApplicationError("UNAUTHORIZED", "Sign in to view this planner.");
+  }
 
   const plan = bySlug ? await fetchPlanBySlug(trimmed) : await fetchPlanByIdWithMembers(trimmed);
-  if (!plan) return notFound();
+  if (!plan) {
+    throw new ApplicationError("NOT_FOUND", "Planner not found.");
+  }
 
   const isOwner = Boolean(plan.ownerId && user.id === plan.ownerId);
   const memberRow = plan.members.find((m) => m.userId === user.id);
 
   // Authenticated but not a member: no access to this shared planner.
-  if (!isOwner && !memberRow) return notFound();
+  if (!isOwner && !memberRow) {
+    throw new ApplicationError("FORBIDDEN", "You don't have access to this planner.");
+  }
 
   const isAdmin = isOwner || memberRow?.tier === "admin";
   const [snapshotRow, entryRows] = await Promise.all([
