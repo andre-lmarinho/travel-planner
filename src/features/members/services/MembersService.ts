@@ -1,13 +1,28 @@
 "use server";
 
-import { resolvePlanIdentity } from "@/features/plan/repositories/PlanRepository";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { PlanIdentity } from "@/features/plan/repositories/PlanRepository";
+import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
 import { fetchProfileByUserId } from "@/features/profile/repositories/ProfileRepository";
 import type { ApplicationErrorOptions } from "@/lib/errors";
 import { ApplicationError } from "@/lib/errors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import { isUuid } from "@/shared/lib/uuid";
+import type { Database } from "@/shared/types/supabase";
 
 import * as MembersRepository from "../repositories/MembersRepository";
 import type { AddMemberResult, ShareMembersData, ShareTier } from "../types";
+
+async function resolvePlanIdentity(
+  planIdOrSlug: string,
+  { client }: { client: SupabaseClient<Database> }
+): Promise<PlanIdentity | null> {
+  const repo = new PlanRepository(client);
+  return isUuid(planIdOrSlug)
+    ? repo.fetchPlanIdentityById(planIdOrSlug)
+    : repo.fetchPlanIdentityBySlug(planIdOrSlug);
+}
 
 type ResolvedPlan = NonNullable<Awaited<ReturnType<typeof resolvePlanIdentity>>>;
 

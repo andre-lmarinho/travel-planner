@@ -1,11 +1,14 @@
-import { getPublicPlans } from "@/features/plan/lib/getPublicPlans";
+import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
+import { PlanService } from "@/features/plan/services/PlanService";
+import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import { Card } from "@/shared/ui/card/Card";
 import { CardGrid } from "@/shared/ui/card/CardGrid";
 import { Sparkles } from "@/shared/ui/icon";
 
 export async function InspirationsSection({ excludePlanIds = [] }: { excludePlanIds?: string[] }) {
   const exclude = new Set(excludePlanIds);
-  const plans = (await getPublicPlans()).filter((plan) => !exclude.has(plan.id));
+  const service = new PlanService(new PlanRepository(createSupabaseServerClient()));
+  const plans = (await service.getPublicPlans()).filter((plan) => !exclude.has(plan.id));
 
   // "Fellow travelers" excludes the viewer's own plans (already listed under "Your planners");
   // hide the whole section when nothing else is public.
