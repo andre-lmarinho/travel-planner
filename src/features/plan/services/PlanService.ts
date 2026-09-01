@@ -1,10 +1,11 @@
 import "server-only";
 
 import { format } from "date-fns";
-
-import { fetchPlanBudgetEntries } from "@/features/budget/repositories/BudgetRepository";
-import { CATEGORIES, type CategoryKey, type Entry } from "@/features/budget/types";
+import type { BudgetEntryRow } from "@/features/budget/repositories/BudgetRepository";
+import { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
+import type { Entry } from "@/features/budget/types";
 import { isDemoUser } from "@/features/demo/lib/demo";
+import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/services/snapshotsSchemas";
@@ -38,8 +39,6 @@ export interface CreateUserPlanResult {
 
 export type CreatePlannerPlanResult = CreateUserPlanResult;
 
-const VALID_CATEGORY_KEYS = CATEGORIES.map((c) => c.key) as readonly CategoryKey[];
-
 export interface PlannerExperience {
   planId: string;
   slug?: string;
@@ -61,21 +60,16 @@ interface GetPlannerExperienceArgs {
   dest?: string;
 }
 
-type BudgetEntryRow = Awaited<ReturnType<typeof fetchPlanBudgetEntries>>[number];
-
 function mapBudgetEntry(entry: BudgetEntryRow): Entry {
-  return {
-    id: entry.id,
-    description: entry.description ?? "",
-    category: VALID_CATEGORY_KEYS.includes(entry.category as CategoryKey)
-      ? (entry.category as CategoryKey)
-      : "transport",
-    amount: entry.amount ?? 0,
-  };
+  return BudgetRepository.mapEntries([entry])[0];
 }
 
 export class PlanService {
-  constructor(private readonly repo: PlanRepository) {}
+  constructor(
+    private readonly repo: PlanRepository,
+    private readonly budgetRepo: BudgetRepository,
+    private readonly profileRepo: ProfileRepository
+  ) {}
 
   async getPlannerExperience({ identifier, dest }: GetPlannerExperienceArgs): Promise<PlannerExperience> {
     const trimmed = identifier?.trim();
@@ -107,7 +101,7 @@ export class PlanService {
     const isAdmin = isOwner || memberRow?.tier === "admin";
     const [snapshotRow, entryRows] = await Promise.all([
       this.repo.fetchLatestSnapshot(plan.id),
-      fetchPlanBudgetEntries(plan.id),
+      this.fetchBudgetEntries(plan.id),
     ]);
     const snapshotDays = snapshotRow ? mapSnapshot(SnapshotRowSchema.parse(snapshotRow)).days : [];
 
@@ -240,8 +234,7 @@ export class PlanService {
 
   private async resolvePlannerRedirect(userId: string): Promise<string> {
     try {
-      const { fetchProfileSlugByUserId } = await import("@/features/profile/repositories/ProfileRepository");
-      const slug = await fetchProfileSlugByUserId(userId);
+      const slug = await this.profileRepo.fetchProfileSlugByUserId(userId);
       return slug ? `/u/${slug}` : "/";
     } catch (error) {
       console.error("resolvePlannerRedirect failed", {
@@ -285,5 +278,9 @@ export class PlanService {
     if (!isAdmin) {
       throw new ApplicationError("FORBIDDEN", "You don't have permission to change plan visibility.");
     }
+  }
+
+  private async fetchBudgetEntries(planId: string): Promise<BudgetEntryRow[]> {
+    return this.budgetRepo.fetchPlanBudgetEntries(planId);
   }
 }

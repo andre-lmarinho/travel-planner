@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import * as MembersService from "../services/MembersService";
+import * as MembersService from "../services/membersService.actions";
 import type { ShareMembersData, ShareTier } from "../types";
 
 // Query Keys

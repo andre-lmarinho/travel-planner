@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { fetchProfileSlugByUserId } from "@/features/profile/repositories/ProfileRepository";
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
+import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export async function GET() {
   try {
     const user = await requireUser();
-    const slug = await fetchProfileSlugByUserId(user.id);
+    const repo = new ProfileRepository(createSupabaseServerClient());
+    const slug = await repo.fetchProfileSlugByUserId(user.id);
     return NextResponse.json({ slug });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

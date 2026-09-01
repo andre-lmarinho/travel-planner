@@ -1,12 +1,10 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
-import { PlanRepository } from "../repositories/PlanRepository";
+import { createPlanService } from "../services/createPlanService";
 import type { CreateUserPlanInput, CreateUserPlanResult } from "../services/PlanService";
-import { PlanService } from "../services/PlanService";
 
 export async function createUserPlan(input: CreateUserPlanInput): Promise<CreateUserPlanResult> {
-  const service = new PlanService(new PlanRepository(createSupabaseServerClient()));
+  const { service } = createPlanService();
   return service.createUserPlan(input);
 }
 

@@ -1,13 +1,11 @@
-import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
-import { PlanService } from "@/features/plan/services/PlanService";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import { createPlanService } from "@/features/plan/services/createPlanService";
 import { Card } from "@/shared/ui/card/Card";
 import { CardGrid } from "@/shared/ui/card/CardGrid";
 import { Sparkles } from "@/shared/ui/icon";
 
 export async function InspirationsSection({ excludePlanIds = [] }: { excludePlanIds?: string[] }) {
   const exclude = new Set(excludePlanIds);
-  const service = new PlanService(new PlanRepository(createSupabaseServerClient()));
+  const { service } = createPlanService();
   const plans = (await service.getPublicPlans()).filter((plan) => !exclude.has(plan.id));
 
   // "Fellow travelers" excludes the viewer's own plans (already listed under "Your planners");

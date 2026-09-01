@@ -14,7 +14,7 @@ const shareServiceMocks = vi.hoisted(() => ({
   leavePlan: vi.fn(),
 }));
 
-vi.mock("@/features/members/services/MembersService", () => ({
+vi.mock("@/features/members/services/membersService.actions", () => ({
   __esModule: true,
   getMembers: shareServiceMocks.getMembers,
   addMember: shareServiceMocks.addMember,
