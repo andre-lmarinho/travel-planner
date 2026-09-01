@@ -1,11 +1,11 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
-
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import type { SupabaseUser } from "@/shared/lib/auth/session";
 import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
+import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
-import { getProfileBySlug } from "../lib/getProfileBySlug";
 import type { ProfileRecord } from "../types";
 
 function isRedirectError(error: unknown): boolean {
@@ -31,7 +31,9 @@ export async function requireProfileSlugMatch(slug: string): Promise<RequireProf
 
   try {
     const user = await requireUser();
-    const profile = await getProfileBySlug(normalizedSlug);
+    const profile = await new ProfileRepository(createSupabaseServerClient()).fetchProfileBySlug(
+      normalizedSlug
+    );
 
     if (!profile || profile.userId !== user.id) {
       redirect("/login");

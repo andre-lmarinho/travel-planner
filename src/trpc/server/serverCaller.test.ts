@@ -27,6 +27,6 @@ describe("serverCaller", () => {
       })
     );
 
-    await expect(caller.viewer.profile()).resolves.toMatchObject({ slug: "ada", userId: user.id });
+    await expect(caller.viewer.profile.get({})).resolves.toMatchObject({ slug: "ada", userId: user.id });
   });
 });

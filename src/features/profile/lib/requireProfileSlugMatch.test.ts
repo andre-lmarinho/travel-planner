@@ -2,16 +2,22 @@ import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
-
-import { getProfileBySlug } from "../lib/getProfileBySlug";
 import { requireProfileSlugMatch } from "./requireProfileSlugMatch";
+
+const { fetchProfileBySlug } = vi.hoisted(() => ({ fetchProfileBySlug: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
-vi.mock("@/features/profile/lib/getProfileBySlug", () => ({
-  getProfileBySlug: vi.fn(),
+vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
+  ProfileRepository: class {
+    fetchProfileBySlug = fetchProfileBySlug;
+  },
+}));
+
+vi.mock("@/shared/lib/supabaseServer", () => ({
+  createSupabaseServerClient: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/auth/session", () => {
@@ -39,14 +45,14 @@ describe("requireProfileSlugMatch", () => {
       throw redirectError;
     });
     vi.mocked(requireUser).mockReset();
-    vi.mocked(getProfileBySlug).mockReset();
+    fetchProfileBySlug.mockReset();
   });
 
   it("redirects when slug is empty", async () => {
     await expect(requireProfileSlugMatch("   ")).rejects.toBe(redirectError);
     expect(redirect).toHaveBeenCalledWith("/login");
     expect(requireUser).not.toHaveBeenCalled();
-    expect(getProfileBySlug).not.toHaveBeenCalled();
+    expect(fetchProfileBySlug).not.toHaveBeenCalled();
   });
 
   it("redirects when the user is unauthorized", async () => {
@@ -58,16 +64,16 @@ describe("requireProfileSlugMatch", () => {
 
   it("redirects when profile is missing", async () => {
     vi.mocked(requireUser).mockResolvedValue({ id: "user-1" });
-    vi.mocked(getProfileBySlug).mockResolvedValue(null);
+    fetchProfileBySlug.mockResolvedValue(null);
 
     await expect(requireProfileSlugMatch("alice")).rejects.toBe(redirectError);
     expect(redirect).toHaveBeenCalledWith("/login");
-    expect(getProfileBySlug).toHaveBeenCalledWith("alice");
+    expect(fetchProfileBySlug).toHaveBeenCalledWith("alice");
   });
 
   it("redirects when profile does not match the user", async () => {
     vi.mocked(requireUser).mockResolvedValue({ id: "user-1" });
-    vi.mocked(getProfileBySlug).mockResolvedValue({
+    fetchProfileBySlug.mockResolvedValue({
       userId: "user-2",
       slug: "alice",
       displayName: "Alice",
@@ -87,16 +93,16 @@ describe("requireProfileSlugMatch", () => {
       avatarUrl: null,
     };
     vi.mocked(requireUser).mockResolvedValue(user);
-    vi.mocked(getProfileBySlug).mockResolvedValue(profile);
+    fetchProfileBySlug.mockResolvedValue(profile);
 
     await expect(requireProfileSlugMatch(" alice ")).resolves.toEqual({ user, profile });
-    expect(getProfileBySlug).toHaveBeenCalledWith("alice");
+    expect(fetchProfileBySlug).toHaveBeenCalledWith("alice");
   });
 
   it("wraps unexpected errors with context", async () => {
     const failure = new Error("Supabase failed");
     vi.mocked(requireUser).mockResolvedValue({ id: "user-1" });
-    vi.mocked(getProfileBySlug).mockRejectedValue(failure);
+    fetchProfileBySlug.mockRejectedValue(failure);
 
     const error = await requireProfileSlugMatch("alice").catch((caught) => caught);
 

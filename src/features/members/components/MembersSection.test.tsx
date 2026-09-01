@@ -21,6 +21,12 @@ const {
   refreshMock: vi.fn(),
 }));
 
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    useUtils: () => ({ viewer: { profile: { fetch: vi.fn().mockResolvedValue(null) } } }),
+  },
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, refresh: refreshMock, replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),

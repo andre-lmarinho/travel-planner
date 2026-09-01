@@ -4,9 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShareMember } from "../types";
 import { useLeaveRedirect } from "./useLeaveRedirect";
 
-const { pushMock, refreshMock } = vi.hoisted(() => ({
+const { pushMock, refreshMock, profileFetchMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
+  profileFetchMock: vi.fn(),
+}));
+
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    useUtils: () => ({ viewer: { profile: { get: { fetch: profileFetchMock } } } }),
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -32,12 +39,6 @@ const createDeferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-const createJsonResponse = (payload: unknown, ok = true) =>
-  new Response(JSON.stringify(payload), {
-    status: ok ? 200 : 500,
-    headers: { "Content-Type": "application/json" },
-  });
-
 describe("useLeaveRedirect", () => {
   const fetchMock = vi.fn<(...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>>();
 
@@ -45,6 +46,7 @@ describe("useLeaveRedirect", () => {
     pushMock.mockReset();
     refreshMock.mockReset();
     fetchMock.mockReset();
+    profileFetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -70,7 +72,7 @@ describe("useLeaveRedirect", () => {
   });
 
   it("resolves a slug via profile lookup when missing", async () => {
-    fetchMock.mockResolvedValueOnce(createJsonResponse({ slug: "viewer-slug" }));
+    profileFetchMock.mockResolvedValueOnce({ slug: "viewer-slug" });
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: null });
 
@@ -80,7 +82,7 @@ describe("useLeaveRedirect", () => {
       await result.current.handleLeave(member);
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/profile/slug", expect.objectContaining({ method: "GET" }));
+    expect(profileFetchMock).toHaveBeenCalledTimes(1);
     expect(pushMock).toHaveBeenCalledWith("/u/viewer-slug");
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
