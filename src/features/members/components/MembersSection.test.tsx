@@ -21,6 +21,15 @@ const {
   refreshMock: vi.fn(),
 }));
 
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    useUtils: () => ({ viewer: { profile: { get: { fetch: vi.fn().mockResolvedValue(null) } } } }),
+    viewer: {
+      profile: { ensure: { useMutation: () => ({ mutateAsync: vi.fn().mockResolvedValue(null) }) } },
+    },
+  },
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, refresh: refreshMock, replace: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
@@ -90,7 +99,7 @@ describe("MembersSection", () => {
     fireEvent.click(screen.getByLabelText("Member User role"));
     fireEvent.click(await screen.findByRole("option", { name: "Remove member" }));
 
-    expect(removeMemberMutate).toHaveBeenCalledWith({ userId: "user-2" });
+    expect(removeMemberMutate).toHaveBeenCalledWith({ planIdOrSlug: "plan-1", userId: "user-2" });
   });
 
   it("redirects after a member leaves the planner", async () => {

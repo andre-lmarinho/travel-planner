@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { fetchGeoapifyAutocomplete } from "@/features/search/services/GeoapifyService";
-import { validateGeoapifyQuery } from "@/shared/lib/server/geoapify/validateQuery";
+import { readGeoapifyCoordinates, validateGeoapifyQuery } from "@/shared/lib/server/geoapify/validateQuery";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
@@ -14,18 +14,13 @@ async function handleCityCountryAutocomplete(req: NextRequest) {
     return text;
   }
 
-  const lat = searchParams.get("lat");
-  const lon = searchParams.get("lon");
+  const { lat, lon } = readGeoapifyCoordinates(searchParams);
 
   try {
-    const results = await fetchGeoapifyAutocomplete(
-      text,
-      lat ? Number(lat) : undefined,
-      lon ? Number(lon) : undefined
-    );
+    const results = await fetchGeoapifyAutocomplete(text, lat, lon);
     return NextResponse.json({ results });
   } catch (err) {
-    console.error("city-country autocomplete failed:", { text, lat, lon }, err);
+    console.error("city-country autocomplete failed:", { hasCoordinates: lat != null && lon != null }, err);
     return NextResponse.json({ error: "Failed to load suggestions." }, { status: 500 });
   }
 }

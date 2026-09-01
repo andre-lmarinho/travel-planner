@@ -63,6 +63,7 @@ const getTierOptions = ({
 };
 
 type ShareMemberRowProps = {
+  planId: string;
   member: ShareMember;
   ownerId: string | null;
   adminCount: number;
@@ -74,6 +75,7 @@ type ShareMemberRowProps = {
 
 function ShareMemberRow({
   member,
+  planId,
   ownerId,
   adminCount,
   viewerUserId,
@@ -117,7 +119,7 @@ function ShareMemberRow({
 
     if (nextValue === "remove") {
       if (canRemove) {
-        mutations.removeMember.mutate({ userId: member.userId });
+        mutations.removeMember.mutate({ planIdOrSlug: planId, userId: member.userId });
       }
       return;
     }
@@ -127,6 +129,7 @@ function ShareMemberRow({
     }
 
     mutations.updateTier.mutate({
+      planIdOrSlug: planId,
       userId: member.userId,
       tier: nextValue,
     });
@@ -200,7 +203,11 @@ export function MembersSection({ planId }: { planId: string }) {
   });
   const memberMutations = { updateTier, removeMember, leave };
   const { viewerUserId, canManageMembers } = usePlannerContext();
-  const { handleLeave, isLeaving } = useLeaveRedirect({ viewerUserId, leave: memberMutations.leave });
+  const { handleLeave, isLeaving } = useLeaveRedirect({
+    planIdOrSlug: planId,
+    viewerUserId,
+    leave: memberMutations.leave,
+  });
 
   const ownerId = data?.ownerId ?? null;
   const members = data?.members ?? [];
@@ -249,6 +256,7 @@ export function MembersSection({ planId }: { planId: string }) {
                 {members.map((member) => (
                   <ShareMemberRow
                     key={member.userId}
+                    planId={planId}
                     member={member}
                     ownerId={ownerId}
                     adminCount={adminCount}

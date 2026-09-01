@@ -18,8 +18,7 @@ import type { Activity, DayPlan } from "@/features/activity/types";
 import { useEditorState } from "@/features/activityDialog/hooks/useEditorState";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
 import { createContextProvider } from "@/shared/lib/createContextProvider";
-
-import { updatePlanDates } from "../lib/updatePlanDates";
+import { trpc } from "@/trpc/react";
 
 interface DestCoords {
   lat: number;
@@ -119,6 +118,7 @@ export function usePlannerContextValue({
 }: PlannerProviderProps): PlannerContextValue {
   // Persistence follows edit access: read-only viewers (public plans) neither subscribe to
   // realtime nor write. Members/owners (canEdit) collaborate normally.
+  const updateDatesMutation = trpc.viewer.plan.updateDates.useMutation();
   const { data: storedDays, persistDays } = usePlanCollaboration(planId, {
     enabled: canEdit,
     actorId: viewerUserId,
@@ -215,13 +215,15 @@ export function usePlannerContextValue({
         // Persist date range to server
         if (canEdit) {
           const to = range.to ?? range.from;
-          updatePlanDates(planId, range.from, to).catch((err) => {
-            console.error("Failed to persist plan dates:", err);
-          });
+          updateDatesMutation
+            .mutateAsync({ planId, from: range.from.toISOString(), to: to.toISOString() })
+            .catch((err) => {
+              console.error("Failed to persist plan dates:", err);
+            });
         }
       }
     },
-    [days, setDays, canEdit, planId]
+    [days, setDays, canEdit, planId, updateDatesMutation]
   );
 
   // Activity CRUD operations

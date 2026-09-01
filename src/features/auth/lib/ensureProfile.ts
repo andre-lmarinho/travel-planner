@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import slugify from "@sindresorhus/slugify";
 import type { SupabaseClient } from "@supabase/supabase-js";

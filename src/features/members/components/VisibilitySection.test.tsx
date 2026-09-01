@@ -8,12 +8,23 @@ const { mockUsePlannerContext, mockSetPlanVisibility } = vi.hoisted(() => ({
   mockSetPlanVisibility: vi.fn(),
 }));
 
-vi.mock("@/features/plan/hooks/PlannerContext", () => ({
-  usePlannerContext: () => mockUsePlannerContext(),
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    viewer: {
+      plan: {
+        setVisibility: {
+          useMutation: () => ({
+            mutateAsync: mockSetPlanVisibility,
+            isPending: false,
+          }),
+        },
+      },
+    },
+  },
 }));
 
-vi.mock("@/features/plan/lib/setPlanVisibility", () => ({
-  setPlanVisibility: (...args: unknown[]) => mockSetPlanVisibility(...args),
+vi.mock("@/features/plan/hooks/PlannerContext", () => ({
+  usePlannerContext: () => mockUsePlannerContext(),
 }));
 
 // Exercise the section's own logic (optimistic update + rollback) without the dropdown's DOM:
@@ -54,7 +65,9 @@ describe("VisibilitySection", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /visibility: private/i }));
 
-    await waitFor(() => expect(mockSetPlanVisibility).toHaveBeenCalledWith("plan-1", true));
+    await waitFor(() =>
+      expect(mockSetPlanVisibility).toHaveBeenCalledWith({ planId: "plan-1", isPublic: true })
+    );
     expect(screen.getByRole("button", { name: /visibility: public/i })).toBeInTheDocument();
   });
 

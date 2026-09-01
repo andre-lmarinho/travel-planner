@@ -29,7 +29,7 @@ function createCaller() {
 
 describe("appRouter", () => {
   it("reads the viewer profile through ProfileService and ProfileRepository", async () => {
-    await expect(createCaller().viewer.profile()).resolves.toMatchObject({
+    await expect(createCaller().viewer.profile.get({})).resolves.toMatchObject({
       slug: "ada",
       userId: USER_ID,
     });

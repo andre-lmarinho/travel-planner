@@ -4,9 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShareMember } from "../types";
 import { useLeaveRedirect } from "./useLeaveRedirect";
 
-const { pushMock, refreshMock } = vi.hoisted(() => ({
+const { pushMock, refreshMock, profileFetchMock, ensureProfileMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
+  profileFetchMock: vi.fn(),
+  ensureProfileMock: vi.fn(),
+}));
+
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    useUtils: () => ({ viewer: { profile: { get: { fetch: profileFetchMock } } } }),
+    viewer: { profile: { ensure: { useMutation: () => ({ mutateAsync: ensureProfileMock }) } } },
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -32,12 +41,6 @@ const createDeferred = <T>() => {
   return { promise, resolve, reject };
 };
 
-const createJsonResponse = (payload: unknown, ok = true) =>
-  new Response(JSON.stringify(payload), {
-    status: ok ? 200 : 500,
-    headers: { "Content-Type": "application/json" },
-  });
-
 describe("useLeaveRedirect", () => {
   const fetchMock = vi.fn<(...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>>();
 
@@ -45,6 +48,8 @@ describe("useLeaveRedirect", () => {
     pushMock.mockReset();
     refreshMock.mockReset();
     fetchMock.mockReset();
+    profileFetchMock.mockReset();
+    ensureProfileMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -56,7 +61,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: "member-slug" });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
@@ -70,17 +77,19 @@ describe("useLeaveRedirect", () => {
   });
 
   it("resolves a slug via profile lookup when missing", async () => {
-    fetchMock.mockResolvedValueOnce(createJsonResponse({ slug: "viewer-slug" }));
+    profileFetchMock.mockResolvedValueOnce({ slug: "viewer-slug" });
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: null });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/profile/slug", expect.objectContaining({ method: "GET" }));
+    expect(profileFetchMock).toHaveBeenCalledTimes(1);
     expect(pushMock).toHaveBeenCalledWith("/u/viewer-slug");
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
@@ -89,7 +98,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: null });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: null, leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: null, leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
@@ -105,7 +116,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockReturnValue(deferred.promise) };
     const member = createMember();
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     let leavePromise: Promise<void> = Promise.resolve();
     act(() => {

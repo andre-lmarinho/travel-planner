@@ -7,6 +7,7 @@ Location and activity search using Geoapify and Wikidata APIs with autocomplete.
 - **Address search** - Street-level locations for activity addresses
 - **Activity search** - Points of interest and attractions
 - **Autocomplete** - Real-time suggestions with debouncing and caching
+- **HTTP boundary** - Same-origin Route Handlers proxy Geoapify and Wikidata so API keys remain server-only.
 - **Keyboard navigation** - Full accessibility support
 
 ## Data Flow

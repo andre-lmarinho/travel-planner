@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShareMembersData } from "../types";
 import { useShareMembers } from "./useShareMembers";
 
-const shareServiceMocks = vi.hoisted(() => ({
+const trpcMocks = vi.hoisted(() => ({
   getMembers: vi.fn(),
   addMember: vi.fn(),
   updateMemberTier: vi.fn(),
@@ -14,14 +14,76 @@ const shareServiceMocks = vi.hoisted(() => ({
   leavePlan: vi.fn(),
 }));
 
-vi.mock("@/features/members/services/membersService.actions", () => ({
-  __esModule: true,
-  getMembers: shareServiceMocks.getMembers,
-  addMember: shareServiceMocks.addMember,
-  updateMemberTier: shareServiceMocks.updateMemberTier,
-  removeMember: shareServiceMocks.removeMember,
-  leavePlan: shareServiceMocks.leavePlan,
-}));
+vi.mock("@/trpc/react", async () => {
+  const { useMutation, useQuery, useQueryClient } = await import("@tanstack/react-query");
+  const key = (planIdOrSlug: string) => ["viewer", "members", "get", planIdOrSlug];
+
+  return {
+    trpc: {
+      useUtils: () => {
+        const queryClient = useQueryClient();
+        return {
+          viewer: {
+            members: {
+              get: {
+                cancel: (input: { planIdOrSlug: string }) =>
+                  queryClient.cancelQueries({ queryKey: key(input.planIdOrSlug) }),
+                getData: (input: { planIdOrSlug: string }) =>
+                  queryClient.getQueryData(key(input.planIdOrSlug)),
+                invalidate: (input: { planIdOrSlug: string }) =>
+                  queryClient.invalidateQueries({ queryKey: key(input.planIdOrSlug) }),
+                reset: (input: { planIdOrSlug: string }) =>
+                  queryClient.removeQueries({ queryKey: key(input.planIdOrSlug) }),
+                setData: (input: { planIdOrSlug: string }, updater: unknown) =>
+                  queryClient.setQueryData(key(input.planIdOrSlug), updater),
+              },
+            },
+          },
+        };
+      },
+      viewer: {
+        members: {
+          get: {
+            useQuery: (input: { planIdOrSlug: string }, options: Record<string, unknown>) =>
+              useQuery({
+                queryKey: key(input.planIdOrSlug),
+                queryFn: () => trpcMocks.getMembers(),
+                ...options,
+              }),
+          },
+          add: {
+            useMutation: (options: Record<string, unknown>) =>
+              useMutation({
+                mutationFn: (input: unknown) => trpcMocks.addMember(input),
+                ...options,
+              } as never),
+          },
+          update: {
+            useMutation: (options: Record<string, unknown>) =>
+              useMutation({
+                mutationFn: (input: unknown) => trpcMocks.updateMemberTier(input),
+                ...options,
+              } as never),
+          },
+          remove: {
+            useMutation: (options: Record<string, unknown>) =>
+              useMutation({
+                mutationFn: (input: unknown) => trpcMocks.removeMember(input),
+                ...options,
+              } as never),
+          },
+          leave: {
+            useMutation: (options: Record<string, unknown>) =>
+              useMutation({
+                mutationFn: (input: unknown) => trpcMocks.leavePlan(input),
+                ...options,
+              } as never),
+          },
+        },
+      },
+    },
+  };
+});
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -38,14 +100,14 @@ const createWrapper = () => {
   return { wrapper, queryClient };
 };
 
-const membersKey = (planId: string) => ["share", "members", planId];
+const membersKey = (planId: string) => ["viewer", "members", "get", planId];
 describe("useShareMembers", () => {
   beforeEach(() => {
-    shareServiceMocks.getMembers.mockReset();
-    shareServiceMocks.addMember.mockReset();
-    shareServiceMocks.updateMemberTier.mockReset();
-    shareServiceMocks.removeMember.mockReset();
-    shareServiceMocks.leavePlan.mockReset();
+    trpcMocks.getMembers.mockReset();
+    trpcMocks.addMember.mockReset();
+    trpcMocks.updateMemberTier.mockReset();
+    trpcMocks.removeMember.mockReset();
+    trpcMocks.leavePlan.mockReset();
   });
 
   it("adds new members to the cache on success", async () => {
@@ -64,12 +126,16 @@ describe("useShareMembers", () => {
       ],
     };
     queryClient.setQueryData(membersKey(planId), initialData);
-    shareServiceMocks.addMember.mockResolvedValue({ userId: "user-2", tier: "member" });
+    trpcMocks.addMember.mockResolvedValue({ userId: "user-2", tier: "member" });
 
     const { result } = renderHook(() => useShareMembers(planId, { enabled: false }), { wrapper });
 
     await act(async () => {
-      await result.current.addMember.mutateAsync({ email: "new@example.com", tier: "member" });
+      await result.current.addMember.mutateAsync({
+        planIdOrSlug: planId,
+        email: "new@example.com",
+        tier: "member",
+      });
     });
 
     const updated = queryClient.getQueryData<ShareMembersData>(membersKey(planId));
@@ -92,12 +158,16 @@ describe("useShareMembers", () => {
       ],
     };
     queryClient.setQueryData(membersKey(planId), initialData);
-    shareServiceMocks.addMember.mockResolvedValue({ userId: "user-1", tier: "admin" });
+    trpcMocks.addMember.mockResolvedValue({ userId: "user-1", tier: "admin" });
 
     const { result } = renderHook(() => useShareMembers(planId, { enabled: false }), { wrapper });
 
     await act(async () => {
-      await result.current.addMember.mutateAsync({ email: "owner@example.com", tier: "admin" });
+      await result.current.addMember.mutateAsync({
+        planIdOrSlug: planId,
+        email: "owner@example.com",
+        tier: "admin",
+      });
     });
 
     const updated = queryClient.getQueryData<ShareMembersData>(membersKey(planId));
@@ -120,13 +190,13 @@ describe("useShareMembers", () => {
       ],
     };
     queryClient.setQueryData(membersKey(planId), initialData);
-    shareServiceMocks.updateMemberTier.mockRejectedValue(new Error("update failed"));
+    trpcMocks.updateMemberTier.mockRejectedValue(new Error("update failed"));
 
     const { result } = renderHook(() => useShareMembers(planId, { enabled: false }), { wrapper });
 
     await act(async () => {
       await expect(
-        result.current.updateTier.mutateAsync({ userId: "user-2", tier: "admin" })
+        result.current.updateTier.mutateAsync({ planIdOrSlug: planId, userId: "user-2", tier: "admin" })
       ).rejects.toThrow("update failed");
     });
 
@@ -159,14 +229,14 @@ describe("useShareMembers", () => {
       ],
     };
     queryClient.setQueryData(membersKey(planId), initialData);
-    shareServiceMocks.removeMember.mockRejectedValue(new Error("remove failed"));
+    trpcMocks.removeMember.mockRejectedValue(new Error("remove failed"));
 
     const { result } = renderHook(() => useShareMembers(planId, { enabled: false }), { wrapper });
 
     await act(async () => {
-      await expect(result.current.removeMember.mutateAsync({ userId: "user-2" })).rejects.toThrow(
-        "remove failed"
-      );
+      await expect(
+        result.current.removeMember.mutateAsync({ planIdOrSlug: planId, userId: "user-2" })
+      ).rejects.toThrow("remove failed");
     });
 
     await waitFor(() => {

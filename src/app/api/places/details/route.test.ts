@@ -55,7 +55,7 @@ describe("GET /api/places/details", () => {
 
     const res = await GET(createRequest("?placeId=pid"));
 
-    expect(consoleSpy).toHaveBeenCalledWith("place details failed:", { placeId: "pid" }, error);
+    expect(consoleSpy).toHaveBeenCalledWith("place details failed:", { hasPlaceId: true }, error);
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({ error: "Failed to load place details." });
 
@@ -90,7 +90,7 @@ describe("GET /api/places/details", () => {
 
     expect(mockFetchGeoapifyPlaceDetails).toHaveBeenCalledWith("pid");
     expect(mockFetchWikidataImage).toHaveBeenCalledWith("Q1");
-    expect(consoleSpy).toHaveBeenCalledWith("place details failed:", { placeId: "pid" }, error);
+    expect(consoleSpy).toHaveBeenCalledWith("place details failed:", { hasPlaceId: true }, error);
     expect(res.status).toBe(500);
     await expect(res.json()).resolves.toEqual({ error: "Failed to load place details." });
 

@@ -3,75 +3,50 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
+import { trpc } from "@/trpc/react";
+
 import type { ShareMember } from "../types";
 
 type UseLeaveMutation = {
-  mutateAsync: () => Promise<unknown>;
+  mutateAsync: (input: { planIdOrSlug: string }) => Promise<unknown>;
 };
 
 type UseLeaveRedirectOptions = {
+  planIdOrSlug: string;
   viewerUserId: string | null;
   leave: UseLeaveMutation;
 };
 
-async function fetchProfileSlug(): Promise<string | null> {
-  try {
-    // Try to get existing slug
-    const getController = new AbortController();
-    const getTimeout = setTimeout(() => getController.abort(), 5000);
-    try {
-      const getRes = await fetch("/api/profile/slug", {
-        method: "GET",
-        credentials: "same-origin",
-        signal: getController.signal,
-      });
-      clearTimeout(getTimeout);
-
-      if (getRes.ok) {
-        const data = (await getRes.json()) as { slug?: string | null };
-        if (data.slug?.trim()) return data.slug;
-      }
-    } catch {
-      clearTimeout(getTimeout);
-    }
-
-    // Try to ensure profile exists
-    const postController = new AbortController();
-    const postTimeout = setTimeout(() => postController.abort(), 5000);
-    try {
-      const postRes = await fetch("/api/profile/ensure", {
-        method: "POST",
-        credentials: "same-origin",
-        signal: postController.signal,
-      });
-      clearTimeout(postTimeout);
-
-      if (postRes.ok) {
-        const data = (await postRes.json()) as { slug?: string | null };
-        if (data.slug?.trim()) return data.slug;
-      }
-    } catch {
-      clearTimeout(postTimeout);
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-export function useLeaveRedirect({ viewerUserId, leave }: UseLeaveRedirectOptions) {
+export function useLeaveRedirect({ planIdOrSlug, viewerUserId, leave }: UseLeaveRedirectOptions) {
   const router = useRouter();
+  const profileUtils = trpc.useUtils();
+  const ensureProfileMutation = trpc.viewer.profile.ensure.useMutation();
   const [isLeaving, setIsLeaving] = useState(false);
+
+  const fetchProfileSlug = useCallback(async (): Promise<string | null> => {
+    try {
+      const profile = await profileUtils.viewer.profile.get.fetch({});
+      if (profile.slug?.trim()) return profile.slug;
+    } catch {
+      // Profile may not exist yet; the auth boundary below can create it.
+    }
+
+    if (!viewerUserId) return null;
+
+    try {
+      return await ensureProfileMutation.mutateAsync({});
+    } catch {
+      return null;
+    }
+  }, [ensureProfileMutation, profileUtils, viewerUserId]);
 
   const handleLeave = useCallback(
     async (member: ShareMember) => {
       setIsLeaving(true);
 
       try {
-        await leave.mutateAsync();
+        await leave.mutateAsync({ planIdOrSlug });
 
-        // Resolve redirect URL
         const slug = member.slug ?? (viewerUserId ? await fetchProfileSlug() : null);
         const redirectUrl = slug ? `/u/${slug}` : null;
 
@@ -83,7 +58,7 @@ export function useLeaveRedirect({ viewerUserId, leave }: UseLeaveRedirectOption
         setIsLeaving(false);
       }
     },
-    [leave, viewerUserId, router]
+    [fetchProfileSlug, leave, planIdOrSlug, router, viewerUserId]
   );
 
   return { handleLeave, isLeaving };
