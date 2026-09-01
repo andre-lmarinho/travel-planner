@@ -1,7 +1,8 @@
 "use client";
 
 import { addDays, parseISO } from "date-fns";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import {
@@ -17,7 +18,6 @@ import { createBlankActivity } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { useEditorState } from "@/features/activityDialog/hooks/useEditorState";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
-import { createContextProvider } from "@/shared/lib/createContextProvider";
 import { trpc } from "@/trpc/react";
 
 interface DestCoords {
@@ -415,7 +415,17 @@ export function usePlannerContextValue({
   };
 }
 
-export const [PlannerProvider, usePlannerContext] = createContextProvider(
-  usePlannerContextValue,
-  "usePlannerContext must be inside PlannerProvider"
-);
+const PlannerContext = createContext<PlannerContextValue | undefined>(undefined);
+
+export function PlannerProvider({ children, ...props }: PropsWithChildren<PlannerProviderProps>) {
+  const value = usePlannerContextValue(props);
+  return <PlannerContext.Provider value={value}>{children}</PlannerContext.Provider>;
+}
+
+export function usePlannerContext() {
+  const value = useContext(PlannerContext);
+  if (value === undefined) {
+    throw new Error("usePlannerContext must be inside PlannerProvider");
+  }
+  return value;
+}
