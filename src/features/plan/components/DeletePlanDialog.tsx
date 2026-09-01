@@ -1,14 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 import { ConfirmationDialog } from "@/shared/ui/dialog/ConfirmationDialog";
 import { Trash2 } from "@/shared/ui/icon";
 import { cn } from "@/shared/utils/cn";
-
+import { trpc } from "@/trpc/react";
 import { usePlannerContext } from "../hooks/PlannerContext";
-import { deletePlan } from "../lib/deletePlan";
 
 type DeletePlanDialogProps = {
   className?: string;
@@ -17,7 +15,8 @@ type DeletePlanDialogProps = {
 
 export function DeletePlanDialog({ className, isDemo = false }: DeletePlanDialogProps) {
   const { planId, isOwner } = usePlannerContext();
-  const [isPending, setIsPending] = useState(false);
+  const deleteMutation = trpc.viewer.plan.delete.useMutation();
+  const isPending = deleteMutation.isPending;
   const router = useRouter();
 
   if (!isOwner || isDemo) {
@@ -29,9 +28,8 @@ export function DeletePlanDialog({ className, isDemo = false }: DeletePlanDialog
       return;
     }
 
-    setIsPending(true);
     try {
-      const { redirectTo } = await deletePlan(planId);
+      const redirectTo = await deleteMutation.mutateAsync({ planId });
       router.push(redirectTo);
     } catch (err) {
       console.error("Unable to delete plan", {
@@ -39,8 +37,6 @@ export function DeletePlanDialog({ className, isDemo = false }: DeletePlanDialog
         message: err instanceof Error ? err.message : "Unknown error",
       });
       throw err;
-    } finally {
-      setIsPending(false);
     }
   };
 

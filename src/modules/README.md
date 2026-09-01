@@ -55,7 +55,7 @@ import { ActivityBoard } from "@/features/activityBoard/components/ActivityBoard
 import { PlannerProvider } from "@/features/plan/hooks/PlannerContext";
 
 // User module
-import { createUserPlan } from "@/features/plan/lib/createUserPlan";
+import { PlannerCreationForm } from "@/features/plan/components/PlannerCreationForm";
 ```
 
 ## When to Create New Modules

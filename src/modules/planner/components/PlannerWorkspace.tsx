@@ -12,8 +12,8 @@ import type { Entry } from "@/features/budget/types";
 import { SharePlannerDialog } from "@/features/members/SharePlannerDialog";
 import { DeletePlanDialog } from "@/features/plan/components/DeletePlanDialog";
 import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { updatePlanTitle } from "@/features/plan/lib/updatePlanTitle";
 import { DateRangePickerIcon } from "@/shared/ui/calendar";
+import { trpc } from "@/trpc/react";
 
 import type { PlannerMode } from "./ModeToggleButton";
 import { ModeToggleButton } from "./ModeToggleButton";
@@ -73,6 +73,7 @@ function PlannerWorkspaceContent({
   } = usePlannerContext();
 
   const [title, setTitle] = useState(initialTitle);
+  const updateTitleMutation = trpc.viewer.plan.updateTitle.useMutation();
 
   // Fallback for adding activity when inline add is disabled
   const handleFallbackAdd = useCallback(
@@ -96,7 +97,7 @@ function PlannerWorkspaceContent({
     }
 
     if (canEdit) {
-      await updatePlanTitle(planId, title.trim());
+      await updateTitleMutation.mutateAsync({ planId, title: title.trim() });
     }
   };
 

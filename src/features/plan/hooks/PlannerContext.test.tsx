@@ -5,18 +5,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
 import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { updatePlanDates } from "@/features/plan/lib/updatePlanDates";
 
 vi.mock("@/features/events/hooks/usePlanCollaboration", () => ({
   usePlanCollaboration: vi.fn(),
 }));
 
-vi.mock("@/features/plan/lib/updatePlanDates", () => ({
-  updatePlanDates: vi.fn(),
+const { mockUpdatePlanDates } = vi.hoisted(() => ({ mockUpdatePlanDates: vi.fn() }));
+
+vi.mock("@/trpc/react", () => ({
+  trpc: { viewer: { plan: { updateDates: { useMutation: () => ({ mutateAsync: mockUpdatePlanDates }) } } } },
 }));
 
 const mockUsePlanCollaboration = vi.mocked(usePlanCollaboration);
-const mockUpdatePlanDates = vi.mocked(updatePlanDates);
 
 type PersistDays = ReturnType<typeof usePlanCollaboration>["persistDays"];
 
@@ -134,11 +134,11 @@ describe("PlannerProvider date ranges", () => {
     expect(result.current.days).toHaveLength(4);
     expect(result.current.days[3].id).toBe("2024-01-04");
     expect(result.current.days[3].activities).toEqual([lastDayActivity]);
-    expect(mockUpdatePlanDates).toHaveBeenCalledWith(
-      "plan-1",
-      new Date("2024-01-01T00:00:00"),
-      new Date("2024-01-04T00:00:00")
-    );
+    expect(mockUpdatePlanDates).toHaveBeenCalledWith({
+      planId: "plan-1",
+      from: "2024-01-01T00:00:00.000Z",
+      to: "2024-01-04T00:00:00.000Z",
+    });
   });
 
   it("does not persist date changes without edit permission", () => {

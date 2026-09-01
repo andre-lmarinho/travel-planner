@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { setPlanVisibility } from "@/features/plan/lib/setPlanVisibility";
 import { SelectMenu, type SelectMenuOption } from "@/shared/ui/select/SelectMenu";
+import { trpc } from "@/trpc/react";
 
 type Visibility = "private" | "public";
 
@@ -16,21 +16,19 @@ const VISIBILITY_OPTIONS: ReadonlyArray<SelectMenuOption<Visibility>> = [
 export function VisibilitySection() {
   const { planId, isPublic, canManageMembers } = usePlannerContext();
   const [visibility, setVisibility] = useState<Visibility>(isPublic ? "public" : "private");
-  const [pending, setPending] = useState(false);
+  const visibilityMutation = trpc.viewer.plan.setVisibility.useMutation();
+  const pending = visibilityMutation.isPending;
   const [error, setError] = useState("");
 
   const handleChange = async (next: Visibility) => {
     const previous = visibility;
     setVisibility(next);
     setError("");
-    setPending(true);
     try {
-      await setPlanVisibility(planId, next === "public");
+      await visibilityMutation.mutateAsync({ planId, isPublic: next === "public" });
     } catch {
       setVisibility(previous);
       setError("Could not update visibility. Please try again.");
-    } finally {
-      setPending(false);
     }
   };
 

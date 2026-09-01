@@ -1,13 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
-import { updatePlanTitle } from "@/features/plan/lib/updatePlanTitle";
-
 import type { PlannerMode } from "./ModeToggleButton";
 import { PlannerWorkspace } from "./PlannerWorkspace";
 
-vi.mock("@/features/plan/lib/updatePlanTitle", () => ({
-  updatePlanTitle: vi.fn().mockResolvedValue(undefined),
+const { updatePlanTitleMock } = vi.hoisted(() => ({
+  updatePlanTitleMock: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/trpc/react", () => ({
+  trpc: { viewer: { plan: { updateTitle: { useMutation: () => ({ mutateAsync: updatePlanTitleMock }) } } } },
 }));
 
 vi.mock("@/features/plan/hooks/PlannerContext", () => ({
@@ -60,8 +62,6 @@ vi.mock("@/shared/ui/calendar", () => ({
   DateRangePickerIcon: () => null,
 }));
 
-const updatePlanTitleMock = vi.mocked(updatePlanTitle);
-
 describe("PlannerWorkspace", () => {
   it("restores the initial title when blurred empty", async () => {
     render(<PlannerWorkspace planId="p1" title="Trip" />);
@@ -81,6 +81,8 @@ describe("PlannerWorkspace", () => {
     fireEvent.change(input, { target: { value: "New Title" } });
     fireEvent.blur(input);
 
-    await waitFor(() => expect(updatePlanTitleMock).toHaveBeenCalledWith("p1", "New Title"));
+    await waitFor(() =>
+      expect(updatePlanTitleMock).toHaveBeenCalledWith({ planId: "p1", title: "New Title" })
+    );
   });
 });

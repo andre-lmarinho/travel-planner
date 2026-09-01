@@ -12,8 +12,9 @@ import { Button } from "@/shared/ui/button/Button";
 import { DateRangePicker } from "@/shared/ui/calendar/DateRangePicker";
 import { LoadingScreen } from "@/shared/ui/loading/LoadingScreen";
 
-import type { CreatePlannerPlanResult } from "../lib/createUserPlan";
-import { createUserPlan } from "../lib/createUserPlan";
+import { trpc } from "@/trpc/react";
+
+import type { CreatePlannerPlanResult } from "../services/PlanService";
 
 type PlannerCreationFormProps = {
   onPlanCreated: (plan: CreatePlannerPlanResult) => void;
@@ -33,7 +34,8 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
   const [destCountry, setDestCountry] = useState<string | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState(false);
+  const createPlan = trpc.viewer.plan.create.useMutation();
+  const loading = createPlan.isPending;
 
   function handleRangeChange(nextRange: DateRange | undefined) {
     setRange(nextRange);
@@ -70,9 +72,8 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
       return;
     }
 
-    setLoading(true);
     try {
-      const planResult = await createUserPlan({
+      const planResult = await createPlan.mutateAsync({
         title: destParam,
         destination: {
           name: destParam,
@@ -98,8 +99,6 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
         message: err instanceof Error ? err.message : "Unknown error",
       });
       setError("Failed to create plan. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
