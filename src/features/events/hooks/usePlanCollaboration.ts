@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { cloneDays } from "@/features/activity/lib/activityOperations";
 import type { DayPlan } from "@/features/activity/types";
-import { fetchSnapshot } from "@/features/snapshots/services/snapshotsClient";
+import { trpc } from "@/trpc/react";
 
 import { diffEvents } from "../lib/diffEvents";
 import { applyEvent, reduceEvents } from "../lib/eventReducer";
-import { appendEvents as appendEventsClient, fetchEvents } from "../services/eventsClient";
 import { subscribeToEvents } from "../services/eventsRealtimeClient";
 import type { EventInsert, EventRecord } from "../types";
 
@@ -40,13 +38,18 @@ export function usePlanCollaboration(
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<unknown>(null);
   const [isPending, setIsPending] = useState(false);
+  const trpcUtils = trpc.useUtils();
+  const appendMutation = trpc.viewer.events.append.useMutation();
 
   const load = useCallback(async () => {
     if (!planId || !enabled) return;
     setIsLoading(true);
     try {
-      const snapshot = await fetchSnapshot(planId);
-      const events = await fetchEvents(planId, snapshot.version);
+      const snapshot = await trpcUtils.viewer.snapshots.get.fetch({ planId });
+      const events = await trpcUtils.viewer.events.list.fetch({
+        planId,
+        sinceVersion: snapshot.version,
+      });
       const reduced = reduceEvents(snapshot, events);
       versionRef.current = reduced.version;
       snapshotRef.current = cloneDays(reduced.days);
@@ -57,7 +60,7 @@ export function usePlanCollaboration(
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, planId]);
+  }, [enabled, planId, trpcUtils]);
 
   useEffect(() => {
     if (!planId || !enabled) return;
@@ -93,7 +96,11 @@ export function usePlanCollaboration(
 
   const appendEventsWithState = useCallback(
     async (events: EventInsert[], baseVersion: number, previous: DayPlan[]) => {
-      const { version, events: storedEvents } = await appendEventsClient(planId, baseVersion, events);
+      const { version, events: storedEvents } = await appendMutation.mutateAsync({
+        planId,
+        baseVersion,
+        events,
+      });
       let updated = cloneDays(previous);
       for (const ev of storedEvents) {
         pendingEventIdsRef.current.delete(ev.id);
@@ -114,7 +121,7 @@ export function usePlanCollaboration(
 
       versionRef.current = version;
     },
-    [load, planId]
+    [appendMutation, load, planId]
   );
 
   const mutateAsync = useCallback(

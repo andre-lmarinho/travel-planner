@@ -36,14 +36,16 @@ describe("appRouter", () => {
   });
 
   it("reads the plan budget through BudgetService and BudgetRepository", async () => {
-    await expect(createCaller().budget.get({ planId: "plan-1" })).resolves.toEqual({
+    await expect(createCaller().viewer.budget.get({ planId: "plan-1" })).resolves.toEqual({
       budget: 500,
       entries: [{ amount: 120, category: "food", description: "Lunch", id: "entry-1" }],
     });
   });
 
   it("converts a budget validation failure into a BAD_REQUEST transport error", async () => {
-    await expect(createCaller().budget.updatePlan({ budget: -1, planId: "plan-1" })).rejects.toMatchObject({
+    await expect(
+      createCaller().viewer.budget.updatePlan({ budget: -1, planId: "plan-1" })
+    ).rejects.toMatchObject({
       code: "BAD_REQUEST",
       message: "Budget cannot be negative",
     });

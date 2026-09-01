@@ -3,37 +3,28 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatSupabaseError } from "@/lib/errors";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import type { Database } from "@/shared/types/supabase";
-
-type SnapshotsRepositoryOptions = {
-  client?: SupabaseClient<Database>;
-};
 
 export type SnapshotRow = Database["public"]["Tables"]["plan_snapshots"]["Row"];
 
-function getClient(client?: SupabaseClient<Database>): SupabaseClient<Database> {
-  return client ?? createSupabaseServerClient();
-}
+export class SnapshotsRepository {
+  constructor(private readonly client: SupabaseClient<Database>) {}
 
-export async function fetchSnapshot(
-  planId: string,
-  { client }: SnapshotsRepositoryOptions = {}
-): Promise<SnapshotRow | null> {
-  const supabase = getClient(client);
-  const { data, error } = await supabase
-    .from("plan_snapshots")
-    .select("plan_id, version, state, updated_at")
-    .eq("plan_id", planId)
-    .maybeSingle();
+  async fetchSnapshot(planId: string): Promise<SnapshotRow | null> {
+    const { data, error } = await this.client
+      .from("plan_snapshots")
+      .select("plan_id, version, state, updated_at")
+      .eq("plan_id", planId)
+      .maybeSingle();
 
-  if (error) {
-    throw formatSupabaseError({
-      operation: "fetchSnapshot",
-      identifiers: { planId },
-      error,
-    });
+    if (error) {
+      throw formatSupabaseError({
+        operation: "fetchSnapshot",
+        identifiers: { planId },
+        error,
+      });
+    }
+
+    return data ?? null;
   }
-
-  return data ?? null;
 }
