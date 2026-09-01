@@ -1,8 +1,8 @@
 "use server";
 
 import { fetchProfileSlugByUserId } from "@/features/profile/repositories/ProfileRepository";
+import { formatSupabaseError } from "@/lib/errors";
 import { requireUser } from "@/shared/lib/auth/session";
-import { formatSupabaseError } from "@/shared/lib/supabaseErrors";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 import { fetchPlanByIdWithMembers } from "../repositories/PlanRepository";
