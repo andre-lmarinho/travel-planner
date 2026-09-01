@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EventInsert } from "@/features/events/types";
 import type { SnapshotRow } from "@/features/snapshots/repositories/SnapshotsRepository";
 import { formatSupabaseError } from "@/lib/errors";
-import type { Database, Json } from "@/shared/types/supabase";
+import type { Database, Json } from "@/supabase/types";
 
 export type EventRow = Database["public"]["Tables"]["plan_events"]["Row"];
 export type AppendEventsResponse = Database["public"]["Functions"]["append_plan_events"]["Returns"];

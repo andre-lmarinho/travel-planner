@@ -1,8 +1,8 @@
 "use client";
 
-import { ToggleButton } from "@/shared/ui/button";
-import type { LucideIcon } from "@/shared/ui/icon";
-import { Calendar, DollarSign, List, Map as MapIcon } from "@/shared/ui/icon";
+import { ToggleButton } from "@/ui/components/button";
+import type { LucideIcon } from "@/ui/components/icon";
+import { Calendar, DollarSign, List, Map as MapIcon } from "@/ui/components/icon";
 
 export const modeOrder = ["overview", "kanban", "map", "budget"] as const;
 export type PlannerMode = (typeof modeOrder)[number];

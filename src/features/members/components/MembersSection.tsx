@@ -4,10 +4,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { KeyboardEventHandler } from "react";
 
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { Avatar } from "@/shared/ui/avatar";
-import type { SelectMenuOption } from "@/shared/ui/select/SelectMenu";
-import { SelectMenu } from "@/shared/ui/select/SelectMenu";
-import { cn } from "@/shared/utils/cn";
+import { Avatar } from "@/ui/components/avatar";
+import type { SelectMenuOption } from "@/ui/components/select/SelectMenu";
+import { SelectMenu } from "@/ui/components/select/SelectMenu";
+import { cn } from "@/ui/utils/cn";
 
 import { useLeaveRedirect } from "../hooks/useLeaveRedirect";
 import { useShareMembers } from "../hooks/useShareMembers";

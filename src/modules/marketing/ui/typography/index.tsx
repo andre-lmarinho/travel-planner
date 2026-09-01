@@ -1,4 +1,4 @@
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 
 export function Eyebrow(props: React.ComponentProps<"p">) {
   const { className, ...rest } = props;

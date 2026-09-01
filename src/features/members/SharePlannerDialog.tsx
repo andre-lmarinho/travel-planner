@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { Dialog, DialogContent, DialogHeader, DialogTriggerButton } from "@/shared/ui/dialog";
-import { Share2 } from "@/shared/ui/icon";
+import { Dialog, DialogContent, DialogHeader, DialogTriggerButton } from "@/ui/components/dialog";
+import { Share2 } from "@/ui/components/icon";
 
 import { InviteForm } from "./components/InviteForm";
 import { MembersSection } from "./components/MembersSection";

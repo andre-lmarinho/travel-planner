@@ -2,9 +2,8 @@
 
 import { MutationCache, QueryClient } from "@tanstack/react-query";
 import { TRPCClientError } from "@trpc/client";
-import { toast } from "@/shared/ui/toast/Toast";
-
 import type { AppRouter } from "@/trpc/server/routers/_app";
+import { toast } from "@/ui/components/toast";
 
 const MAX_QUERY_RETRIES = 3;
 

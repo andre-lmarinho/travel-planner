@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { formatSupabaseError } from "@/lib/errors";
-import { supabase } from "@/shared/lib/supabaseClient";
-import { Button } from "@/shared/ui/button";
+import { supabase } from "@/supabase/client";
+import { Button } from "@/ui/components/button";
 
 type Profile = { slug: string | null };
 

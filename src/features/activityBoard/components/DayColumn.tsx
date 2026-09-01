@@ -7,7 +7,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "
 import type { Activity } from "@/features/activity/types";
 import { AddActivity } from "@/features/activityDialog/components/AddActivity";
 import { InlineActivity } from "@/features/activityDialog/components/InlineActivity";
-import { cn } from "@/shared/utils/cn";
+import { cn } from "@/ui/utils/cn";
 
 import type { DayColumnProps } from "../types";
 import { ActivityCard } from "./ActivityCard";

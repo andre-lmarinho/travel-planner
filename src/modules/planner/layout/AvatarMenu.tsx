@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-import { supabase } from "@/shared/lib/supabaseClient";
-import { Avatar } from "@/shared/ui/avatar";
-import { Popover, PopoverContent, PopoverTriggerButton } from "@/shared/ui/popover";
+import { supabase } from "@/supabase/client";
+import { Avatar } from "@/ui/components/avatar";
+import { Popover, PopoverContent, PopoverTriggerButton } from "@/ui/components/popover";
 
 type AvatarMenuProps = {
   displayName: string | null;

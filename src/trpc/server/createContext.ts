@@ -2,10 +2,10 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
+import { getCurrentUser, type SupabaseUser } from "@/features/auth/lib/session";
 import { createRequestCtx } from "@/lib/errors/requestCtx";
-import { getCurrentUser, type SupabaseUser } from "@/shared/lib/auth/session";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
-import type { Database } from "@/shared/types/supabase";
+import { createSupabaseServerClient } from "@/supabase/server";
+import type { Database } from "@/supabase/types";
 
 export type AuthContext = {
   email: string | null;

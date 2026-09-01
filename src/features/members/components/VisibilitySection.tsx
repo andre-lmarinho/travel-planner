@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { SelectMenu, type SelectMenuOption } from "@/shared/ui/select/SelectMenu";
 import { trpc } from "@/trpc/react";
+import { SelectMenu, type SelectMenuOption } from "@/ui/components/select/SelectMenu";
 
 type Visibility = "private" | "public";
 

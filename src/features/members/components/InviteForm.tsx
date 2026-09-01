@@ -4,8 +4,8 @@ import type { FormEventHandler } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
-import { Button } from "@/shared/ui/button";
-import { SelectMenu } from "@/shared/ui/select/SelectMenu";
+import { Button } from "@/ui/components/button";
+import { SelectMenu } from "@/ui/components/select/SelectMenu";
 
 import { useShareMembers } from "../hooks/useShareMembers";
 import type { ShareTier } from "../types";

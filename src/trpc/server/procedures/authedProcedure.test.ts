@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 import { type AuthContext, createTRPCInnerContext } from "../createContext";
 import { createCallerFactory, router } from "../trpc";
 import { authedProcedure } from "./authedProcedure";

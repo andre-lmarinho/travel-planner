@@ -1,17 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getCurrentUser, requireUser } from "@/features/auth/lib/session";
 import type { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
-import { getCurrentUser, requireUser } from "@/shared/lib/auth/session";
 import type { PlanRepository } from "../repositories/PlanRepository";
 import { PlanService } from "./PlanService";
 
 const { fetchProfileSlugByUserId } = vi.hoisted(() => ({ fetchProfileSlugByUserId: vi.fn() }));
 
-vi.mock("@/shared/lib/auth/session", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/shared/lib/auth/session")>("@/shared/lib/auth/session");
+vi.mock("@/features/auth/lib/session", async () => {
+  const actual = await vi.importActual<typeof import("@/features/auth/lib/session")>(
+    "@/features/auth/lib/session"
+  );
   return { ...actual, getCurrentUser: vi.fn(), requireUser: vi.fn() };
 });
 vi.mock("@/features/search/services/GeoapifyService", () => ({

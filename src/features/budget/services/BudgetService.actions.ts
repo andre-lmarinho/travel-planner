@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/supabase/server";
 
 import { BudgetRepository } from "../repositories/BudgetRepository";
 import type { BudgetQueryResult, Entry } from "../types";

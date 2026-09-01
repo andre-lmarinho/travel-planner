@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/shared/utils/siteUrl";
+import { SITE_URL } from "@/lib/urls/siteUrl";
 
 const logoUrl = `${SITE_URL}/favicon.ico`;
 

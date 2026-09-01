@@ -6,10 +6,10 @@ import { memo, useCallback, useEffect, useId, useState } from "react";
 import { ACTIVITY_COLORS } from "@/features/activity/constants";
 import { useActivityColors } from "@/features/activity/hooks/useActivityColors";
 import type { Activity } from "@/features/activity/types";
-import { Button } from "@/shared/ui/button";
-import { Dialog, DialogContent, DialogHeader } from "@/shared/ui/dialog";
-import { ChevronDown, Palette, Trash2, X } from "@/shared/ui/icon";
-import { Popover, PopoverContent, PopoverTriggerButton } from "@/shared/ui/popover";
+import { Button } from "@/ui/components/button";
+import { Dialog, DialogContent, DialogHeader } from "@/ui/components/dialog";
+import { ChevronDown, Palette, Trash2, X } from "@/ui/components/icon";
+import { Popover, PopoverContent, PopoverTriggerButton } from "@/ui/components/popover";
 
 import type { EditorDialogProps } from "../types";
 import { ActivityForm } from "./ActivityForm";

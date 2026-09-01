@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Check, Pencil, Plus, Trash2, X } from "@/shared/ui/icon";
+import { Check, Pencil, Plus, Trash2, X } from "@/ui/components/icon";
 import { useBudgetContext } from "../hooks/BudgetContext";
 import { normalizeAmount } from "../lib/normalizeAmount";
 import type { BudgetRowInputsResult, CategoryKey, Entry } from "../types";

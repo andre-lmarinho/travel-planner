@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { supabase } from "@/shared/lib/supabaseClient";
+import { supabase } from "@/supabase/client";
 
 import type { EventRecord } from "../types";
 import { EventRowSchema, mapEvent } from "./eventsSchemas";

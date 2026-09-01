@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { Button } from "@/shared/ui/button/Button";
-import { Dialog, DialogContent, DialogHeader } from "@/shared/ui/dialog/Dialog";
-import { Hourglass, Link2, Map as MapIcon, Upload } from "@/shared/ui/icon/lucide-icons";
+import { Button } from "@/ui/components/button/Button";
+import { Dialog, DialogContent, DialogHeader } from "@/ui/components/dialog/Dialog";
+import { Hourglass, Link2, Map as MapIcon, Upload } from "@/ui/components/icon/lucide-icons";
 
 type DemoGuideDialogProps = {
   isDemo: boolean;

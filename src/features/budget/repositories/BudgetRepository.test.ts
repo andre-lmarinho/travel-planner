@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildTableMock, SUPABASE_ERRORS } from "@tests/utils/mocks";
 import { describe, expect, it } from "vitest";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 import { BudgetRepository } from "./BudgetRepository";
 

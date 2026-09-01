@@ -8,9 +8,9 @@ import { sendResetPasswordEmail } from "@/features/auth/handlers/sendResetPasswo
 import { buildLoginHref, buildResetPasswordRedirectUrl, resolveNextPath } from "@/features/auth/lib/redirect";
 import { getAuthErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { validEmail } from "@/features/auth/utils/validEmail";
-import { Button } from "@/shared/ui/button/Button";
-import { EmailField, Form } from "@/shared/ui/form";
-import { AccessShell } from "@/shared/ui/layout";
+import { Button } from "@/ui/components/button/Button";
+import { EmailField, Form } from "@/ui/components/form";
+import { AccessShell } from "@/ui/components/layout";
 
 const RESET_PASSWORD_FALLBACK = "Unable to reset password.";
 

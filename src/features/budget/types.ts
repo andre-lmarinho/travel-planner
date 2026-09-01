@@ -1,4 +1,4 @@
-import { Bus, FileText, Hotel, ShoppingCart, Ticket, Utensils } from "@/shared/ui/icon";
+import { Bus, FileText, Hotel, ShoppingCart, Ticket, Utensils } from "@/ui/components/icon";
 
 const CATEGORIES = [
   { key: "transport", label: "Transportation", icon: Bus },

@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatSupabaseError } from "@/lib/errors";
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 export type SnapshotRow = Database["public"]["Tables"]["plan_snapshots"]["Row"];
 

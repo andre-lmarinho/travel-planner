@@ -11,9 +11,9 @@ import { buildLoginHref, resolveNextPath } from "@/features/auth/lib/redirect";
 import { mapResetPasswordError } from "@/features/auth/utils/mapResetPasswordError";
 import { readResetPasswordParams } from "@/features/auth/utils/readResetPasswordParams";
 import { MIN_PASSWORD_LENGTH, validPassword } from "@/features/auth/utils/validPassword";
-import { Button } from "@/shared/ui/button/Button";
-import { Form, PasswordField } from "@/shared/ui/form";
-import { AccessShell } from "@/shared/ui/layout";
+import { Button } from "@/ui/components/button/Button";
+import { Form, PasswordField } from "@/ui/components/form";
+import { AccessShell } from "@/ui/components/layout";
 
 const INVALID_LINK_MESSAGE = "Reset link is invalid or has expired.";
 

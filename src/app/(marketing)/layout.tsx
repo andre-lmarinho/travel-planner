@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-
+import { SITE_URL } from "@/lib/urls/siteUrl";
 import { Footer } from "@/modules/marketing/layout/Footer";
 import { LegalArticle } from "@/modules/marketing/layout/LegalArticle";
 import { Navbar } from "@/modules/marketing/layout/Navbar";
-
-import { SITE_URL } from "@/shared/utils/siteUrl";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

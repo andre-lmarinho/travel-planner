@@ -3,7 +3,7 @@ import "server-only";
 import type { PlanIdentity, PlanRepository } from "@/features/plan/repositories/PlanRepository";
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { ApplicationError } from "@/lib/errors";
-import { isUuid } from "@/shared/lib/uuid";
+import { isUuid } from "@/lib/uuid";
 
 import type { MembersRepository } from "../repositories/MembersRepository";
 import type { AddMemberResult, ShareMembersData, ShareTier } from "../types";

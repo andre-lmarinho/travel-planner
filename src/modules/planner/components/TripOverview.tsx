@@ -14,9 +14,9 @@ import { getActivity } from "@/features/activity/lib/activityOperations";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { useDragHandlers } from "@/features/activityBoard/hooks/useDragHandlers";
 import { containerCollisionDetection } from "@/features/activityBoard/lib/dragUtils";
-import { ChevronDown, Eye, EyeOff, GripVertical, List, Plus } from "@/shared/ui/icon";
-import { Tooltip } from "@/shared/ui/tooltip";
-import { cn } from "@/shared/utils/cn";
+import { ChevronDown, Eye, EyeOff, GripVertical, List, Plus } from "@/ui/components/icon";
+import { Tooltip } from "@/ui/components/tooltip";
+import { cn } from "@/ui/utils/cn";
 
 interface TripOverviewProps {
   days: DayPlan[];

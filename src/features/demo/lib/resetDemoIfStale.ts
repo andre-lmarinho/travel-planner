@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/supabase/server";
 
 import { DemoRepository } from "../repositories/DemoRepository";
 

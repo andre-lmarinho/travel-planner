@@ -3,8 +3,8 @@
 import { memo, useMemo } from "react";
 
 import { ACTIVITY_COPY } from "@/features/activity/constants";
-import { Plus } from "@/shared/ui/icon";
-import { cn } from "@/shared/utils/cn";
+import { Plus } from "@/ui/components/icon";
+import { cn } from "@/ui/utils/cn";
 
 const INLINE_ADD_ENABLED =
   process.env.NEXT_PUBLIC_PLANNER_INLINE_ADD === undefined ||

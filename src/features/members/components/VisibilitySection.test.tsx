@@ -29,7 +29,7 @@ vi.mock("@/features/plan/hooks/PlannerContext", () => ({
 
 // Exercise the section's own logic (optimistic update + rollback) without the dropdown's DOM:
 // the stub button just flips the value through onChange like a real selection would.
-vi.mock("@/shared/ui/select/SelectMenu", () => ({
+vi.mock("@/ui/components/select/SelectMenu", () => ({
   SelectMenu: ({
     value,
     onChange,

@@ -1,7 +1,7 @@
 import { isPlaceholder, sanitizeTitle } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
-import { generateId } from "@/shared/lib/generateId";
-import { isFiniteNumber } from "@/shared/lib/typeGuards";
+import { generateId } from "@/lib/generateId";
+import { isFiniteNumber } from "@/lib/typeGuards";
 
 import { midpoint } from "../lib/gapOrdering";
 import type { EventInsert } from "../types";

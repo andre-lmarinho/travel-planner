@@ -13,9 +13,9 @@ import { buildSignupHref, resolveNextPath } from "@/features/auth/lib/redirect";
 import { getAuthErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { validEmail } from "@/features/auth/utils/validEmail";
 import { demoSignIn } from "@/features/demo/lib/demoSignIn";
-import { Button } from "@/shared/ui/button/Button";
-import { EmailField, Form, PasswordField } from "@/shared/ui/form";
-import { AccessShell } from "@/shared/ui/layout";
+import { Button } from "@/ui/components/button/Button";
+import { EmailField, Form, PasswordField } from "@/ui/components/form";
+import { AccessShell } from "@/ui/components/layout";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required.").refine(validEmail, "Enter a valid email."),

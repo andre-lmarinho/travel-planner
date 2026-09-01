@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { SupabaseUser } from "@/shared/lib/auth/session";
-import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
+import type { SupabaseUser } from "@/features/auth/lib/session";
+import { requireUser, UnauthorizedError } from "@/features/auth/lib/session";
 
 import { ensureProfile } from "./ensureProfile";
 
 const { mockUpsertProfile } = vi.hoisted(() => ({ mockUpsertProfile: vi.fn() }));
 
-vi.mock("@/shared/lib/auth/session", () => {
+vi.mock("@/features/auth/lib/session", () => {
   class UnauthorizedError extends Error {
     constructor(message = "Authentication required.") {
       super(message);
@@ -26,7 +26,7 @@ vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
     upsertProfile = mockUpsertProfile;
   },
 }));
-vi.mock("@/shared/lib/supabaseServer", () => ({
+vi.mock("@/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 

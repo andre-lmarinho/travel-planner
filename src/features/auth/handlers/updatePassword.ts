@@ -1,4 +1,4 @@
-import { supabase } from "@/shared/lib/supabaseClient";
+import { supabase } from "@/supabase/client";
 
 export type UpdatePasswordResult = { ok: true } | { ok: false; error: unknown };
 

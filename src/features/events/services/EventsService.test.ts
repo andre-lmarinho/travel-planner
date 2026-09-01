@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SnapshotsService } from "@/features/snapshots/services/SnapshotsService";
 import type { Snapshot } from "@/features/snapshots/types";
 import { ApplicationError } from "@/lib/errors";
-import type { Json } from "@/shared/types/supabase";
+import type { Json } from "@/supabase/types";
 import type { EventRow, EventsRepository } from "../repositories/EventsRepository";
 import type { EventInsert } from "../types";
 

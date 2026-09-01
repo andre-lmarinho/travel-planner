@@ -8,8 +8,8 @@ import type { Activity } from "@/features/activity/types";
 import { ActivitySearchInput } from "@/features/search/components/ActivitySearchInput";
 import { useActivitySuggestions } from "@/features/search/hooks/useActivitySuggestions";
 import type { ActivitySuggestion, PlaceSelection } from "@/features/search/types";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/utils/cn";
+import { Button } from "@/ui/components/button";
+import { cn } from "@/ui/utils/cn";
 
 import { useInlineAutoFocus } from "../hooks/useInlineAutoFocus";
 import { useInlineOutsideSubmit } from "../hooks/useInlineOutsideSubmit";

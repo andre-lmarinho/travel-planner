@@ -1,6 +1,6 @@
 "use client";
 
-import { Toaster } from "@/shared/ui/toast/Toast";
+import { Toaster } from "@/ui/components/toast/Toast";
 
 import { TRPCProvider } from "./_trpc/trpc-provider";
 

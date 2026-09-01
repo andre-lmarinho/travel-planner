@@ -3,8 +3,8 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatSupabaseError } from "@/lib/errors";
-import { isUuid } from "@/shared/lib/uuid";
-import type { Database } from "@/shared/types/supabase";
+import { isUuid } from "@/lib/uuid";
+import type { Database } from "@/supabase/types";
 
 export type PlanIdentity = {
   id: string;

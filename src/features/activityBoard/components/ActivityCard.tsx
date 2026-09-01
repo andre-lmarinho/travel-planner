@@ -6,8 +6,8 @@ import { memo } from "react";
 import { EMPTY_ACTIVITY_TITLE } from "@/features/activity/constants";
 import { useCardColors } from "@/features/activity/hooks/useActivityColors";
 import type { Activity } from "@/features/activity/types";
-import { DollarSign, Hourglass } from "@/shared/ui/icon";
-import { cn } from "@/shared/utils/cn";
+import { DollarSign, Hourglass } from "@/ui/components/icon";
+import { cn } from "@/ui/utils/cn";
 
 export interface ActivityCardProps {
   activity: Activity;

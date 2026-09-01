@@ -58,7 +58,7 @@ vi.mock("@/modules/planner/components/ModeToggleButton", () => ({
   ),
 }));
 
-vi.mock("@/shared/ui/calendar", () => ({
+vi.mock("@/ui/components/calendar", () => ({
   DateRangePickerIcon: () => null,
 }));
 

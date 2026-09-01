@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 import { SnapshotsRepository } from "./SnapshotsRepository";
 
 function createMockSupabaseClient(snapshotData: { data: unknown; error: Error | null }) {
