@@ -5,11 +5,26 @@ import type { Entry } from "../types";
 import { BudgetProvider, useBudgetContext } from "./BudgetContext";
 import { useBudget } from "./useBudget";
 
-// Mock React Query to simplify testing
-vi.mock("@tanstack/react-query", () => ({
-  useQuery: () => ({ data: null, isSuccess: true }),
-  useMutation: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
-  useQueryClient: () => ({ setQueryData: vi.fn(), invalidateQueries: vi.fn() }),
+const trpcMocks = vi.hoisted(() => ({
+  invalidate: vi.fn(),
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue("new-entry"),
+  setData: vi.fn(),
+}));
+
+vi.mock("@/trpc/react", () => ({
+  trpc: {
+    budget: {
+      createEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+      deleteEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+      get: { useQuery: () => ({ data: null, isSuccess: true }) },
+      updateEntry: { useMutation: () => ({ mutateAsync: trpcMocks.mutateAsync }) },
+      updatePlan: { useMutation: () => ({ mutate: trpcMocks.mutate }) },
+    },
+    useUtils: () => ({
+      budget: { get: { invalidate: trpcMocks.invalidate, setData: trpcMocks.setData } },
+    }),
+  },
 }));
 
 describe("BudgetContext", () => {
