@@ -72,11 +72,11 @@ describe("MembersService", () => {
     ["removeMember", () => removeMember("plan-1", "user-1"), "removeMember: plan not found"],
     ["leavePlan", () => leavePlan("plan-1"), "leavePlan: plan not found"],
   ])(
-    "throws when %s cannot resolve the plan",
+    "throws NOT_FOUND when %s cannot resolve the plan",
     async (_label: string, call: () => Promise<unknown>, message: string) => {
       planRepositoryMocks.resolvePlanIdentity.mockResolvedValue(null);
 
-      await expect(call()).rejects.toThrow(message);
+      await expect(call()).rejects.toMatchObject({ code: "NOT_FOUND", message });
     }
   );
 

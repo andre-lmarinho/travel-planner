@@ -31,18 +31,6 @@ vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
     .mockResolvedValue({ userId: "owner-1", slug: "owner", displayName: "Owner", avatarUrl: null }),
 }));
 
-// notFound/redirect throw so control flow stops, like Next at runtime.
-const NEXT_NOT_FOUND = new Error("NEXT_NOT_FOUND");
-const NEXT_REDIRECT = new Error("NEXT_REDIRECT");
-vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw NEXT_NOT_FOUND;
-  },
-  redirect: (url: string) => {
-    throw Object.assign(NEXT_REDIRECT, { url });
-  },
-}));
-
 const SLUG = "abc123slug";
 const UUID = "11111111-2222-4333-8444-555555555555";
 
@@ -65,10 +53,12 @@ const PUBLIC_PLAN = { ...(PLAN as object), members: [], isPublic: true } as unkn
 describe("getPlannerExperience — membership-only access", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("redirects anonymous visitors to /login (public or not)", async () => {
+  it("throws UNAUTHORIZED for an anonymous visitor and never fetches the plan", async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce(null);
 
-    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({ url: "/login" });
+    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
     expect(fetchPlanBySlug).not.toHaveBeenCalled();
     expect(fetchPublicPlanBySlug).not.toHaveBeenCalled();
   });
@@ -94,18 +84,31 @@ describe("getPlannerExperience — membership-only access", () => {
     expect(fetchPublicPlanById).not.toHaveBeenCalled();
   });
 
-  it("returns notFound for a logged-in non-member even on a public plan", async () => {
+  it("throws NOT_FOUND when the resolved plan does not exist", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "owner-1" });
+    vi.mocked(fetchPlanBySlug).mockResolvedValueOnce(null);
+
+    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("throws FORBIDDEN for a logged-in non-member even on a public plan", async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "stranger" });
     vi.mocked(fetchPlanBySlug).mockResolvedValueOnce(PUBLIC_PLAN);
 
-    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
-  it("returns notFound for a logged-in non-member on a private plan", async () => {
+  it("throws FORBIDDEN for a logged-in non-member on a private plan", async () => {
     vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "stranger" });
     vi.mocked(fetchPlanByIdWithMembers).mockResolvedValueOnce(PLAN);
 
-    await expect(getPlannerExperience({ identifier: UUID })).rejects.toThrow("NEXT_NOT_FOUND");
+    await expect(getPlannerExperience({ identifier: UUID })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 
   it("falls back to undefined days when the plan date range is reversed", async () => {
