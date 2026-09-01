@@ -20,6 +20,7 @@ type UseLeaveRedirectOptions = {
 export function useLeaveRedirect({ planIdOrSlug, viewerUserId, leave }: UseLeaveRedirectOptions) {
   const router = useRouter();
   const profileUtils = trpc.useUtils();
+  const ensureProfileMutation = trpc.viewer.profile.ensure.useMutation();
   const [isLeaving, setIsLeaving] = useState(false);
 
   const fetchProfileSlug = useCallback(async (): Promise<string | null> => {
@@ -30,26 +31,14 @@ export function useLeaveRedirect({ planIdOrSlug, viewerUserId, leave }: UseLeave
       // Profile may not exist yet; the auth boundary below can create it.
     }
 
-    try {
-      const postController = new AbortController();
-      const postTimeout = setTimeout(() => postController.abort(), 5000);
-      try {
-        const postRes = await fetch("/api/profile/ensure", {
-          method: "POST",
-          credentials: "same-origin",
-          signal: postController.signal,
-        });
+    if (!viewerUserId) return null;
 
-        if (!postRes.ok) return null;
-        const data = (await postRes.json()) as { slug?: string | null };
-        return data.slug?.trim() ?? null;
-      } finally {
-        clearTimeout(postTimeout);
-      }
+    try {
+      return await ensureProfileMutation.mutateAsync({});
     } catch {
       return null;
     }
-  }, [profileUtils]);
+  }, [ensureProfileMutation, profileUtils, viewerUserId]);
 
   const handleLeave = useCallback(
     async (member: ShareMember) => {

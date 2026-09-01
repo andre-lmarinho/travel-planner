@@ -9,7 +9,6 @@ import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { checkUsernameAvailability } from "@/features/auth/handlers/checkUsernameAvailability";
 import { registerWithPassword } from "@/features/auth/handlers/registerWithPassword";
 import { buildEmailRedirectUrl, buildLoginHref, resolveNextPath } from "@/features/auth/lib/redirect";
 import { getAuthErrorMessage } from "@/features/auth/utils/extractErrorMessage";
@@ -21,6 +20,7 @@ import { Button } from "@/shared/ui/button/Button";
 import { EmailField, Form, PasswordField, TextField } from "@/shared/ui/form";
 import type { LucideIcon } from "@/shared/ui/icon/lucide-icons";
 import { Kanban, LandPlot, Plane } from "@/shared/ui/icon/lucide-icons";
+import { trpc } from "@/trpc/react";
 
 import mock from "./media/app-mock.webp";
 
@@ -85,6 +85,7 @@ export function SignupView({ finalizeProfile, nextPath }: SignupViewProps) {
     "idle" | "checking" | "available" | "taken" | "invalid" | "error"
   >("idle");
   const lastCheckedUsernameRef = useRef<string | null>(null);
+  const profileUtils = trpc.useUtils();
 
   const formMethods = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
@@ -115,7 +116,7 @@ export function SignupView({ finalizeProfile, nextPath }: SignupViewProps) {
     clearErrors("username");
 
     try {
-      const { available } = await checkUsernameAvailability(normalized);
+      const { available } = await profileUtils.public.profile.availability.fetch({ username: normalized });
 
       const currentNormalized = normalizeUsername(getValues("username") ?? "");
       if (currentNormalized !== normalized) {

@@ -4,15 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ShareMember } from "../types";
 import { useLeaveRedirect } from "./useLeaveRedirect";
 
-const { pushMock, refreshMock, profileFetchMock } = vi.hoisted(() => ({
+const { pushMock, refreshMock, profileFetchMock, ensureProfileMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
   refreshMock: vi.fn(),
   profileFetchMock: vi.fn(),
+  ensureProfileMock: vi.fn(),
 }));
 
 vi.mock("@/trpc/react", () => ({
   trpc: {
     useUtils: () => ({ viewer: { profile: { get: { fetch: profileFetchMock } } } }),
+    viewer: { profile: { ensure: { useMutation: () => ({ mutateAsync: ensureProfileMock }) } } },
   },
 }));
 
@@ -47,6 +49,7 @@ describe("useLeaveRedirect", () => {
     refreshMock.mockReset();
     fetchMock.mockReset();
     profileFetchMock.mockReset();
+    ensureProfileMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
   });
 

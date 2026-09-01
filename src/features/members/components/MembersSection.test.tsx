@@ -23,7 +23,10 @@ const {
 
 vi.mock("@/trpc/react", () => ({
   trpc: {
-    useUtils: () => ({ viewer: { profile: { fetch: vi.fn().mockResolvedValue(null) } } }),
+    useUtils: () => ({ viewer: { profile: { get: { fetch: vi.fn().mockResolvedValue(null) } } } }),
+    viewer: {
+      profile: { ensure: { useMutation: () => ({ mutateAsync: vi.fn().mockResolvedValue(null) }) } },
+    },
   },
 }));
 

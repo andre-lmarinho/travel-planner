@@ -18,6 +18,7 @@ function createUnauthenticatedCaller() {
 describe("viewerRouter authentication boundary", () => {
   it.each([
     ["profile", () => createUnauthenticatedCaller().viewer.profile.get({})],
+    ["profile.ensure", () => createUnauthenticatedCaller().viewer.profile.ensure({})],
     ["budget", () => createUnauthenticatedCaller().viewer.budget.get({ planId: "plan-1" })],
     ["events", () => createUnauthenticatedCaller().viewer.events.list({ planId: "plan-1", sinceVersion: 0 })],
     ["snapshots", () => createUnauthenticatedCaller().viewer.snapshots.get({ planId: "plan-1" })],
