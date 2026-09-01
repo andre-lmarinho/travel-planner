@@ -1,3 +1,4 @@
+import { DemoGuideDialog } from "@/features/demo/components/DemoGuideDialog";
 import type { UserDestination } from "@/features/plan/lib/getUserDestinations";
 import type { UserPlannerSummary } from "@/features/plan/lib/getUserPlanners";
 import { DashboardMap } from "@/modules/user/components/DashboardMap";
@@ -10,9 +11,10 @@ interface DashboardViewProps {
   displayName: string | null;
   plans: UserPlannerSummary[];
   destinations: UserDestination[];
+  isDemo?: boolean;
 }
 
-export function DashboardView({ displayName, plans, destinations }: DashboardViewProps) {
+export function DashboardView({ displayName, plans, destinations, isDemo = false }: DashboardViewProps) {
   const greeting = displayName ? `${displayName}'s travels` : "Your travels";
 
   // Destinations are already deduped by city name; countries dedupe here.
@@ -31,26 +33,29 @@ export function DashboardView({ displayName, plans, destinations }: DashboardVie
   const upcomingPlan = getUpcomingPlan(plans);
 
   return (
-    <main id="main-content" className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
-      <section className="space-y-1">
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">{greeting}</h1>
-        <p className="text-muted-foreground text-sm">{stats}</p>
-      </section>
+    <>
+      <main id="main-content" className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
+        <section className="space-y-1">
+          <h1 className="text-foreground text-2xl font-semibold tracking-tight">{greeting}</h1>
+          <p className="text-muted-foreground text-sm">{stats}</p>
+        </section>
 
-      {upcomingPlan ? <UpcomingTripSection plan={upcomingPlan} /> : null}
+        {upcomingPlan ? <UpcomingTripSection plan={upcomingPlan} /> : null}
 
-      <section aria-labelledby="map-heading" className="space-y-3">
-        <div className="flex items-center gap-2">
-          <MapPin className="text-primary h-5 w-5" aria-hidden="true" />
-          <h2 id="map-heading" className="text-foreground text-base font-semibold">
-            Your travel map
-          </h2>
-        </div>
-        <DashboardMap pins={pins} />
-      </section>
+        <section aria-labelledby="map-heading" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="text-primary h-5 w-5" aria-hidden="true" />
+            <h2 id="map-heading" className="text-foreground text-base font-semibold">
+              Your travel map
+            </h2>
+          </div>
+          <DashboardMap pins={pins} />
+        </section>
 
-      <PlannersSection plans={plans} />
-      <InspirationsSection excludePlanIds={plans.map((plan) => plan.id)} />
-    </main>
+        <PlannersSection plans={plans} />
+        <InspirationsSection excludePlanIds={plans.map((plan) => plan.id)} />
+      </main>
+      <DemoGuideDialog isDemo={isDemo} />
+    </>
   );
 }

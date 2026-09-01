@@ -9,8 +9,12 @@ import { InviteForm } from "./components/InviteForm";
 import { MembersSection } from "./components/MembersSection";
 import { VisibilitySection } from "./components/VisibilitySection";
 
-export function SharePlannerDialog({ planId }: { planId: string }) {
+export function SharePlannerDialog({ planId, isDemo = false }: { planId: string; isDemo?: boolean }) {
   const [open, setOpen] = useState(false);
+
+  if (isDemo) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

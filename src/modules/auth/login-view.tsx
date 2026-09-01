@@ -12,6 +12,7 @@ import { signInWithPassword } from "@/features/auth/handlers/signInWithPassword"
 import { buildSignupHref, resolveNextPath } from "@/features/auth/lib/redirect";
 import { getAuthErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { validEmail } from "@/features/auth/utils/validEmail";
+import { demoSignIn } from "@/features/demo/lib/demoSignIn";
 import { Button } from "@/shared/ui/button/Button";
 import { EmailField, Form, PasswordField } from "@/shared/ui/form";
 import { AccessShell } from "@/shared/ui/layout";
@@ -67,6 +68,17 @@ export function LoginView({ resolveProfile, nextPath }: LoginViewProps) {
     }
   };
 
+  const handleDemo = async () => {
+    setFormError(null);
+    try {
+      const slug = await demoSignIn(resolveProfile);
+      router.push(`/u/${slug}`);
+      router.refresh();
+    } catch (error) {
+      setFormError(getAuthErrorMessage(error, SIGN_IN_FALLBACK));
+    }
+  };
+
   return (
     <AccessShell
       title="Welcome back"
@@ -106,6 +118,14 @@ export function LoginView({ resolveProfile, nextPath }: LoginViewProps) {
           {formState.isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
       </Form>
+      <div className="border-border mt-5 border-t pt-5">
+        <Button
+          variant="accent"
+          onClick={handleDemo}
+          className="w-full py-3 text-base font-semibold shadow-sm transition-colors">
+          Explore the demo — no account needed
+        </Button>
+      </div>
     </AccessShell>
   );
 }

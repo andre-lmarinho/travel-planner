@@ -13,7 +13,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: "bg-primary text-primary-foreground",
-        accent: "bg-accent text-primary-foreground",
+        accent: "bg-accent text-foreground",
         ghost: "bg-background text-foreground",
       },
     },

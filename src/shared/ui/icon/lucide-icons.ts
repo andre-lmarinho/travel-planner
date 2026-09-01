@@ -48,6 +48,7 @@ export {
   Sparkles,
   Ticket,
   Trash2,
+  Upload,
   User,
   UserStar,
   Users,
