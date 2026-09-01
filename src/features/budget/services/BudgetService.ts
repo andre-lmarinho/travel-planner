@@ -1,10 +1,10 @@
-import { ApplicationError } from "@/lib/errors";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import "server-only";
 
+import { ApplicationError } from "@/lib/errors";
 import { BudgetRepository } from "../repositories/BudgetRepository";
 import type { BudgetQueryResult, Entry } from "../types";
 
-type BudgetEntryInput = Pick<Entry, "description" | "category" | "amount">;
+export type BudgetEntryInput = Pick<Entry, "description" | "category" | "amount">;
 
 export class BudgetService {
   constructor(private readonly repo: BudgetRepository) {}
@@ -47,33 +47,4 @@ export class BudgetService {
   async deleteBudgetEntry(entryId: string): Promise<void> {
     await this.repo.deleteBudgetEntry(entryId);
   }
-}
-
-function makeBudgetService(): BudgetService {
-  return new BudgetService(new BudgetRepository(createSupabaseServerClient()));
-}
-
-export async function getPlanBudget(planId: string): Promise<BudgetQueryResult> {
-  "use server";
-  return makeBudgetService().getPlanBudget(planId);
-}
-
-export async function updatePlanBudget(planId: string, newBudget: number): Promise<number> {
-  "use server";
-  return makeBudgetService().updatePlanBudget(planId, newBudget);
-}
-
-export async function createBudgetEntry(planId: string, payload: BudgetEntryInput): Promise<string> {
-  "use server";
-  return makeBudgetService().createBudgetEntry(planId, payload);
-}
-
-export async function updateBudgetEntry(entry: Entry): Promise<void> {
-  "use server";
-  return makeBudgetService().updateBudgetEntry(entry);
-}
-
-export async function deleteBudgetEntry(entryId: string): Promise<void> {
-  "use server";
-  return makeBudgetService().deleteBudgetEntry(entryId);
 }

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import * as BudgetService from "../services/BudgetService";
+import * as BudgetService from "../services/BudgetService.actions";
 import type { BudgetQueryResult, CategoryKey, Entry } from "../types";
 
 export function useBudget(
