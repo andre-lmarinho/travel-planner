@@ -7,8 +7,8 @@ import type { SupabaseUser } from "@/features/auth/lib/session";
 import { requireUser } from "@/features/auth/lib/session";
 import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
+import { isRecord, readString } from "@/lib/typeGuards";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
-import { isRecord, readString } from "@/shared/lib/typeGuards";
 import type { Database } from "@/shared/types/supabase";
 
 const MAX_SLUG_ATTEMPTS = 10;

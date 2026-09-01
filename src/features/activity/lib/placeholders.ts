@@ -1,4 +1,4 @@
-import { generateId } from "@/shared/lib/generateId";
+import { generateId } from "@/lib/generateId";
 
 import { getDefaultColor } from "../constants";
 import type { Activity } from "../types";

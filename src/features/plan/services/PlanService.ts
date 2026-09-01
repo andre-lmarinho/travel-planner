@@ -11,7 +11,7 @@ import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifySe
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
 import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/repositories/snapshotSchemas";
 import { ApplicationError } from "@/lib/errors";
-import { isUuid } from "@/shared/lib/uuid";
+import { isUuid } from "@/lib/uuid";
 
 import { buildDaysFromRange } from "../lib/helpers";
 import type { PlanRepository } from "../repositories/PlanRepository";

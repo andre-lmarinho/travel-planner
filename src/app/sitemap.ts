@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { SITE_URL } from "@/shared/utils/siteUrl";
+import { SITE_URL } from "@/lib/urls/siteUrl";
 
 const MARKETING_ROUTES = ["/", "/privacy", "/terms"] as const;
 

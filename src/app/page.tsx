@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { ensureProfile } from "@/features/auth/lib/ensureProfile";
 import { resolveNextPath } from "@/features/auth/lib/redirect";
 import { redirectIfAuthenticated } from "@/features/auth/lib/redirectServer";
+import { SITE_URL } from "@/lib/urls/siteUrl";
 import { SignupView } from "@/modules/auth/signup-view";
 import SeoJsonLd from "@/modules/marketing/seo/SeoJsonLd";
-import { SITE_URL } from "@/shared/utils/siteUrl";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
