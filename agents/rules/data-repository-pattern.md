@@ -15,7 +15,7 @@ Technology choices must not seep through the application. The Supabase problem i
 
 ```typescript
 // In a service file
-import { supabase } from '@/shared/lib/supabaseClient';
+import { supabase } from '@/supabase/client';
 
 async function getPlan(id: string) {
   // Direct Supabase usage in service
@@ -32,8 +32,8 @@ async function getPlan(id: string) {
 
 ```typescript
 // In repository file
-import { supabase } from '@/shared/lib/supabaseServer';
-import type { Database } from '@/shared/types/supabase';
+import { supabase } from '@/supabase/server';
+import type { Database } from '@/supabase/types';
 import type { Plan } from './types';
 
 export class PlanRepository {

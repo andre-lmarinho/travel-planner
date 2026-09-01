@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 import planFixture from "../../fixtures/plan.json";
 

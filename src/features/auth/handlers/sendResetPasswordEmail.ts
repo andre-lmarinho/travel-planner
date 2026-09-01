@@ -1,4 +1,4 @@
-import { supabase } from "@/shared/lib/supabaseClient";
+import { supabase } from "@/supabase/client";
 
 type SendResetPasswordEmailInput = {
   email: string;

@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { describe, expect, it } from "vitest";
 import { ApplicationError } from "@/lib/errors";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 import { createTRPCInnerContext } from "../createContext";
 import { createCallerFactory, router } from "../trpc";
 import { publicProcedure } from "./publicProcedure";

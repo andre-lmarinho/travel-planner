@@ -4,19 +4,18 @@ import type { SetAllCookies } from "@supabase/ssr";
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
-
-import type { Database } from "../types/supabase";
-import { clientEnv } from "./clientEnv";
+import { clientEnv } from "@/lib/env/clientEnv";
+import type { Database } from "./types";
 
 type CookieStore = Awaited<ReturnType<typeof cookies>>;
 type CookieBatch = Parameters<SetAllCookies>[0];
 
 const isE2E = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_E2E === "1";
 
-type SupabaseMockModule = typeof import("../../../tests/e2e/mocks/supabase");
+type SupabaseMockModule = typeof import("../../tests/e2e/mocks/supabase");
 
 function getE2ESupabaseClient(): SupabaseClient<Database> {
-  const { getSupabaseMock } = require("../../../tests/e2e/mocks/supabase") as SupabaseMockModule;
+  const { getSupabaseMock } = require("../../tests/e2e/mocks/supabase") as SupabaseMockModule;
   return getSupabaseMock();
 }
 

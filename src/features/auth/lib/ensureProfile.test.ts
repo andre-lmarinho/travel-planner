@@ -26,7 +26,7 @@ vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
     upsertProfile = mockUpsertProfile;
   },
 }));
-vi.mock("@/shared/lib/supabaseServer", () => ({
+vi.mock("@/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 

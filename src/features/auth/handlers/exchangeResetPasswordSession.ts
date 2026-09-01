@@ -1,4 +1,4 @@
-import { supabase } from "@/shared/lib/supabaseClient";
+import { supabase } from "@/supabase/client";
 
 export type ResetPasswordExchangeResult = { status: "ready" } | { status: "error"; error: unknown };
 

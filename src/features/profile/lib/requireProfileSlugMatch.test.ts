@@ -16,7 +16,7 @@ vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
   },
 }));
 
-vi.mock("@/shared/lib/supabaseServer", () => ({
+vi.mock("@/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(),
 }));
 

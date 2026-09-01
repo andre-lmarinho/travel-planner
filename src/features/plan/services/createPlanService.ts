@@ -1,6 +1,6 @@
 import { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import { createSupabaseServerClient } from "@/supabase/server";
 
 import { PlanRepository } from "../repositories/PlanRepository";
 import { PlanService } from "./PlanService";

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildSupabaseMock } from "@tests/utils/testHelpers";
 import { describe, expect, it } from "vitest";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 import { PlanRepository } from "./PlanRepository";
 

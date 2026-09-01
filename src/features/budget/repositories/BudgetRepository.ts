@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { formatSupabaseError } from "@/lib/errors";
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 import type { CategoryKey, Entry } from "../types";
 

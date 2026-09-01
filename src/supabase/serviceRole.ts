@@ -3,7 +3,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 import { clientEnv } from "@/lib/env/clientEnv";
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 let serviceRoleClient: SupabaseClient<Database> | null = null;
 

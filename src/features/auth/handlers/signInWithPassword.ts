@@ -2,7 +2,7 @@ import type { AuthResponse } from "@supabase/auth-js";
 import type { Session } from "@supabase/supabase-js";
 
 import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
-import { supabase } from "@/shared/lib/supabaseClient";
+import { supabase } from "@/supabase/client";
 
 type SignInWithPasswordInput = {
   email: string;

@@ -8,7 +8,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Mock } from "vitest";
 import { vi } from "vitest";
 
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 // ============================================================================
 // QUERY CHAIN

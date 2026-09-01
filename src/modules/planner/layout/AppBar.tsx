@@ -1,7 +1,7 @@
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import { Button } from "@/shared/ui/button";
 import { Logo } from "@/shared/ui/logo";
+import { createSupabaseServerClient } from "@/supabase/server";
 
 import { AvatarMenu } from "./AvatarMenu";
 

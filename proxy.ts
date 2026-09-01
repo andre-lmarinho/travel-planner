@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { buildCsp } from "./securityHeaders";
-import { clientEnv } from "./src/shared/lib/clientEnv";
+import { clientEnv } from "./src/lib/env/clientEnv";
 
 const isE2E = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_E2E === "1";
 

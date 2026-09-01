@@ -1,6 +1,6 @@
 import { buildRpcMock, buildTableMock } from "@tests/utils/mocks";
 import { describe, expect, it } from "vitest";
-import type { Database } from "@/shared/types/supabase";
+import type { Database } from "@/supabase/types";
 
 import { EventsRepository } from "./EventsRepository";
 

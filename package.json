@@ -23,7 +23,7 @@
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "e2e": "playwright test",
-    "gen:types": "supabase gen types typescript --schema public > src/shared/types/supabase.ts",
+    "gen:types": "supabase gen types typescript --schema public > src/supabase/types.ts",
     "vercel:pull": "pnpm dlx vercel@56.0.0 pull --yes --environment=preview",
     "vercel:build": "pnpm dlx vercel@56.0.0 build --debug",
     "check:vercel": "pnpm vercel:pull && pnpm vercel:build",
