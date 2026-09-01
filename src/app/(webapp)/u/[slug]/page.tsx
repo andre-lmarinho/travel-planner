@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 
 import { isDemoUser } from "@/features/demo/lib/demo";
 import { resetDemoIfStale } from "@/features/demo/lib/resetDemoIfStale";
-import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
-import { PlanService } from "@/features/plan/services/PlanService";
+import { createPlanService } from "@/features/plan/services/createPlanService";
 import { requireProfileSlugMatch } from "@/features/profile/lib/requireProfileSlugMatch";
 import { DashboardView } from "@/modules/user/dashboard-view";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export const metadata: Metadata = {
   title: "Your travels | Turistar App",
@@ -25,7 +23,7 @@ export default async function UserDashboardPage({ params }: UserDashboardPagePro
     await resetDemoIfStale();
   }
 
-  const service = new PlanService(new PlanRepository(createSupabaseServerClient()));
+  const { service } = createPlanService();
   const [plans, destinations] = await Promise.all([
     service.getUserPlanners(),
     service.getUserDestinations(user.id),

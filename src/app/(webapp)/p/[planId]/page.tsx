@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
+import { createPlanService } from "@/features/plan/services/createPlanService";
 import type { PlannerExperience } from "@/features/plan/services/PlanService";
-import { PlanService } from "@/features/plan/services/PlanService";
 import { ApplicationError } from "@/lib/errors";
 import { PlanIdView } from "@/modules/planner/planid-view";
-import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +14,7 @@ type PageProps = {
 };
 
 function buildPlannerContext() {
-  const repo = new PlanRepository(createSupabaseServerClient());
-  return { repo, service: new PlanService(repo) };
+  return createPlanService();
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {

@@ -5,10 +5,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 
 import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
-import { upsertProfile } from "@/features/profile/repositories/ProfileRepository";
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import type { SupabaseUser } from "@/shared/lib/auth/session";
 import { requireUser } from "@/shared/lib/auth/session";
+import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import { isRecord, readString } from "@/shared/lib/typeGuards";
+import type { Database } from "@/shared/types/supabase";
 
 const MAX_SLUG_ATTEMPTS = 10;
 
@@ -89,20 +91,18 @@ async function upsertProfileWithUniqueSlug(
   { id, displayName, avatarUrl, baseSlug }: ProfileUpsertPayload,
   client?: SupabaseClient
 ): Promise<string> {
+  const repo = new ProfileRepository((client ?? createSupabaseServerClient()) as SupabaseClient<Database>);
   const sanitizedBase = baseSlug || slugify(id, { separator: "-", lowercase: true });
 
   for (let attempt = 0; attempt < MAX_SLUG_ATTEMPTS; attempt += 1) {
     const candidateSlug = attempt === 0 ? sanitizedBase : `${sanitizedBase}-${attempt}`;
     try {
-      const result = await upsertProfile(
-        {
-          userId: id,
-          slug: candidateSlug,
-          displayName,
-          avatarUrl,
-        },
-        { client }
-      );
+      const result = await repo.upsertProfile({
+        userId: id,
+        slug: candidateSlug,
+        displayName,
+        avatarUrl,
+      });
       return result.slug;
     } catch (error) {
       if (extractSupabaseErrorCode(error) === "23505") {

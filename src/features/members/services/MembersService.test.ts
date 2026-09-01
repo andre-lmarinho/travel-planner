@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ShareMember, ShareMembersData } from "../types";
-import { addMember, getMembers, leavePlan, removeMember, updateMemberTier } from "./MembersService";
+import type { PlanRepository } from "@/features/plan/repositories/PlanRepository";
+import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
+import type { ProfileSummary } from "@/features/profile/types";
 
-const { mockCreateSupabaseServerClient } = vi.hoisted(() => ({
-  mockCreateSupabaseServerClient: vi.fn(),
-}));
+import type { MembersRepository } from "../repositories/MembersRepository";
+import type { ShareMember, ShareMembersData } from "../types";
+import { MembersService } from "./MembersService";
 
 const planRepositoryMocks = vi.hoisted(() => ({
   fetchPlanIdentityById: vi.fn(),
@@ -16,72 +17,57 @@ const profileRepositoryMocks = vi.hoisted(() => ({
   fetchProfileByUserId: vi.fn(),
 }));
 
-const membersRepositoryMocks = vi.hoisted(() => ({
-  fetchMembers: vi.fn(),
-  addMemberByEmail: vi.fn(),
-  updateMemberTier: vi.fn(),
-  removeMember: vi.fn(),
-  leavePlan: vi.fn(),
-}));
-
-vi.mock("@/shared/lib/supabaseServer", () => ({
-  createSupabaseServerClient: () => mockCreateSupabaseServerClient(),
-}));
-
-vi.mock("@/features/plan/repositories/PlanRepository", () => ({
-  __esModule: true,
-  PlanRepository: class {
-    fetchPlanIdentityById = planRepositoryMocks.fetchPlanIdentityById;
-    fetchPlanIdentityBySlug = planRepositoryMocks.fetchPlanIdentityBySlug;
-  },
-}));
-
-vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
-  __esModule: true,
-  fetchProfileByUserId: (...args: unknown[]) => profileRepositoryMocks.fetchProfileByUserId(...args),
-}));
-
-vi.mock("../repositories/MembersRepository", () => ({
-  __esModule: true,
-  fetchMembers: membersRepositoryMocks.fetchMembers,
-  addMemberByEmail: membersRepositoryMocks.addMemberByEmail,
-  updateMemberTier: membersRepositoryMocks.updateMemberTier,
-  removeMember: membersRepositoryMocks.removeMember,
-  leavePlan: membersRepositoryMocks.leavePlan,
-}));
+function makeService(
+  partialRepo: Partial<MembersRepository>,
+  partialPlanRepo: Partial<PlanRepository> = {},
+  partialProfileRepo: Partial<ProfileRepository> = {}
+) {
+  return new MembersService(
+    partialRepo as MembersRepository,
+    {
+      fetchPlanIdentityById: planRepositoryMocks.fetchPlanIdentityById,
+      fetchPlanIdentityBySlug: planRepositoryMocks.fetchPlanIdentityBySlug,
+      ...partialPlanRepo,
+    } as PlanRepository,
+    {
+      fetchProfileByUserId: profileRepositoryMocks.fetchProfileByUserId,
+      ...partialProfileRepo,
+    } as ProfileRepository
+  );
+}
 
 describe("MembersService", () => {
-  const client = { id: "client-1" };
-
   beforeEach(() => {
-    mockCreateSupabaseServerClient.mockReset();
     planRepositoryMocks.fetchPlanIdentityById.mockReset();
     planRepositoryMocks.fetchPlanIdentityBySlug.mockReset();
     profileRepositoryMocks.fetchProfileByUserId.mockReset();
-    membersRepositoryMocks.fetchMembers.mockReset();
-    membersRepositoryMocks.addMemberByEmail.mockReset();
-    membersRepositoryMocks.updateMemberTier.mockReset();
-    membersRepositoryMocks.removeMember.mockReset();
-    membersRepositoryMocks.leavePlan.mockReset();
-    mockCreateSupabaseServerClient.mockReturnValue(client);
   });
 
   it.each([
-    ["getMembers", () => getMembers("plan-1"), "getMembers: plan not found"],
-    ["addMember", () => addMember("plan-1", "user@example.com", "member"), "addMember: plan not found"],
+    ["getMembers", (s: MembersService) => s.getMembers("plan-1"), "getMembers: plan not found"],
+    [
+      "addMember",
+      (s: MembersService) => s.addMember("plan-1", "user@example.com", "member"),
+      "addMember: plan not found",
+    ],
     [
       "updateMemberTier",
-      () => updateMemberTier("plan-1", "user-1", "member"),
+      (s: MembersService) => s.updateMemberTier("plan-1", "user-1", "member"),
       "updateMemberTier: plan not found",
     ],
-    ["removeMember", () => removeMember("plan-1", "user-1"), "removeMember: plan not found"],
-    ["leavePlan", () => leavePlan("plan-1"), "leavePlan: plan not found"],
+    [
+      "removeMember",
+      (s: MembersService) => s.removeMember("plan-1", "user-1"),
+      "removeMember: plan not found",
+    ],
+    ["leavePlan", (s: MembersService) => s.leavePlan("plan-1"), "leavePlan: plan not found"],
   ])(
     "throws NOT_FOUND when %s cannot resolve the plan",
-    async (_label: string, call: () => Promise<unknown>, message: string) => {
+    async (_label: string, call: (service: MembersService) => Promise<unknown>, message: string) => {
       planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue(null);
+      const service = makeService({});
 
-      await expect(call()).rejects.toMatchObject({ code: "NOT_FOUND", message });
+      await expect(call(service)).rejects.toMatchObject({ code: "NOT_FOUND", message });
     }
   );
 
@@ -96,15 +82,18 @@ describe("MembersService", () => {
       },
     ];
     planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "plan-1", ownerId: "owner-1" });
-    membersRepositoryMocks.fetchMembers.mockResolvedValue(members);
     profileRepositoryMocks.fetchProfileByUserId.mockResolvedValue({
       userId: "owner-1",
       slug: "owner-slug",
       displayName: "Owner",
       avatarUrl: null,
+    } satisfies ProfileSummary);
+
+    const service = makeService({
+      fetchMembers: vi.fn().mockResolvedValue(members),
     });
 
-    const result = await getMembers("plan-1");
+    const result = await service.getMembers("plan-1");
 
     expect(result.ownerId).toBe("owner-1");
     expect(result.members[0]).toMatchObject({
@@ -120,9 +109,12 @@ describe("MembersService", () => {
     const planId = "123e4567-e89b-42d3-a456-426614174000";
     planRepositoryMocks.fetchPlanIdentityById.mockResolvedValue({ id: planId, ownerId: "owner-1" });
     planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "wrong-plan", ownerId: "owner-1" });
-    membersRepositoryMocks.fetchMembers.mockResolvedValue([]);
 
-    const result = await getMembers(planId);
+    const service = makeService({
+      fetchMembers: vi.fn().mockResolvedValue([]),
+    });
+
+    const result = await service.getMembers(planId);
 
     expect(planRepositoryMocks.fetchPlanIdentityById).toHaveBeenCalledWith(planId);
     expect(planRepositoryMocks.fetchPlanIdentityBySlug).not.toHaveBeenCalled();
@@ -147,9 +139,12 @@ describe("MembersService", () => {
       },
     ];
     planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "plan-1", ownerId: null });
-    membersRepositoryMocks.fetchMembers.mockResolvedValue(members);
 
-    const result: ShareMembersData = await getMembers("plan-1");
+    const service = makeService({
+      fetchMembers: vi.fn().mockResolvedValue(members),
+    });
+
+    const result: ShareMembersData = await service.getMembers("plan-1");
 
     expect(result.ownerId).toBe("admin-1");
     expect(result.members.map((member) => member.userId)).toEqual(["admin-1", "user-2"]);

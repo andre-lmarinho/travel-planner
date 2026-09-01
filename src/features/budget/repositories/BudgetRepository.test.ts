@@ -1,14 +1,14 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildTableMock, SUPABASE_ERRORS } from "@tests/utils/mocks";
 import { describe, expect, it } from "vitest";
-import {
-  createBudgetEntry,
-  deleteBudgetEntry,
-  fetchPlanBudgetEntries,
-  fetchPlanBudgetRow,
-  mapEntries,
-  updateBudgetEntry,
-  updatePlanBudget,
-} from "./BudgetRepository";
+
+import type { Database } from "@/shared/types/supabase";
+
+import { BudgetRepository } from "./BudgetRepository";
+
+function makeRepo(client: SupabaseClient<Database>): BudgetRepository {
+  return new BudgetRepository(client);
+}
 
 describe("BudgetRepository", () => {
   describe("mapEntries", () => {
@@ -18,7 +18,7 @@ describe("BudgetRepository", () => {
         { id: "e2", description: "Train", category: "transport", amount: 100 },
       ];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result).toEqual([
         { id: "e1", description: "Hotel", category: "lodging", amount: 200 },
@@ -29,7 +29,7 @@ describe("BudgetRepository", () => {
     it("defaults invalid category to transport", () => {
       const rows = [{ id: "e1", description: "Unknown", category: "invalid", amount: 50 }];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result[0].category).toBe("transport");
     });
@@ -37,7 +37,7 @@ describe("BudgetRepository", () => {
     it("handles null category", () => {
       const rows = [{ id: "e1", description: "Test", category: null, amount: 50 }];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result[0].category).toBe("transport");
     });
@@ -50,7 +50,7 @@ describe("BudgetRepository", () => {
         amount: number | null;
       }> = [];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result).toEqual([]);
     });
@@ -58,7 +58,7 @@ describe("BudgetRepository", () => {
     it("handles undefined category", () => {
       const rows = [{ id: "e1", description: "Test", category: undefined as unknown as string, amount: 50 }];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result[0].category).toBe("transport");
     });
@@ -66,7 +66,7 @@ describe("BudgetRepository", () => {
     it("handles empty string category", () => {
       const rows = [{ id: "e1", description: "Test", category: "", amount: 50 }];
 
-      const result = mapEntries(rows);
+      const result = BudgetRepository.mapEntries(rows);
 
       expect(result[0].category).toBe("transport");
     });
@@ -77,7 +77,7 @@ describe("BudgetRepository", () => {
       const mockData = { budget: 1000 };
       const { supabase, chain } = buildTableMock("plans", { data: mockData, error: null });
 
-      const result = await fetchPlanBudgetRow("plan-1", { client: supabase });
+      const result = await makeRepo(supabase).fetchPlanBudgetRow("plan-1");
 
       expect(result).toEqual(mockData);
       expect(chain.select).toHaveBeenCalledWith("budget");
@@ -89,13 +89,13 @@ describe("BudgetRepository", () => {
       const { supabase, chain } = buildTableMock("plans", { data: null, error: SUPABASE_ERRORS.NOT_FOUND });
       chain.single.mockResolvedValue({ data: null, error: SUPABASE_ERRORS.NOT_FOUND });
 
-      await expect(fetchPlanBudgetRow("plan-1", { client: supabase })).rejects.toThrow("fetchPlanBudgetRow");
+      await expect(makeRepo(supabase).fetchPlanBudgetRow("plan-1")).rejects.toThrow("fetchPlanBudgetRow");
     });
 
     it("returns null when no data found", async () => {
       const { supabase } = buildTableMock("plans", { data: null, error: null });
 
-      const result = await fetchPlanBudgetRow("plan-1", { client: supabase });
+      const result = await makeRepo(supabase).fetchPlanBudgetRow("plan-1");
 
       expect(result).toBeNull();
     });
@@ -109,7 +109,7 @@ describe("BudgetRepository", () => {
       ];
       const { supabase, chain } = buildTableMock("budget_entries", { data: mockData, error: null });
 
-      const result = await fetchPlanBudgetEntries("plan-1", { client: supabase });
+      const result = await makeRepo(supabase).fetchPlanBudgetEntries("plan-1");
 
       expect(result).toEqual(mockData);
       expect(chain.select).toHaveBeenCalledWith("id, description, category, amount");
@@ -119,7 +119,7 @@ describe("BudgetRepository", () => {
     it("throws error when database error occurs", async () => {
       const { supabase } = buildTableMock("budget_entries", { data: null, error: SUPABASE_ERRORS.NOT_FOUND });
 
-      await expect(fetchPlanBudgetEntries("plan-1", { client: supabase })).rejects.toThrow(
+      await expect(makeRepo(supabase).fetchPlanBudgetEntries("plan-1")).rejects.toThrow(
         "fetchPlanBudgetEntries"
       );
     });
@@ -127,7 +127,7 @@ describe("BudgetRepository", () => {
     it("returns empty array when no entries found", async () => {
       const { supabase } = buildTableMock("budget_entries", { data: null, error: null });
 
-      const result = await fetchPlanBudgetEntries("plan-1", { client: supabase });
+      const result = await makeRepo(supabase).fetchPlanBudgetEntries("plan-1");
 
       expect(result).toEqual([]);
     });
@@ -138,7 +138,7 @@ describe("BudgetRepository", () => {
       const mockData = { budget: 1500 };
       const { supabase, chain } = buildTableMock("plans", { data: mockData, error: null });
 
-      const result = await updatePlanBudget("plan-1", 1500, { client: supabase });
+      const result = await makeRepo(supabase).updatePlanBudget("plan-1", 1500);
 
       expect(result).toEqual(mockData);
       expect(chain.update).toHaveBeenCalledWith({ budget: 1500 });
@@ -150,9 +150,7 @@ describe("BudgetRepository", () => {
     it("throws error when update fails", async () => {
       const { supabase } = buildTableMock("plans", { data: null, error: SUPABASE_ERRORS.FORBIDDEN });
 
-      await expect(updatePlanBudget("plan-1", 1500, { client: supabase })).rejects.toThrow(
-        "updatePlanBudget"
-      );
+      await expect(makeRepo(supabase).updatePlanBudget("plan-1", 1500)).rejects.toThrow("updatePlanBudget");
     });
   });
 
@@ -162,7 +160,7 @@ describe("BudgetRepository", () => {
       const payload = { description: "New Entry", category: "food", amount: 100 };
       const { supabase, chain } = buildTableMock("budget_entries", { data: mockData, error: null });
 
-      const result = await createBudgetEntry("plan-1", payload, { client: supabase });
+      const result = await makeRepo(supabase).createBudgetEntry("plan-1", payload);
 
       expect(result).toEqual(mockData);
       expect(chain.insert).toHaveBeenCalledWith({
@@ -179,7 +177,7 @@ describe("BudgetRepository", () => {
       const payload = { description: "New Entry", category: "food", amount: 100 };
       const { supabase } = buildTableMock("budget_entries", { data: null, error: SUPABASE_ERRORS.CONFLICT });
 
-      await expect(createBudgetEntry("plan-1", payload, { client: supabase })).rejects.toThrow(
+      await expect(makeRepo(supabase).createBudgetEntry("plan-1", payload)).rejects.toThrow(
         "createBudgetEntry"
       );
     });
@@ -188,7 +186,7 @@ describe("BudgetRepository", () => {
       const payload = { description: "New Entry", category: "food", amount: 100 };
       const { supabase } = buildTableMock("budget_entries", { data: null, error: null });
 
-      await expect(createBudgetEntry("plan-1", payload, { client: supabase })).rejects.toThrow(
+      await expect(makeRepo(supabase).createBudgetEntry("plan-1", payload)).rejects.toThrow(
         "createBudgetEntry:missing-row"
       );
     });
@@ -199,7 +197,7 @@ describe("BudgetRepository", () => {
       const payload = { description: "Updated Entry", category: "transport", amount: 200 };
       const { supabase, chain } = buildTableMock("budget_entries", { data: null, error: null });
 
-      await expect(updateBudgetEntry("entry-1", payload, { client: supabase })).resolves.toBeUndefined();
+      await expect(makeRepo(supabase).updateBudgetEntry("entry-1", payload)).resolves.toBeUndefined();
 
       expect(chain.update).toHaveBeenCalledWith({
         description: "Updated Entry",
@@ -213,7 +211,7 @@ describe("BudgetRepository", () => {
       const payload = { description: "Updated Entry", category: "transport", amount: 200 };
       const { supabase } = buildTableMock("budget_entries", { data: null, error: SUPABASE_ERRORS.FORBIDDEN });
 
-      await expect(updateBudgetEntry("entry-1", payload, { client: supabase })).rejects.toThrow(
+      await expect(makeRepo(supabase).updateBudgetEntry("entry-1", payload)).rejects.toThrow(
         "updateBudgetEntry"
       );
     });
@@ -223,7 +221,7 @@ describe("BudgetRepository", () => {
     it("deletes budget entry successfully", async () => {
       const { supabase, chain } = buildTableMock("budget_entries", { data: null, error: null });
 
-      await expect(deleteBudgetEntry("entry-1", { client: supabase })).resolves.toBeUndefined();
+      await expect(makeRepo(supabase).deleteBudgetEntry("entry-1")).resolves.toBeUndefined();
 
       expect(chain.delete).toHaveBeenCalled();
       expect(chain.eq).toHaveBeenCalledWith("id", "entry-1");
@@ -232,7 +230,7 @@ describe("BudgetRepository", () => {
     it("throws error when delete fails", async () => {
       const { supabase } = buildTableMock("budget_entries", { data: null, error: SUPABASE_ERRORS.FORBIDDEN });
 
-      await expect(deleteBudgetEntry("entry-1", { client: supabase })).rejects.toThrow("deleteBudgetEntry");
+      await expect(makeRepo(supabase).deleteBudgetEntry("entry-1")).rejects.toThrow("deleteBudgetEntry");
     });
   });
 });

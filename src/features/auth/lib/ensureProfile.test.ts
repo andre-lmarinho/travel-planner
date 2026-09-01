@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { upsertProfile } from "@/features/profile/repositories/ProfileRepository";
 import type { SupabaseUser } from "@/shared/lib/auth/session";
 import { requireUser, UnauthorizedError } from "@/shared/lib/auth/session";
 
 import { ensureProfile } from "./ensureProfile";
+
+const { mockUpsertProfile } = vi.hoisted(() => ({ mockUpsertProfile: vi.fn() }));
 
 vi.mock("@/shared/lib/auth/session", () => {
   class UnauthorizedError extends Error {
@@ -21,7 +22,12 @@ vi.mock("@/shared/lib/auth/session", () => {
 });
 
 vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
-  upsertProfile: vi.fn(),
+  ProfileRepository: class {
+    upsertProfile = mockUpsertProfile;
+  },
+}));
+vi.mock("@/shared/lib/supabaseServer", () => ({
+  createSupabaseServerClient: vi.fn(),
 }));
 
 type UpsertResponse = { slug: string } | Error;
@@ -34,7 +40,6 @@ type UpsertCall = {
 };
 
 const mockRequireUser = vi.mocked(requireUser);
-const mockUpsertProfile = vi.mocked(upsertProfile);
 
 function buildUpsertError(code: string, message: string): Error {
   return new Error(message, { cause: { code, message } });

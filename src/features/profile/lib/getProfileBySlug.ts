@@ -1,6 +1,8 @@
 import "server-only";
 
-import { fetchProfileBySlug } from "../repositories/ProfileRepository";
+import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+
+import { ProfileRepository } from "../repositories/ProfileRepository";
 import type { ProfileRecord } from "../types";
 
 export async function getProfileBySlug(slug: string): Promise<ProfileRecord | null> {
@@ -10,5 +12,5 @@ export async function getProfileBySlug(slug: string): Promise<ProfileRecord | nu
     return null;
   }
 
-  return fetchProfileBySlug(normalizedSlug);
+  return new ProfileRepository(createSupabaseServerClient()).fetchProfileBySlug(normalizedSlug);
 }

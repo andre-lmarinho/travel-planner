@@ -1,3 +1,4 @@
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
 import { Button } from "@/shared/ui/button";
 import { Logo } from "@/shared/ui/logo";
@@ -22,15 +23,11 @@ async function getUserProfile(): Promise<UserProfile> {
       return { slug: null, displayName: null, email: null };
     }
 
-    const { data } = await supabase
-      .from("profiles")
-      .select("slug, display_name")
-      .eq("id", userId)
-      .maybeSingle();
+    const profile = await new ProfileRepository(supabase).fetchProfileByUserId(userId);
 
     return {
-      slug: data?.slug ?? null,
-      displayName: data?.display_name ?? null,
+      slug: profile?.slug ?? null,
+      displayName: profile?.displayName ?? null,
       email: email ?? null,
     };
   } catch {

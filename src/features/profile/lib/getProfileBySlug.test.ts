@@ -1,37 +1,43 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchProfileBySlug } from "../repositories/ProfileRepository";
 import type { ProfileRecord } from "../types";
 import { getProfileBySlug } from "./getProfileBySlug";
 
+const { mockFetchProfileBySlug } = vi.hoisted(() => ({ mockFetchProfileBySlug: vi.fn() }));
+
 vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
-  fetchProfileBySlug: vi.fn(),
+  ProfileRepository: class {
+    fetchProfileBySlug = mockFetchProfileBySlug;
+  },
+}));
+vi.mock("@/shared/lib/supabaseServer", () => ({
+  createSupabaseServerClient: vi.fn(),
 }));
 
 describe("getProfileBySlug", () => {
   beforeEach(() => {
-    vi.mocked(fetchProfileBySlug).mockReset();
+    mockFetchProfileBySlug.mockReset();
   });
 
   it("returns null when slug is empty or whitespace", async () => {
     const result = await getProfileBySlug("   ");
 
     expect(result).toBeNull();
-    expect(fetchProfileBySlug).not.toHaveBeenCalled();
+    expect(mockFetchProfileBySlug).not.toHaveBeenCalled();
   });
 
   it("returns null when repository has no profile", async () => {
-    vi.mocked(fetchProfileBySlug).mockResolvedValue(null);
+    mockFetchProfileBySlug.mockResolvedValue(null);
 
     const profile = await getProfileBySlug("alice");
 
     expect(profile).toBeNull();
-    expect(fetchProfileBySlug).toHaveBeenCalledWith("alice");
+    expect(mockFetchProfileBySlug).toHaveBeenCalledWith("alice");
   });
 
   it("propagates repository errors", async () => {
     const failure = new Error("fail");
-    vi.mocked(fetchProfileBySlug).mockRejectedValue(failure);
+    mockFetchProfileBySlug.mockRejectedValue(failure);
 
     await expect(getProfileBySlug("alice")).rejects.toBe(failure);
   });
@@ -43,11 +49,11 @@ describe("getProfileBySlug", () => {
       displayName: "Alice",
       avatarUrl: "https://avatar.png",
     };
-    vi.mocked(fetchProfileBySlug).mockResolvedValue(profile);
+    mockFetchProfileBySlug.mockResolvedValue(profile);
 
     const result = await getProfileBySlug(" alice ");
 
     expect(result).toEqual(profile);
-    expect(fetchProfileBySlug).toHaveBeenCalledWith("alice");
+    expect(mockFetchProfileBySlug).toHaveBeenCalledWith("alice");
   });
 });

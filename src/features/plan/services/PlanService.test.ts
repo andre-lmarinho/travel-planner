@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
+import type { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
+import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
 import { getCurrentUser, requireUser } from "@/shared/lib/auth/session";
-
 import type { PlanRepository } from "../repositories/PlanRepository";
 import { PlanService } from "./PlanService";
 
@@ -19,9 +19,6 @@ vi.mock("@/features/search/services/GeoapifyService", () => ({
 }));
 vi.mock("@/features/search/services/WikidataService", () => ({
   fetchWikidataImage: vi.fn(),
-}));
-vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
-  fetchProfileSlugByUserId: (...args: unknown[]) => fetchProfileSlugByUserId(...args),
 }));
 
 const SLUG = "abc123slug";
@@ -40,7 +37,11 @@ const OWNED_PLAN = {
 };
 
 function makeService(repo: Partial<PlanRepository>) {
-  return new PlanService(repo as PlanRepository);
+  const budgetRepo = {
+    fetchPlanBudgetEntries: vi.fn().mockResolvedValue([]),
+  } as unknown as BudgetRepository;
+  const profileRepo = { fetchProfileSlugByUserId } as unknown as ProfileRepository;
+  return new PlanService(repo as PlanRepository, budgetRepo, profileRepo);
 }
 
 describe("PlanService", () => {
