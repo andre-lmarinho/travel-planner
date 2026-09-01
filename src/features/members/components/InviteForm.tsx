@@ -82,7 +82,7 @@ export function InviteForm({ planId }: { planId: string }) {
     }
 
     try {
-      await addMember.mutateAsync({ email: trimmedEmail, tier });
+      await addMember.mutateAsync({ planIdOrSlug: planId, email: trimmedEmail, tier });
       setEmail("");
       showSuccess("Member added.");
     } catch (error) {

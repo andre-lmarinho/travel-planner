@@ -21,6 +21,7 @@ describe("viewerRouter authentication boundary", () => {
     ["budget", () => createUnauthenticatedCaller().viewer.budget.get({ planId: "plan-1" })],
     ["events", () => createUnauthenticatedCaller().viewer.events.list({ planId: "plan-1", sinceVersion: 0 })],
     ["snapshots", () => createUnauthenticatedCaller().viewer.snapshots.get({ planId: "plan-1" })],
+    ["members", () => createUnauthenticatedCaller().viewer.members.get({ planIdOrSlug: "plan-1" })],
   ])("requires authentication for viewer.%s", async (_domain, call) => {
     await expect(call()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });

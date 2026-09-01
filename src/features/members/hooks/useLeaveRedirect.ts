@@ -8,15 +8,16 @@ import { trpc } from "@/trpc/react";
 import type { ShareMember } from "../types";
 
 type UseLeaveMutation = {
-  mutateAsync: () => Promise<unknown>;
+  mutateAsync: (input: { planIdOrSlug: string }) => Promise<unknown>;
 };
 
 type UseLeaveRedirectOptions = {
+  planIdOrSlug: string;
   viewerUserId: string | null;
   leave: UseLeaveMutation;
 };
 
-export function useLeaveRedirect({ viewerUserId, leave }: UseLeaveRedirectOptions) {
+export function useLeaveRedirect({ planIdOrSlug, viewerUserId, leave }: UseLeaveRedirectOptions) {
   const router = useRouter();
   const profileUtils = trpc.useUtils();
   const [isLeaving, setIsLeaving] = useState(false);
@@ -55,7 +56,7 @@ export function useLeaveRedirect({ viewerUserId, leave }: UseLeaveRedirectOption
       setIsLeaving(true);
 
       try {
-        await leave.mutateAsync();
+        await leave.mutateAsync({ planIdOrSlug });
 
         const slug = member.slug ?? (viewerUserId ? await fetchProfileSlug() : null);
         const redirectUrl = slug ? `/u/${slug}` : null;
@@ -68,7 +69,7 @@ export function useLeaveRedirect({ viewerUserId, leave }: UseLeaveRedirectOption
         setIsLeaving(false);
       }
     },
-    [fetchProfileSlug, leave, router, viewerUserId]
+    [fetchProfileSlug, leave, planIdOrSlug, router, viewerUserId]
   );
 
   return { handleLeave, isLeaving };

@@ -1,17 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import * as MembersService from "../services/membersService.actions";
-import type { ShareMembersData, ShareTier } from "../types";
-
-// Query Keys
-
-const keys = {
-  members: (planId: string) => ["share", "members", planId] as const,
-};
-
-// useShareMembers
+import { trpc } from "@/trpc/react";
 
 type UseShareMembersOptions = {
   enabled?: boolean;
@@ -19,22 +8,16 @@ type UseShareMembersOptions = {
 
 export function useShareMembers(planId: string, options: UseShareMembersOptions = {}) {
   const enabled = options.enabled ?? true;
-  const qc = useQueryClient();
-  const queryKey = keys.members(planId);
+  const utils = trpc.useUtils();
+  const query = trpc.viewer.members.get.useQuery(
+    { planIdOrSlug: planId },
+    { enabled: Boolean(planId) && enabled }
+  );
 
-  const query = useQuery<ShareMembersData>({
-    queryKey,
-    enabled: Boolean(planId) && enabled,
-    queryFn: () => MembersService.getMembers(planId),
-  });
-
-  const addMember = useMutation({
-    mutationFn: ({ email, tier }: { email: string; tier: ShareTier }) =>
-      MembersService.addMember(planId, email, tier),
+  const addMutation = trpc.viewer.members.add.useMutation({
     onSuccess: (result) => {
-      qc.setQueryData<ShareMembersData | undefined>(queryKey, (current) => {
-        if (!current) return current;
-        if (current.members.some((m) => m.userId === result.userId)) return current;
+      utils.viewer.members.get.setData({ planIdOrSlug: planId }, (current) => {
+        if (!current || current.members.some((member) => member.userId === result.userId)) return current;
         return {
           ...current,
           members: [
@@ -50,61 +33,57 @@ export function useShareMembers(planId: string, options: UseShareMembersOptions 
         };
       });
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => utils.viewer.members.get.invalidate({ planIdOrSlug: planId }),
   });
 
-  const updateTier = useMutation({
-    mutationFn: ({ userId, tier }: { userId: string; tier: ShareTier }) =>
-      MembersService.updateMemberTier(planId, userId, tier).then(() => ({ userId, tier })),
+  const updateMutation = trpc.viewer.members.update.useMutation({
     onMutate: async ({ userId, tier }) => {
-      await qc.cancelQueries({ queryKey });
-      const previous = qc.getQueryData<ShareMembersData>(queryKey);
-      qc.setQueryData<ShareMembersData | undefined>(queryKey, (current) => {
+      await utils.viewer.members.get.cancel({ planIdOrSlug: planId });
+      const previous = utils.viewer.members.get.getData({ planIdOrSlug: planId });
+      utils.viewer.members.get.setData({ planIdOrSlug: planId }, (current) => {
         if (!current) return current;
         return {
           ...current,
-          members: current.members.map((m) => (m.userId === userId ? { ...m, tier } : m)),
+          members: current.members.map((member) => (member.userId === userId ? { ...member, tier } : member)),
         };
       });
       return { previous };
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) qc.setQueryData(queryKey, ctx.previous);
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        utils.viewer.members.get.setData({ planIdOrSlug: planId }, context.previous);
+      }
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => utils.viewer.members.get.invalidate({ planIdOrSlug: planId }),
   });
 
-  const removeMember = useMutation({
-    mutationFn: ({ userId }: { userId: string }) =>
-      MembersService.removeMember(planId, userId).then(() => ({ userId })),
+  const removeMutation = trpc.viewer.members.remove.useMutation({
     onMutate: async ({ userId }) => {
-      await qc.cancelQueries({ queryKey });
-      const previous = qc.getQueryData<ShareMembersData>(queryKey);
-      qc.setQueryData<ShareMembersData | undefined>(queryKey, (current) => {
+      await utils.viewer.members.get.cancel({ planIdOrSlug: planId });
+      const previous = utils.viewer.members.get.getData({ planIdOrSlug: planId });
+      utils.viewer.members.get.setData({ planIdOrSlug: planId }, (current) => {
         if (!current) return current;
-        return {
-          ...current,
-          members: current.members.filter((m) => m.userId !== userId),
-        };
+        return { ...current, members: current.members.filter((member) => member.userId !== userId) };
       });
       return { previous };
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.previous) qc.setQueryData(queryKey, ctx.previous);
+    onError: (_error, _input, context) => {
+      if (context?.previous) {
+        utils.viewer.members.get.setData({ planIdOrSlug: planId }, context.previous);
+      }
     },
-    onSettled: () => qc.invalidateQueries({ queryKey }),
+    onSettled: () => utils.viewer.members.get.invalidate({ planIdOrSlug: planId }),
   });
 
-  const leave = useMutation({
-    mutationFn: () => MembersService.leavePlan(planId),
-    onSuccess: () => qc.removeQueries({ queryKey }),
+  const leaveMutation = trpc.viewer.members.leave.useMutation({
+    onSuccess: () => utils.viewer.members.get.reset({ planIdOrSlug: planId }),
   });
 
   return {
     ...query,
-    addMember,
-    updateTier,
-    removeMember,
-    leave,
+    addMember: addMutation,
+    updateTier: updateMutation,
+    removeMember: removeMutation,
+    leave: leaveMutation,
   };
 }

@@ -96,7 +96,7 @@ describe("MembersSection", () => {
     fireEvent.click(screen.getByLabelText("Member User role"));
     fireEvent.click(await screen.findByRole("option", { name: "Remove member" }));
 
-    expect(removeMemberMutate).toHaveBeenCalledWith({ userId: "user-2" });
+    expect(removeMemberMutate).toHaveBeenCalledWith({ planIdOrSlug: "plan-1", userId: "user-2" });
   });
 
   it("redirects after a member leaves the planner", async () => {

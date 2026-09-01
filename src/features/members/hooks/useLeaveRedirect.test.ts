@@ -58,7 +58,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: "member-slug" });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
@@ -76,7 +78,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: null });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
@@ -91,7 +95,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockResolvedValue(undefined) };
     const member = createMember({ slug: null });
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: null, leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: null, leave })
+    );
 
     await act(async () => {
       await result.current.handleLeave(member);
@@ -107,7 +113,9 @@ describe("useLeaveRedirect", () => {
     const leave = { mutateAsync: vi.fn().mockReturnValue(deferred.promise) };
     const member = createMember();
 
-    const { result } = renderHook(() => useLeaveRedirect({ viewerUserId: "user-1", leave }));
+    const { result } = renderHook(() =>
+      useLeaveRedirect({ planIdOrSlug: "plan-1", viewerUserId: "user-1", leave })
+    );
 
     let leavePromise: Promise<void> = Promise.resolve();
     act(() => {
