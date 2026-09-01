@@ -1,7 +1,10 @@
 import "server-only";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+
 import { createSupabaseServerClient } from "@/shared/lib/supabaseServer";
+import type { Database } from "@/shared/types/supabase";
 
 export type SupabaseUser = {
   id: string;
@@ -54,13 +57,13 @@ export function isAuthSessionMissingError(error: unknown): boolean {
   );
 }
 
-export async function getCurrentUser(): Promise<SupabaseUser | null> {
+export async function getCurrentUser(
+  supabase: SupabaseClient<Database> = createSupabaseServerClient()
+): Promise<SupabaseUser | null> {
   const e2eUser = await getE2EUserFromCookies();
   if (e2eUser) {
     return e2eUser;
   }
-
-  const supabase = createSupabaseServerClient();
 
   try {
     const { data } = await supabase.auth.getUser();
