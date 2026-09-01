@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import type { PlannerExperience } from "@/features/plan/lib/getPlannerExperience";
+import type { PlannerExperience } from "@/features/plan/services/PlanService";
 import { PlannerWorkspace } from "@/modules/planner/components/PlannerWorkspace";
 
 interface PlanIdViewProps {

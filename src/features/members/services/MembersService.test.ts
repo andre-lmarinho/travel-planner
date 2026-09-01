@@ -8,7 +8,8 @@ const { mockCreateSupabaseServerClient } = vi.hoisted(() => ({
 }));
 
 const planRepositoryMocks = vi.hoisted(() => ({
-  resolvePlanIdentity: vi.fn(),
+  fetchPlanIdentityById: vi.fn(),
+  fetchPlanIdentityBySlug: vi.fn(),
 }));
 
 const profileRepositoryMocks = vi.hoisted(() => ({
@@ -29,7 +30,10 @@ vi.mock("@/shared/lib/supabaseServer", () => ({
 
 vi.mock("@/features/plan/repositories/PlanRepository", () => ({
   __esModule: true,
-  resolvePlanIdentity: (...args: unknown[]) => planRepositoryMocks.resolvePlanIdentity(...args),
+  PlanRepository: class {
+    fetchPlanIdentityById = planRepositoryMocks.fetchPlanIdentityById;
+    fetchPlanIdentityBySlug = planRepositoryMocks.fetchPlanIdentityBySlug;
+  },
 }));
 
 vi.mock("@/features/profile/repositories/ProfileRepository", () => ({
@@ -51,7 +55,8 @@ describe("MembersService", () => {
 
   beforeEach(() => {
     mockCreateSupabaseServerClient.mockReset();
-    planRepositoryMocks.resolvePlanIdentity.mockReset();
+    planRepositoryMocks.fetchPlanIdentityById.mockReset();
+    planRepositoryMocks.fetchPlanIdentityBySlug.mockReset();
     profileRepositoryMocks.fetchProfileByUserId.mockReset();
     membersRepositoryMocks.fetchMembers.mockReset();
     membersRepositoryMocks.addMemberByEmail.mockReset();
@@ -74,7 +79,7 @@ describe("MembersService", () => {
   ])(
     "throws NOT_FOUND when %s cannot resolve the plan",
     async (_label: string, call: () => Promise<unknown>, message: string) => {
-      planRepositoryMocks.resolvePlanIdentity.mockResolvedValue(null);
+      planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue(null);
 
       await expect(call()).rejects.toMatchObject({ code: "NOT_FOUND", message });
     }
@@ -90,7 +95,7 @@ describe("MembersService", () => {
         avatarUrl: null,
       },
     ];
-    planRepositoryMocks.resolvePlanIdentity.mockResolvedValue({ id: "plan-1", ownerId: "owner-1" });
+    planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "plan-1", ownerId: "owner-1" });
     membersRepositoryMocks.fetchMembers.mockResolvedValue(members);
     profileRepositoryMocks.fetchProfileByUserId.mockResolvedValue({
       userId: "owner-1",
@@ -111,6 +116,19 @@ describe("MembersService", () => {
     expect(result.members).toHaveLength(2);
   });
 
+  it("resolves by id (UUID) instead of slug when the input is a UUID", async () => {
+    const planId = "123e4567-e89b-42d3-a456-426614174000";
+    planRepositoryMocks.fetchPlanIdentityById.mockResolvedValue({ id: planId, ownerId: "owner-1" });
+    planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "wrong-plan", ownerId: "owner-1" });
+    membersRepositoryMocks.fetchMembers.mockResolvedValue([]);
+
+    const result = await getMembers(planId);
+
+    expect(planRepositoryMocks.fetchPlanIdentityById).toHaveBeenCalledWith(planId);
+    expect(planRepositoryMocks.fetchPlanIdentityBySlug).not.toHaveBeenCalled();
+    expect(result.ownerId).toBe("owner-1");
+  });
+
   it("falls back to the first admin when the owner is missing", async () => {
     const members: ShareMember[] = [
       {
@@ -128,7 +146,7 @@ describe("MembersService", () => {
         avatarUrl: null,
       },
     ];
-    planRepositoryMocks.resolvePlanIdentity.mockResolvedValue({ id: "plan-1", ownerId: null });
+    planRepositoryMocks.fetchPlanIdentityBySlug.mockResolvedValue({ id: "plan-1", ownerId: null });
     membersRepositoryMocks.fetchMembers.mockResolvedValue(members);
 
     const result: ShareMembersData = await getMembers("plan-1");

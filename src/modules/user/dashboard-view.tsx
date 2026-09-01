@@ -1,6 +1,5 @@
 import { DemoGuideDialog } from "@/features/demo/components/DemoGuideDialog";
-import type { UserDestination } from "@/features/plan/lib/getUserDestinations";
-import type { UserPlannerSummary } from "@/features/plan/lib/getUserPlanners";
+import type { UserDestination, UserPlannerSummary } from "@/features/plan/repositories/PlanRepository";
 import { DashboardMap } from "@/modules/user/components/DashboardMap";
 import { InspirationsSection } from "@/modules/user/components/InspirationsSection";
 import { PlannersSection } from "@/modules/user/components/PlannersSection";

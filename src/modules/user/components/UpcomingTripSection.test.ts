@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { UserPlannerSummary } from "@/features/plan/lib/getUserPlanners";
+import type { UserPlannerSummary } from "@/features/plan/repositories/PlanRepository";
 import { getUpcomingPlan } from "./UpcomingTripSection";
 
 const plan: UserPlannerSummary = {

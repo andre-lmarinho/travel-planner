@@ -1,7 +1,7 @@
 import { differenceInCalendarDays, format, isValid, parseISO, startOfToday } from "date-fns";
 import Link from "next/link";
 
-import type { UserPlannerSummary } from "@/features/plan/lib/getUserPlanners";
+import type { UserPlannerSummary } from "@/features/plan/repositories/PlanRepository";
 import { DEFAULT_PLAN_COVER_IMAGE } from "@/features/search/config";
 
 import styles from "./UpcomingTripSection.module.css";
