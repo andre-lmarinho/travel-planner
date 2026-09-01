@@ -1,10 +1,10 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import * as BudgetService from "../services/BudgetService.actions";
-import type { BudgetQueryResult, CategoryKey, Entry } from "../types";
+import { trpc } from "@/trpc/react";
+
+import type { CategoryKey, Entry } from "../types";
 
 export function useBudget(
   planId: string,
@@ -25,31 +25,24 @@ export function useBudget(
 
   const initialBudgetRef = useRef(0);
   const [persistError, setPersistError] = useState<string | null>(null);
-  const qc = useQueryClient();
+  const utils = trpc.useUtils();
 
   // persistence follows edit access: a read-only viewer never fetches or writes, and renders
   // the initialEntries/initialBudget passed in from the snapshot.
   const persistEnabled = canEdit && Boolean(planId);
-  const queryKey = ["budget", planId] as const;
-
-  const budgetQuery = useQuery<BudgetQueryResult, Error, BudgetQueryResult, typeof queryKey>({
-    queryKey,
-    enabled: persistEnabled,
-    queryFn: async () => BudgetService.getPlanBudget(planId),
-  });
+  const budgetQuery = trpc.budget.get.useQuery({ planId }, { enabled: persistEnabled });
   const loaded = budgetQuery.data;
   const hasLoaded = !persistEnabled || budgetQuery.isSuccess;
 
-  const saveBudgetMutation = useMutation({
-    mutationFn: async (newBudget: number) => BudgetService.updatePlanBudget(planId, newBudget),
-    onSuccess: (b: number) => {
-      initialBudgetRef.current = b;
-      qc.setQueryData<BudgetQueryResult>(queryKey, (prev) =>
-        prev ? { ...prev, budget: b } : { budget: b, entries: [] }
+  const saveBudgetMutation = trpc.budget.updatePlan.useMutation({
+    onSuccess: (budget) => {
+      initialBudgetRef.current = budget;
+      utils.budget.get.setData({ planId }, (previous) =>
+        previous ? { ...previous, budget } : { budget, entries: [] }
       );
     },
-    onError: (_error, newBudget) =>
-      setPersistError(`Failed to update budget: planId=${planId} value=${newBudget}`),
+    onError: (_error, input) =>
+      setPersistError(`Failed to update budget: planId=${planId} value=${input.budget}`),
   });
   const saveBudget = saveBudgetMutation.mutate;
   const setBudget = (value: number) => {
@@ -58,7 +51,7 @@ export function useBudget(
     if (!budgetQuery.isSuccess) return;
     if (value === initialBudgetRef.current) return;
     setPersistError(null);
-    saveBudget(value);
+    saveBudget({ planId, budget: value });
   };
 
   useEffect(() => {
@@ -95,14 +88,12 @@ export function useBudget(
     [categoryTotals]
   );
 
-  const addEntryMutation = useMutation({
-    mutationFn: async (payload: { description: string; category: CategoryKey; amount: number }) => {
-      const id = await BudgetService.createBudgetEntry(planId, payload);
-      qc.invalidateQueries({ queryKey });
-      return id;
+  const addEntryMutation = trpc.budget.createEntry.useMutation({
+    onSuccess: () => {
+      utils.budget.get.invalidate({ planId });
     },
-    onError: (_error, payload) =>
-      setPersistError(`Failed to create budget entry: planId=${planId} category=${payload.category}`),
+    onError: (_error, input) =>
+      setPersistError(`Failed to create budget entry: planId=${planId} category=${input.payload.category}`),
   });
   const addEntryMut = addEntryMutation.mutateAsync;
 
@@ -113,9 +104,8 @@ export function useBudget(
     if (persistEnabled) {
       try {
         const newId = await addEntryMut({
-          description: desc,
-          category: cat,
-          amount,
+          planId,
+          payload: { description: desc, category: cat, amount },
         });
         setEntries((prev) => [...prev, { id: newId, description: desc, category: cat, amount }]);
       } catch {
@@ -129,13 +119,12 @@ export function useBudget(
     setAmount(0);
   };
 
-  const updateEntryMutation = useMutation({
-    mutationFn: async (updated: Entry) => {
-      await BudgetService.updateBudgetEntry(updated);
-      qc.invalidateQueries({ queryKey });
+  const updateEntryMutation = trpc.budget.updateEntry.useMutation({
+    onSuccess: () => {
+      utils.budget.get.invalidate({ planId });
     },
-    onError: (_error, updated) =>
-      setPersistError(`Failed to update budget entry: planId=${planId} entryId=${updated.id}`),
+    onError: (_error, input) =>
+      setPersistError(`Failed to update budget entry: planId=${planId} entryId=${input.entry.id}`),
   });
   const updateEntryMut = updateEntryMutation.mutateAsync;
 
@@ -150,18 +139,18 @@ export function useBudget(
     });
     if (!persistEnabled) return;
     try {
-      await updateEntryMut(updated);
+      await updateEntryMut({ entry: updated });
     } catch {
       setEntries(previousEntries);
     }
   };
 
-  const deleteEntryMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await BudgetService.deleteBudgetEntry(id);
-      qc.invalidateQueries({ queryKey });
+  const deleteEntryMutation = trpc.budget.deleteEntry.useMutation({
+    onSuccess: () => {
+      utils.budget.get.invalidate({ planId });
     },
-    onError: (_error, id) => setPersistError(`Failed to delete budget entry: planId=${planId} entryId=${id}`),
+    onError: (_error, input) =>
+      setPersistError(`Failed to delete budget entry: planId=${planId} entryId=${input.entryId}`),
   });
   const deleteEntryMut = deleteEntryMutation.mutateAsync;
 
@@ -173,7 +162,7 @@ export function useBudget(
     setEntries((prev) => prev.filter((_, i) => i !== index));
     if (!persistEnabled) return;
     try {
-      await deleteEntryMut(entry.id);
+      await deleteEntryMut({ entryId: entry.id });
     } catch {
       setEntries(previousEntries);
     }
