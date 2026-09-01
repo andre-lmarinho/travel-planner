@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 async function handleLocalDetails(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const placeId = searchParams.get("placeId");
+  const placeId = searchParams.get("placeId")?.trim();
   if (!placeId) {
     return NextResponse.json({ error: "Place ID is required." }, { status: 400 });
   }
@@ -19,7 +19,7 @@ async function handleLocalDetails(req: NextRequest) {
     const wikidataImageUrl = details.wikidataId ? await fetchWikidataImage(details.wikidataId) : undefined;
     return NextResponse.json({ details, wikidataImageUrl });
   } catch (error) {
-    console.error("place details failed:", { placeId }, error);
+    console.error("place details failed:", { hasPlaceId: Boolean(placeId) }, error);
     return NextResponse.json({ error: "Failed to load place details." }, { status: 500 });
   }
 }

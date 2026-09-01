@@ -39,6 +39,13 @@ describe("GET /api/places/city-country", () => {
     });
   });
 
+  it("rejects whitespace-only text", async () => {
+    const res = await GET(createRequest("?text=%20%20%20"));
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toEqual({ error: "Query is required." });
+  });
+
   it("proxies Geoapify autocomplete results and parses coordinates", async () => {
     const results = [{ id: "1", formatted: "Paris, France" }];
     mockFetchGeoapifyAutocomplete.mockResolvedValue(results);
@@ -50,6 +57,14 @@ describe("GET /api/places/city-country", () => {
     await expect(res.json()).resolves.toEqual({ results });
   });
 
+  it("ignores invalid coordinates", async () => {
+    mockFetchGeoapifyAutocomplete.mockResolvedValue([]);
+
+    await GET(createRequest("?text=paris&lat=not-a-number&lon=Infinity"));
+
+    expect(mockFetchGeoapifyAutocomplete).toHaveBeenCalledWith("paris", undefined, undefined);
+  });
+
   it("logs the error and returns 500 when Geoapify fails", async () => {
     const error = new Error("network failed");
     mockFetchGeoapifyAutocomplete.mockRejectedValue(error);
@@ -59,7 +74,7 @@ describe("GET /api/places/city-country", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       "city-country autocomplete failed:",
-      { text: "paris", lat: null, lon: null },
+      { hasCoordinates: false },
       error
     );
     expect(res.status).toBe(500);

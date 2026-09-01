@@ -9,9 +9,12 @@ const { mockValidateGeoapifyQuery, mockFetchGeoapifyAddressAutocomplete } = vi.h
   mockFetchGeoapifyAddressAutocomplete: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/server/geoapify/validateQuery", () => ({
-  validateGeoapifyQuery: mockValidateGeoapifyQuery,
-}));
+vi.mock("@/shared/lib/server/geoapify/validateQuery", async () => {
+  const actual = await vi.importActual<typeof import("@/shared/lib/server/geoapify/validateQuery")>(
+    "@/shared/lib/server/geoapify/validateQuery"
+  );
+  return { ...actual, validateGeoapifyQuery: mockValidateGeoapifyQuery };
+});
 
 vi.mock("@/features/search/services/GeoapifyService", () => ({
   fetchGeoapifyAddressAutocomplete: mockFetchGeoapifyAddressAutocomplete,
@@ -60,7 +63,7 @@ describe("GET /api/places/address", () => {
 
     expect(consoleSpy).toHaveBeenCalledWith(
       "address autocomplete failed:",
-      { text: "home", lat: null, lon: null },
+      { hasCoordinates: false },
       failure
     );
     expect(res.status).toBe(500);
