@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
+import type { BudgetRowInputsResult, CategoryKey, Entry } from "@/features/budget/types";
+import { CATEGORIES } from "@/features/budget/types";
 import { Check, Pencil, Plus, Trash2, X } from "@/ui/components/icon";
-import { useBudgetContext } from "../hooks/BudgetContext";
-import { normalizeAmount } from "../lib/normalizeAmount";
-import type { BudgetRowInputsResult, CategoryKey, Entry } from "../types";
-import { CATEGORIES } from "../types";
-import { AmountDisplay } from "../ui/AmountDisplay";
+import { AmountDisplay } from "./AmountDisplay";
 
 const isValidCategoryKey = (value: string): value is CategoryKey =>
   CATEGORIES.some(({ key }) => key === value);
@@ -35,7 +32,7 @@ function BudgetRowInputs({ description, category, amount }: BudgetRowInputsResul
           placeholder={description.placeholder}
           onChange={(event) => description.onChange(event.target.value)}
           aria-label={description.ariaLabel ?? "Description"}
-          className="focus:ring-primary w-full rounded border px-2 py-1 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1"
         />
       </td>
       <td className="p-2">
@@ -51,7 +48,7 @@ function BudgetRowInputs({ description, category, amount }: BudgetRowInputsResul
             if (isValidCategoryKey(value)) category.onChange(value);
           }}
           aria-label={category.ariaLabel ?? "Category"}
-          className="focus:ring-primary w-full rounded border px-2 py-1 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1">
           {CATEGORIES.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
@@ -77,22 +74,34 @@ function BudgetRowInputs({ description, category, amount }: BudgetRowInputsResul
   );
 }
 
-export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
-  const {
-    entries,
-    amount,
-    handleAdd,
-    handleDeleteEntry,
-    handleUpdateEntry,
-    desc,
-    setDesc,
-    cat,
-    setCat,
-    setAmount,
-  } = useBudgetContext();
+export function ExpenseTable({
+  entries,
+  amount,
+  desc,
+  cat,
+  canEdit = true,
+  onAdd,
+  onDelete,
+  onUpdate,
+  onDescriptionChange,
+  onCategoryChange,
+  onAmountChange,
+}: {
+  entries: Entry[];
+  amount: number;
+  desc: string;
+  cat: CategoryKey;
+  canEdit?: boolean;
+  onAdd: () => Promise<void>;
+  onDelete: (index: number) => Promise<void>;
+  onUpdate: (index: number, entry: Entry) => Promise<void>;
+  onDescriptionChange: (value: string) => void;
+  onCategoryChange: (value: CategoryKey) => void;
+  onAmountChange: (value: number) => void;
+}) {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editEntry, setEditEntry] = useState<Entry | null>(null);
-  const [amountInput, setAmountInput] = useState(amount ? String(amount) : "");
+  const [amountInput, onAmountChangeInput] = useState(amount ? String(amount) : "");
   const [editAmountInput, setEditAmountInput] = useState("");
 
   const startEdit = (index: number) => {
@@ -108,7 +117,7 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
   };
 
   const saveEdit = (index: number, entry: Entry) => {
-    handleUpdateEntry(index, entry);
+    onUpdate(index, entry);
     cancelEdit();
   };
 
@@ -119,7 +128,7 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
       const editId = `edit-${index}`;
 
       return (
-        <tr key={entry.id} className="border-t">
+        <tr key={entry.id} className="border-border">
           <BudgetRowInputs
             description={{
               id: `description-${editId}`,
@@ -137,27 +146,29 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
               value: editAmountInput,
               onValueChange: (value) => setEditAmountInput(String(value)),
               onBlur: () => {
-                const normalized = normalizeAmount(editAmountInput);
+                const normalized = Number(editAmountInput) || 0;
                 setEditEntry((prev) => (prev ? { ...prev, amount: normalized } : prev));
                 setEditAmountInput(normalized ? String(normalized) : "0");
               },
             }}
           />
-          <td className="flex justify-end gap-2 p-2 text-right">
-            <button
-              type="button"
-              onClick={() => saveEdit(index, editEntry)}
-              aria-label="Save entry"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-              <Check className="size-4" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={cancelEdit}
-              aria-label="Cancel edit"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-              <X className="size-4" aria-hidden="true" />
-            </button>
+          <td className="p-2 text-right">
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => saveEdit(index, editEntry)}
+                aria-label="Save entry"
+                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+                <Check className="size-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                aria-label="Cancel edit"
+                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+                <X className="size-4" aria-hidden="true" />
+              </button>
+            </div>
           </td>
         </tr>
       );
@@ -167,33 +178,40 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
     const categoryLabel = CATEGORIES.find((c) => c.key === entry.category)?.label ?? "Unknown";
 
     return (
-      <tr key={entry.id} className="border-t">
+      <tr key={entry.id} className="border-border">
         <th scope="row" className="p-2 text-left font-medium">
           {entry.description}
         </th>
         <td className="p-2">{categoryLabel}</td>
         <td className="p-2 text-right">
-          <AmountDisplay value={entry.amount} variant="span" ariaLabel={`Amount: $${formattedAmount}`} />
+          <AmountDisplay
+            value={entry.amount}
+            variant="span"
+            compact
+            ariaLabel={`Amount: $${formattedAmount}`}
+          />
         </td>
-        <td className="flex justify-end gap-2 p-2 text-right">
-          <button
-            type="button"
-            onClick={() => startEdit(index)}
-            aria-label="Edit entry"
-            className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-            disabled={!canEdit}>
-            <Pencil className="size-4" aria-hidden="true" />
-          </button>
-          {canEdit && (
+        <td className="p-2 text-right">
+          <div className="flex justify-end gap-2">
             <button
               type="button"
-              onClick={() => handleDeleteEntry(index)}
-              aria-label="Delete entry"
+              onClick={() => startEdit(index)}
+              aria-label="Edit entry"
               className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               disabled={!canEdit}>
-              <Trash2 className="size-4" aria-hidden="true" />
+              <Pencil className="size-4" aria-hidden="true" />
             </button>
-          )}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => onDelete(index)}
+                aria-label="Delete entry"
+                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                disabled={!canEdit}>
+                <Trash2 className="size-4" aria-hidden="true" />
+              </button>
+            )}
+          </div>
         </td>
       </tr>
     );
@@ -205,57 +223,63 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
     const newId = "new-row";
 
     return (
-      <tr className="border-t">
+      <tr className="border-border">
         <BudgetRowInputs
           description={{
             id: `description-${newId}`,
             value: desc,
-            onChange: setDesc,
+            onChange: onDescriptionChange,
             placeholder: "Description",
           }}
           category={{
             id: `category-${newId}`,
             value: cat,
-            onChange: setCat,
+            onChange: onCategoryChange,
           }}
           amount={{
             id: `amount-${newId}`,
             value: amountInput,
             onValueChange: (value) => {
-              setAmountInput(String(value));
-              setAmount(value);
+              onAmountChangeInput(String(value));
+              onAmountChange(value);
             },
             onBlur: () => {
-              const normalized = normalizeAmount(amountInput);
-              setAmount(normalized);
-              setAmountInput(normalized ? String(normalized) : "0");
+              const normalized = Number(amountInput) || 0;
+              onAmountChange(normalized);
+              onAmountChangeInput(normalized ? String(normalized) : "0");
             },
             placeholder: "Amount",
           }}
         />
         <td className="p-2 text-right">
-          <button
-            type="button"
-            onClick={handleAdd}
-            aria-label="Add expense"
-            className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-            <Plus className="size-4" aria-hidden="true" />
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onAdd}
+              aria-label="Add expense"
+              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+              <Plus className="size-4" aria-hidden="true" />
+            </button>
+          </div>
         </td>
       </tr>
     );
   };
 
   return (
-    <section className="col-span-2 md:ml-12" aria-labelledby="expenses-heading">
-      <h2 id="expenses-heading" className="pb-2 font-semibold">
-        Expenses
-      </h2>
-      <table aria-labelledby="expense-table-caption" className="w-full rounded border text-sm">
+    <section className="min-w-0" aria-labelledby="expenses-heading">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 id="expenses-heading" className="font-semibold tracking-[-0.02em]">
+          Expenses
+        </h2>
+      </div>
+      <table
+        aria-labelledby="expense-table-caption"
+        className="w-full border-separate border-spacing-y-2 text-sm">
         <caption id="expense-table-caption" className="sr-only">
           Expenses table showing description, category, amount, and actions
         </caption>
-        <thead className="bg-card">
+        <thead className="text-muted-foreground text-xs uppercase tracking-wide">
           <tr>
             <th scope="col" className="p-2 text-left font-normal">
               Description
@@ -271,7 +295,7 @@ export function ExpenseTable({ canEdit = true }: { canEdit?: boolean }) {
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="[&>tr]:rounded-xl [&>tr]:border [&>tr]:bg-background [&>tr]:shadow-sm">
           {entries.map(renderRow)}
           {renderNewRow()}
         </tbody>

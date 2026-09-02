@@ -26,8 +26,11 @@ export function PlanIdView({ experience }: PlanIdViewProps) {
       initialDays={experience.initialDays}
       planId={experience.planId}
       dest={experience.destination}
-      title={experience.title ?? experience.destination}
-      initialBudget={experience.initialBudget}
+      title={
+        experience.title?.trim() && experience.title.trim() !== experience.slug?.trim()
+          ? experience.title
+          : experience.destination
+      }
       initialEntries={experience.initialEntries}
       canEdit={experience.canEdit}
       isDemo={experience.isDemo}

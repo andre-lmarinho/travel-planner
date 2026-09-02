@@ -28,8 +28,8 @@ vi.mock("@/features/activity/components/dnd/PlannerBoard", () => ({
   PlannerBoard: () => <div data-testid="planner-board" />,
 }));
 
-vi.mock("@/features/budget/BudgetBoard", () => ({
-  BudgetBoard: () => <div data-testid="budget-board" />,
+vi.mock("@/modules/planner/views/BudgetView/BudgetView", () => ({
+  BudgetView: () => <div data-testid="budget-board" />,
 }));
 
 vi.mock("@/features/mapBoard/MapBoard", () => ({

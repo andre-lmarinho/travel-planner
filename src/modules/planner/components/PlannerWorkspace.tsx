@@ -7,11 +7,11 @@ import { useCallback, useEffect, useState } from "react";
 import type { DayPlan } from "@/features/activity/types";
 import { ActivityBoard } from "@/features/activityBoard/components/ActivityBoard";
 import { ActivityDialog } from "@/features/activityDialog/components/ActivityDialog";
-import { BudgetBoard } from "@/features/budget/components/BudgetBoard";
 import type { Entry } from "@/features/budget/types";
 import { SharePlannerDialog } from "@/features/members/SharePlannerDialog";
 import { DeletePlanDialog } from "@/features/plan/components/DeletePlanDialog";
 import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
+import { BudgetView } from "@/modules/planner/views/BudgetView/BudgetView";
 import { trpc } from "@/trpc/react";
 import { DateRangePickerIcon } from "@/ui/components/calendar";
 
@@ -34,7 +34,6 @@ export interface PlannerWorkspaceProps {
   isOwner?: boolean;
   canManageMembers?: boolean;
   isPublic?: boolean;
-  initialBudget?: number;
   initialEntries?: Entry[];
 }
 
@@ -42,7 +41,6 @@ type PlannerWorkspaceContentProps = {
   title: string;
   canEdit: boolean;
   isDemo: boolean;
-  initialBudget?: number;
   initialEntries?: Entry[];
 };
 
@@ -50,7 +48,6 @@ function PlannerWorkspaceContent({
   title: initialTitle,
   canEdit,
   isDemo,
-  initialBudget,
   initialEntries,
 }: PlannerWorkspaceContentProps) {
   const [mode, setMode] = useState<PlannerMode>("overview");
@@ -180,7 +177,7 @@ function PlannerWorkspaceContent({
           </div>
         ) : (
           <div className="absolute inset-0">
-            <BudgetBoard initialBudget={initialBudget} initialEntries={initialEntries} canEdit={canEdit} />
+            <BudgetView initialEntries={initialEntries} canEdit={canEdit} />
           </div>
         )}
       </div>
@@ -221,7 +218,6 @@ export function PlannerWorkspace({
   isOwner = false,
   canManageMembers = false,
   isPublic = false,
-  initialBudget,
   initialEntries,
 }: PlannerWorkspaceProps) {
   return (
@@ -238,7 +234,6 @@ export function PlannerWorkspace({
         title={title}
         canEdit={canEdit}
         isDemo={isDemo}
-        initialBudget={initialBudget}
         initialEntries={initialEntries}
       />
     </PlannerProvider>
