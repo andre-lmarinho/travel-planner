@@ -2,11 +2,9 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 
-import type { Activity } from "@/features/activity/types";
 import { AddActivity } from "@/features/activityDialog/components/AddActivity";
-import { InlineActivity } from "@/features/activityDialog/components/InlineActivity";
 import { cn } from "@/ui/utils/cn";
 
 import type { DayColumnProps } from "../types";
@@ -15,9 +13,9 @@ import { DraggableCard } from "./DraggableCard";
 
 export const DayColumn = memo(function DayColumn({
   day,
+  dayNumber,
   canEdit = true,
   onActivitySelect,
-  onAddActivity,
   onFallbackAdd,
 }: DayColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
@@ -26,7 +24,6 @@ export const DayColumn = memo(function DayColumn({
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeInlineIndex, setActiveInlineIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (day.activities.length <= 1) {
@@ -36,68 +33,44 @@ export const DayColumn = memo(function DayColumn({
 
   const activityIds = useMemo(() => day.activities.map((a) => a.id), [day.activities]);
 
-  const handleOpenInline = useCallback((index: number) => {
-    setActiveInlineIndex(index);
-  }, []);
-
-  const handleCloseInline = useCallback(() => {
-    setActiveInlineIndex(null);
-  }, []);
-
-  const handleAdvanceInline = useCallback((nextIndex: number) => {
-    setActiveInlineIndex(nextIndex);
-  }, []);
-
-  const handleInlineSubmit = useCallback(
-    async (title: string, suggestion?: Partial<Activity>): Promise<Activity | null> => {
-      if (!onAddActivity) return null;
-      const currentIndex = activeInlineIndex ?? day.activities.length;
-      const activity = await onAddActivity(day.id, title, currentIndex, suggestion);
-      return activity;
-    },
-    [day.id, day.activities.length, activeInlineIndex, onAddActivity]
-  );
-
   return (
     <section
       ref={canEdit ? setNodeRef : undefined}
-      className={cn("flex h-full flex-1 flex-col", isOver && canEdit && "ring-primary/40 ring-2")}>
-      {/* Header */}
-      <div className="text-muted-foreground flex px-3 pt-2">
-        <h2 className="text-sm font-semibold">{day.label}</h2>
+      className={cn(
+        "bg-card flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-sm transition-shadow motion-reduce:transition-none",
+        isOver && canEdit && "ring-primary/40 shadow-md ring-2"
+      )}>
+      <div className="flex items-center justify-between gap-3 border-b px-3 py-3">
+        <div className="flex min-w-0 items-center gap-2">
+          {dayNumber ? (
+            <span className="bg-primary text-primary-foreground inline-flex size-7 shrink-0 items-center justify-center rounded-lg text-xs font-semibold tabular-nums">
+              {dayNumber}
+            </span>
+          ) : null}
+          <div className="min-w-0">
+            <h2 className="truncate text-sm font-semibold">{day.label}</h2>
+            <p className="text-muted-foreground mt-0.5 text-xs">
+              {day.activities.length} {day.activities.length === 1 ? "activity" : "activities"}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Activities */}
-      <div ref={scrollRef} data-testid="day-scroll" className="overflow-x-hidden overflow-y-auto pt-2">
+      <div
+        ref={scrollRef}
+        data-testid="day-scroll"
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto space-y-3 px-2 py-2 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
         {canEdit ? (
           <SortableContext id={day.id} items={activityIds} strategy={verticalListSortingStrategy}>
-            {day.activities.map((activity, idx) => (
-              <React.Fragment key={activity.id}>
-                {activeInlineIndex === idx ? (
-                  <InlineActivity
-                    dayId={day.id}
-                    insertIndex={idx}
-                    onSubmit={handleInlineSubmit}
-                    onClose={handleCloseInline}
-                    onAdvanceInline={handleAdvanceInline}
-                    className="my-2"
-                  />
-                ) : (
-                  <AddActivity
-                    placement="between"
-                    dayId={day.id}
-                    insertIndex={idx}
-                    onInlineOpen={handleOpenInline}
-                    onFallbackAdd={onFallbackAdd}
-                  />
-                )}
-                <DraggableCard
-                  id={activity.id}
-                  activity={activity}
-                  onSelect={() => onActivitySelect?.(activity, day.id)}
-                  bgColor={activity.color}
-                />
-              </React.Fragment>
+            {day.activities.map((activity) => (
+              <DraggableCard
+                key={activity.id}
+                id={activity.id}
+                activity={activity}
+                onSelect={() => onActivitySelect?.(activity, day.id)}
+                bgColor={activity.color}
+              />
             ))}
           </SortableContext>
         ) : (
@@ -109,29 +82,11 @@ export const DayColumn = memo(function DayColumn({
         )}
       </div>
 
-      {/* Add button at bottom */}
-      {canEdit && (
-        <div className="py-2">
-          {activeInlineIndex === day.activities.length ? (
-            <InlineActivity
-              dayId={day.id}
-              insertIndex={day.activities.length}
-              onSubmit={handleInlineSubmit}
-              onClose={handleCloseInline}
-              onAdvanceInline={handleAdvanceInline}
-            />
-          ) : (
-            <AddActivity
-              dayId={day.id}
-              insertIndex={day.activities.length}
-              onInlineOpen={handleOpenInline}
-              onFallbackAdd={onFallbackAdd}
-              isInlineOpen={activeInlineIndex === day.activities.length}
-              isHidden={activeInlineIndex !== null}
-            />
-          )}
+      {canEdit ? (
+        <div className="border-t px-2 py-2">
+          <AddActivity dayId={day.id} insertIndex={day.activities.length} onAddActivity={onFallbackAdd} />
         </div>
-      )}
+      ) : null}
     </section>
   );
 });

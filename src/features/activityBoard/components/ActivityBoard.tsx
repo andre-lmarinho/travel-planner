@@ -23,7 +23,6 @@ export const ActivityBoard = memo(function Board({
   canEdit = true,
   onActivitySelect,
   onDaysChange,
-  onAddActivity,
   onFallbackAdd,
 }: BoardProps) {
   const [draftDays, setDraftDays] = useState(days);
@@ -95,14 +94,14 @@ export const ActivityBoard = memo(function Board({
         ref={boardRef}
         aria-label="Days"
         onMouseDown={handleMouseDown}
-        className="bg-background m-0 flex h-full flex-1 list-none gap-4 overflow-x-auto overflow-y-hidden rounded-xl border p-4 select-none cursor-default">
-        {draftDays.map((day) => (
-          <li key={day.id} className="w-58 shrink-0">
+        className="bg-background m-0 flex h-full flex-1 list-none gap-3 overflow-x-auto overflow-y-hidden rounded-2xl border p-2 select-none cursor-default md:gap-4 md:p-4">
+        {draftDays.map((day, dayIndex) => (
+          <li key={day.id} className="w-[min(82vw,20rem)] shrink-0 md:w-72 lg:w-80">
             <DayColumn
               day={day}
+              dayNumber={dayIndex + 1}
               canEdit={canEdit}
               onActivitySelect={onActivitySelect}
-              onAddActivity={onAddActivity}
               onFallbackAdd={onFallbackAdd}
             />
           </li>

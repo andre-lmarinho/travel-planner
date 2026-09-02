@@ -12,16 +12,10 @@ export interface DragState {
 export interface BoardCallbacks {
   onActivitySelect?: (activity: Activity, dayId: string) => void;
   onDaysChange?: (days: DayPlan[]) => void;
-  onAddActivity?: (
-    dayId: string,
-    title: string,
-    index: number,
-    suggestion?: Partial<Activity>
-  ) => Promise<Activity | null>;
   onFallbackAdd?: (dayId: string, index: number) => void;
 }
 
-/** Props for the Board component */
+/** Props for the board component */
 export interface BoardProps extends BoardCallbacks {
   days: DayPlan[];
   canEdit?: boolean;
@@ -30,13 +24,8 @@ export interface BoardProps extends BoardCallbacks {
 /** Props for a day column */
 export interface DayColumnProps {
   day: DayPlan;
+  dayNumber?: number;
   canEdit?: boolean;
   onActivitySelect?: (activity: Activity, dayId: string) => void;
-  onAddActivity?: (
-    dayId: string,
-    title: string,
-    index: number,
-    suggestion?: Partial<Activity>
-  ) => Promise<Activity | null>;
   onFallbackAdd?: (dayId: string, index: number) => void;
 }

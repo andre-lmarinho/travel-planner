@@ -18,7 +18,7 @@ import { DateRangePickerIcon } from "@/ui/components/calendar";
 
 import type { PlannerMode } from "./components/ModeToggleButton";
 import { ModeToggleButton } from "./components/ModeToggleButton";
-import { TripView } from "./views/TripView/TripView";
+import { TripView } from "./views/TripView";
 
 const MapView = dynamic(() => import("@/modules/planner/views/MapView/MapView"), {
   ssr: false,
@@ -149,7 +149,6 @@ function PlannerContent({
               canEdit={canEdit}
               onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
               onDaysChange={setDays}
-              onAddActivity={addActivityWithTitle}
               onFallbackAdd={handleFallbackAdd}
             />
           </div>

@@ -12,7 +12,6 @@ const shared = vi.hoisted(() => ({
   draggableCardSpy: vi.fn(),
   activityCardSpy: vi.fn(),
   addActivitySpy: vi.fn(),
-  inlineActivitySpy: vi.fn(),
   setNodeRef: vi.fn(),
 }));
 
@@ -30,13 +29,6 @@ vi.mock("@/features/activityDialog/components/AddActivity", () => ({
   AddActivity: (props: { dayId: string; insertIndex: number }) => {
     shared.addActivitySpy(props);
     return <div data-testid={`add-${props.insertIndex}`} />;
-  },
-}));
-
-vi.mock("@/features/activityDialog/components/InlineActivity", () => ({
-  InlineActivity: (props: { dayId: string; insertIndex: number }) => {
-    shared.inlineActivitySpy(props);
-    return <div data-testid={`inline-${props.insertIndex}`} />;
   },
 }));
 
@@ -77,7 +69,6 @@ describe("DayColumn", () => {
     shared.draggableCardSpy.mockClear();
     shared.activityCardSpy.mockClear();
     shared.addActivitySpy.mockClear();
-    shared.inlineActivitySpy.mockClear();
     shared.setNodeRef.mockClear();
   });
 

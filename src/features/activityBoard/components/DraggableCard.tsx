@@ -34,7 +34,7 @@ export const DraggableCard = memo(function DraggableCard({
     return (
       <div
         className={cn(
-          "bg-background pointer-events-none origin-bottom rotate-3 cursor-grabbing rounded-lg opacity-90 backdrop-blur-md transition-transform duration-200 ease-out",
+          "bg-background pointer-events-none origin-bottom rotate-2 cursor-grabbing rounded-xl border shadow-lg opacity-95 backdrop-blur-md",
           className
         )}>
         <ActivityCard activity={activity} onSelect={onSelect} bgColor={bgColor} />
@@ -52,7 +52,7 @@ export const DraggableCard = memo(function DraggableCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative touch-none list-none",
+        "relative touch-none list-none transition-opacity duration-200",
         isDragging ? "cursor-grabbing" : "cursor-grab",
         className
       )}
@@ -63,7 +63,7 @@ export const DraggableCard = memo(function DraggableCard({
         <ActivityCard activity={activity} onSelect={onSelect} bgColor={bgColor} />
       </div>
       {isDragging && (
-        <div className="bg-background border-border absolute inset-0 rounded-lg border-2 border-dashed" />
+        <div className="bg-primary/5 border-primary/50 absolute inset-0 rounded-xl border-2 border-dashed" />
       )}
     </div>
   );

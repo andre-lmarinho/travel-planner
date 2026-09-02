@@ -18,7 +18,7 @@ export function getDefaultColor(property: "bg" | "border" = "bg"): string {
   return ACTIVITY_COLORS[DEFAULT_COLOR_INDEX]?.[property] ?? ACTIVITY_COLORS[0]?.[property] ?? "";
 }
 
-export const EMPTY_ACTIVITY_TITLE = "✍️ Add a title";
+export const EMPTY_ACTIVITY_TITLE = "Add a title";
 
 /** UI text constants */
 export const ACTIVITY_TEXT = {
