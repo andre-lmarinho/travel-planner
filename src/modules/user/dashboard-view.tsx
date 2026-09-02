@@ -32,8 +32,8 @@ export function DashboardView({ displayName, plans, destinations, isDemo = false
   const upcomingPlan = getUpcomingPlan(plans);
 
   return (
-    <>
-      <main id="main-content" className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
+    <main id="main-content" className="bg-card min-h-[calc(100dvh-4rem)] w-full">
+      <div className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
         <section className="space-y-1">
           <h1 className="text-foreground text-2xl font-semibold tracking-tight">{greeting}</h1>
           <p className="text-muted-foreground text-sm">{stats}</p>
@@ -53,8 +53,8 @@ export function DashboardView({ displayName, plans, destinations, isDemo = false
 
         <PlannersSection plans={plans} />
         <InspirationsSection excludePlanIds={plans.map((plan) => plan.id)} />
-      </main>
-      <DemoGuideDialog isDemo={isDemo} />
-    </>
+        <DemoGuideDialog isDemo={isDemo} />
+      </div>
+    </main>
   );
 }
