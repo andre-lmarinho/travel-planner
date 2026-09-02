@@ -16,8 +16,8 @@ Resolve authentication in the page or Server Component that renders private data
 ```tsx
 // app/admin/layout.tsx - DON'T DO THIS
 export default async function AdminLayout({ children }) {
-  const session = await getUserSession();
-  if (!session?.user.role === "admin") {
+  const viewer = await getViewer();
+  if (!viewer) {
     redirect("/");
   }
   return <div>{children}</div>;
@@ -29,17 +29,18 @@ export default async function AdminLayout({ children }) {
 ```tsx
 // app/admin/page.tsx
 import { redirect } from "next/navigation";
-import { getUserSession } from "@/lib/auth";
+import { getViewer } from "@/features/auth/lib/session";
 
 export default async function AdminPage() {
-  const session = await getUserSession();
+  const viewer = await getViewer();
 
-  if (!session || session.user.role !== "admin") {
+  if (!viewer) {
     redirect("/"); // Or show an error
   }
 
-  // Protected content here
-  return <div>Welcome, Admin!</div>;
+  // Use a Service for resource membership and role checks.
+  // The authenticated Viewer exposes fields such as `id` and `email`.
+  return <div>Protected content for {viewer.email ?? viewer.id}</div>;
 }
 ```
 
