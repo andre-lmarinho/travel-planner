@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -74,17 +75,17 @@ export function AvatarMenu({ displayName, email, slug }: AvatarMenuProps) {
           </div>
 
           <div className="text-muted-foreground/70 mt-1 flex items-center justify-center gap-2 border-t pt-2 text-[11px]">
-            <a
+            <Link
               href="/privacy"
               className="hover:text-muted-foreground focus-visible:text-foreground underline-offset-2 hover:underline">
               Privacy
-            </a>
+            </Link>
             <span aria-hidden="true">·</span>
-            <a
+            <Link
               href="/terms"
               className="hover:text-muted-foreground focus-visible:text-foreground underline-offset-2 hover:underline">
               Terms of use
-            </a>
+            </Link>
           </div>
         </PopoverContent>
       </Popover>

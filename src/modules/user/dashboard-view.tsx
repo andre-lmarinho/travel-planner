@@ -1,44 +1,59 @@
 import { DemoGuideDialog } from "@/features/demo/components/DemoGuideDialog";
 import type { UserDestination, UserPlannerSummary } from "@/features/plan/repositories/PlanRepository";
 import { DashboardMap } from "@/modules/user/components/DashboardMap";
-import { InspirationsSection } from "@/modules/user/components/InspirationsSection";
+import type { TravelCountry } from "@/modules/user/components/DestinationsMap";
 import { PlannersSection } from "@/modules/user/components/PlannersSection";
 import { getUpcomingPlan, UpcomingTripSection } from "@/modules/user/components/UpcomingTripSection";
 import { MapPin } from "@/ui/components/icon";
 
 interface DashboardViewProps {
-  displayName: string | null;
   plans: UserPlannerSummary[];
   destinations: UserDestination[];
   isDemo?: boolean;
 }
 
-export function DashboardView({ displayName, plans, destinations, isDemo = false }: DashboardViewProps) {
-  const greeting = displayName ? `${displayName}'s travels` : "Your travels";
+function buildCountrySummaries(destinations: UserDestination[]): TravelCountry[] {
+  const summaries = new Map<
+    string,
+    {
+      tripIds: Set<string>;
+      locationCount: number;
+      trips: Map<string, { id: string; title: string }>;
+    }
+  >();
 
-  // Destinations are already deduped by city name; countries dedupe here.
-  const cityCount = destinations.length;
-  const countryCount = new Set(destinations.map((destination) => destination.country).filter(Boolean)).size;
-  const stats = [
-    `${cityCount} ${cityCount === 1 ? "city" : "cities"}`,
-    `${countryCount} ${countryCount === 1 ? "country" : "countries"}`,
-  ].join(" · ");
+  for (const destination of destinations) {
+    const code = destination.country?.trim();
+    if (!code) continue;
 
-  const pins = destinations.flatMap((destination) =>
-    destination.lat != null && destination.lng != null
-      ? [{ name: destination.name, lat: destination.lat, lng: destination.lng }]
-      : []
-  );
+    const key = code.toLocaleLowerCase();
+    const summary = summaries.get(key) ?? {
+      tripIds: new Set<string>(),
+      locationCount: 0,
+      trips: new Map<string, { id: string; title: string }>(),
+    };
+
+    summary.tripIds.add(destination.planId);
+    summary.locationCount += destination.activityCount;
+    summary.trips.set(destination.planId, { id: destination.planId, title: destination.planTitle });
+    summaries.set(key, summary);
+  }
+
+  return Array.from(summaries, ([code, summary]) => ({
+    code,
+    tripCount: summary.tripIds.size,
+    locationCount: summary.locationCount,
+    trips: Array.from(summary.trips.values()),
+  }));
+}
+
+export function DashboardView({ plans, destinations, isDemo = false }: DashboardViewProps) {
+  const countries = buildCountrySummaries(destinations);
   const upcomingPlan = getUpcomingPlan(plans);
 
   return (
     <main id="main-content" className="bg-card min-h-[calc(100dvh-4rem)] w-full">
       <div className="mx-auto w-full max-w-7xl space-y-10 px-4 py-8 md:px-8">
-        <section className="space-y-1">
-          <h1 className="text-foreground text-2xl font-semibold tracking-tight">{greeting}</h1>
-          <p className="text-muted-foreground text-sm">{stats}</p>
-        </section>
-
         {upcomingPlan ? <UpcomingTripSection plan={upcomingPlan} /> : null}
 
         <section aria-labelledby="map-heading" className="space-y-3">
@@ -48,11 +63,10 @@ export function DashboardView({ displayName, plans, destinations, isDemo = false
               Your travel map
             </h2>
           </div>
-          <DashboardMap pins={pins} />
+          <DashboardMap countries={countries} />
         </section>
 
         <PlannersSection plans={plans} />
-        <InspirationsSection excludePlanIds={plans.map((plan) => plan.id)} />
         <DemoGuideDialog isDemo={isDemo} />
       </div>
     </main>

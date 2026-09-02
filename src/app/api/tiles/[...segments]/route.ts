@@ -1,6 +1,6 @@
 import "server-only";
 
-const ALLOWED = new Set(["osm-bright", "osm-bright-grey", "osm-bright-smooth", "positron"]);
+const ALLOWED = new Set(["voyager", "light_all", "dark_all"]);
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export async function GET(_req: Request, { params }: { params: Promise<{ segments: string[] }> }) {
   const segments = (await params).segments;
   if (segments.length !== 4) return new Response("Bad request", { status: 400 });
+
   const [style, z, x, yRaw] = segments;
   const y = yRaw?.replace(/\.png$/, "") ?? "";
 
@@ -17,10 +18,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ segment
     return new Response("Bad request", { status: 400 });
   }
 
-  const key = process.env.GEOAPIFY_KEY;
-  if (!key) return new Response("GEOAPIFY_KEY not set", { status: 500 });
+  const cartoKey = process.env.CARTO_KEY;
+  if (!cartoKey) return new Response("CARTO map provider is not configured", { status: 500 });
 
-  const upstream = `https://maps.geoapify.com/v1/tile/${style}/${z}/${x}/${y}.png?apiKey=${key}`;
+  const upstream = `https://basemaps.cartocdn.com/rastertiles/${style}/${z}/${x}/${y}.png?key=${encodeURIComponent(cartoKey)}`;
   const res = await fetch(upstream, { cache: "force-cache", next: { revalidate: 31536000 } });
   if (!res.ok) return new Response("Upstream error", { status: 502 });
 

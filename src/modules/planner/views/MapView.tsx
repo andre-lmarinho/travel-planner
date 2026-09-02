@@ -3,10 +3,10 @@
 import type { LatLngExpression, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
 import React, { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polyline, TileLayer, useMap, ZoomControl } from "react-leaflet";
 import { getDefaultColor } from "@/features/activity/constants";
 import type { Activity, DayPlan } from "@/features/activity/types";
-import { tileAttribution, tileUrl } from "@/ui/components/map/geoapifyTiles";
+import { plannerTileUrl, tileAttribution } from "@/ui/components/map/config";
 import { cn } from "@/ui/utils/cn";
 
 // Extract the CSS color from a Tailwind class like "bg-[var(--color-X)]"
@@ -85,12 +85,30 @@ export const MapView = React.memo(function MapView({
         center={center}
         zoom={13}
         zoomControl={false}
+        zoomDelta={0.5}
+        zoomSnap={0.5}
+        wheelDebounceTime={100}
+        wheelPxPerZoomLevel={120}
         style={{ width: "100%", height: "100%" }}
         aria-label="Itinerary map">
         <FitAllMarkers coords={allCoords} />
-        <TileLayer url={tileUrl} attribution={tileAttribution} maxZoom={20} />
+        <ZoomControl position="bottomright" />
+        <TileLayer url={plannerTileUrl} attribution={tileAttribution} maxZoom={20} />
         {dayPaths.map(({ day, dayIdx, coords, acts }) => (
           <React.Fragment key={day.id}>
+            {coords.length > 1 ? (
+              <Polyline
+                key={`${day.id}-path`}
+                positions={coords}
+                pathOptions={{
+                  color: getCssColor(acts[0]?.color) ?? "var(--primary)",
+                  weight: 3,
+                  opacity: 0.72,
+                  lineCap: "round",
+                  lineJoin: "round",
+                }}
+              />
+            ) : null}
             {coords.map((pos, i) => {
               const act = acts[i];
               const bg = getCssColor(act.color) ?? defaultBg;

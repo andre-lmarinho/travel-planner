@@ -26,6 +26,7 @@ vi.mock("react-leaflet", () => {
       return <div>{props.children}</div>;
     },
     TileLayer: () => null,
+    ZoomControl: () => null,
     Marker: (props: { title?: string; eventHandlers?: Record<string, (...args: unknown[]) => void> }) => {
       shared.markers.push(props);
       return null;
