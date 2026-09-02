@@ -4,14 +4,13 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FocusEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
-
-import { ActivityBoard } from "@/features/activityBoard/components/ActivityBoard";
 import { ActivityDialog } from "@/features/activityDialog/components/ActivityDialog";
 import type { Entry } from "@/features/budget/types";
 import type { PlannerExperience } from "@/features/plan/services/PlanService";
 import { DeletePlanDialog } from "@/modules/planner/components/DeletePlanDialog";
 import { SharePlannerDialog } from "@/modules/planner/components/SharePlannerDialog";
 import { PlannerProvider, usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
+import { BoardView } from "@/modules/planner/views/BoardView";
 import { BudgetView } from "@/modules/planner/views/BudgetView/BudgetView";
 import { trpc } from "@/trpc/react";
 import { DateRangePickerIcon } from "@/ui/components/calendar";
@@ -20,7 +19,7 @@ import type { PlannerMode } from "./components/ModeToggleButton";
 import { ModeToggleButton } from "./components/ModeToggleButton";
 import { TripView } from "./views/TripView";
 
-const MapView = dynamic(() => import("@/modules/planner/views/MapView/MapView"), {
+const MapView = dynamic(() => import("@/modules/planner/views/MapView"), {
   ssr: false,
 });
 
@@ -124,7 +123,7 @@ function PlannerContent({
         {mode === "overview" || mode === "map" ? (
           <>
             <div className={`absolute inset-0 z-10 xl:hidden ${mode === "map" ? "hidden" : ""}`}>
-              <ActivityBoard
+              <BoardView
                 days={days}
                 canEdit={canEdit}
                 onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
@@ -144,7 +143,7 @@ function PlannerContent({
           </>
         ) : mode === "kanban" ? (
           <div className="absolute inset-0">
-            <ActivityBoard
+            <BoardView
               days={days}
               canEdit={canEdit}
               onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
