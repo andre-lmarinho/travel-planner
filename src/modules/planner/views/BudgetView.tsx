@@ -109,7 +109,7 @@ export function BudgetView({ planId, days, initialEntries = [], canEdit = true }
   };
 
   return (
-    <div className="bg-background flex h-full w-full flex-col gap-5 overflow-y-auto rounded-2xl border p-4 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent md:p-5">
+    <div className="bg-background flex h-full w-full flex-col gap-5 overflow-y-auto rounded-2xl border p-2 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-track]:bg-transparent md:p-4">
       <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-2 xl:grid-cols-[18rem_minmax(0,1fr)]">
         <div className="flex min-w-0 flex-col gap-5 md:contents xl:flex">
           <Summary totalSpent={totalSpent} persistError={persistError} />

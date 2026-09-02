@@ -18,6 +18,12 @@ export type ProfileUpsertResult = {
   slug: string;
 };
 
+export type ProfileUpdatePayload = {
+  userId: string;
+  slug: string;
+  displayName: string | null;
+};
+
 export class ProfileRepository {
   constructor(private readonly client: SupabaseClient<Database>) {}
 
@@ -79,6 +85,25 @@ export class ProfileRepository {
     }
 
     return data?.slug ?? null;
+  }
+
+  async updateProfile({ userId, slug, displayName }: ProfileUpdatePayload): Promise<ProfileSummary> {
+    const { data, error } = await this.client
+      .from("profiles")
+      .update({ slug, display_name: displayName })
+      .eq("id", userId)
+      .select("id, slug, display_name, avatar_url")
+      .single();
+
+    if (error) {
+      throw formatSupabaseError({ operation: "updateProfile", identifiers: { userId, slug }, error });
+    }
+
+    if (!data) {
+      throw formatSupabaseError({ operation: "updateProfile:missing-row", identifiers: { userId, slug } });
+    }
+
+    return { userId: data.id, slug: data.slug, displayName: data.display_name, avatarUrl: data.avatar_url };
   }
 
   async upsertProfile(payload: ProfileUpsertPayload): Promise<ProfileUpsertResult> {

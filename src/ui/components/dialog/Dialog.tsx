@@ -39,7 +39,7 @@ type DialogContentProps = React.HTMLAttributes<HTMLDivElement>;
 function DialogContent({ className, children, ...props }: DialogContentProps) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Backdrop className="bg-background/80 data-open:animate-in data-closed:animate-out data-open:fade-in data-closed:fade-out fixed inset-0 z-40 backdrop-blur-sm" />
+      <DialogPrimitive.Backdrop className="bg-foreground/80 data-open:animate-in data-closed:animate-out data-open:fade-in data-closed:fade-out fixed inset-0 z-40 backdrop-blur-sm" />
       <DialogPrimitive.Popup
         className={cn(
           "bg-background text-foreground fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-xl border shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
