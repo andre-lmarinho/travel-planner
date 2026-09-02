@@ -47,7 +47,7 @@ vi.mock("@/modules/planner/views/BudgetView", () => ({
   BudgetView: () => <div data-testid="budget-board" />,
 }));
 
-vi.mock("@/modules/planner/views/MapView/MapView", () => ({
+vi.mock("@/modules/planner/views/MapView", () => ({
   __esModule: true,
   default: () => <div data-testid="map-board" />,
 }));
