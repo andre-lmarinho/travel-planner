@@ -4,7 +4,7 @@ import L from "leaflet";
 import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
 
-import { tileAttribution, tileUrl } from "./geoapifyTiles";
+import { tileAttribution, tileUrl } from "@/ui/components/map/geoapifyTiles";
 
 export type MapPin = { name: string; lat: number; lng: number };
 

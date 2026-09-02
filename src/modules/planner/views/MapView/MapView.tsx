@@ -6,10 +6,9 @@ import React, { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 
 import { getDefaultColor } from "@/features/activity/constants";
-import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
+import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
+import { tileAttribution, tileUrl } from "@/ui/components/map/geoapifyTiles";
 import { cn } from "@/ui/utils/cn";
-
-import { tileAttribution, tileUrl } from "./geoapifyTiles";
 
 // Extract the CSS color from a Tailwind class like "bg-[var(--color-X)]"
 const getCssColor = (cls?: string): string | undefined => {
@@ -44,11 +43,11 @@ function FitAllMarkers({ coords }: { coords: LatLngExpression[] }) {
   return null;
 }
 
-interface MapBoardProps {
+interface MapViewProps {
   className?: string;
 }
 
-export const MapBoard = React.memo(function MapBoard({ className }: MapBoardProps) {
+export const MapView = React.memo(function MapView({ className }: MapViewProps) {
   const { days, setSelectedActivity, destCoords } = usePlannerContext();
   const centerCoords = destCoords ?? undefined;
   const defaultBg = useMemo(() => getCssColor(getDefaultColor()) ?? "var(--color-0)", []);
@@ -139,6 +138,6 @@ export const MapBoard = React.memo(function MapBoard({ className }: MapBoardProp
   );
 });
 
-MapBoard.displayName = "MapBoard";
+MapView.displayName = "MapView";
 
-export default MapBoard;
+export default MapView;

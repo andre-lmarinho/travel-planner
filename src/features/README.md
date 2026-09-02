@@ -25,7 +25,6 @@ The travel planner application follows a **feature-based architecture** with cle
 - **`activityBoard`** - Drag-and-drop board for organizing activities
 - **`activityDialog`** - Forms and dialogs for activity management
 - **`budget`** - Financial tracking and expense management
-- **`mapBoard`** - Geographic visualization of activities
 
 ### 🤝 Collaboration Layer
 **Real-time features and data persistence**
@@ -105,13 +104,10 @@ Plan Access → Member Check → Permission Context → Feature Authorization
 | `auth` | `profile` | Infrastructure - Authentication |
 | `budget` | `activity`, `plan` | UI - Financial Tracking |
 | `events` | `activity`, `snapshots` | Infrastructure - Event Sourcing |
-| `inspirations` | `activity`, `budget` | Content - Templates |
-| `mapBoard` | `activity`, `plan` | UI - Geographic View |
 | `members` | `plan`, `profile`, `shareLink` | UI - Collaboration |
 | `plan` | `activity`, `activityDialog`, `events`, `search`, `budget`, `snapshots` | Central Orchestrator |
 | `profile` | None | User Data |
 | `search` | None | External Service |
-| `shareLink` | `auth`, `plan` | UI - Public Sharing |
 | `snapshots` | `activity`, `events` | Infrastructure - State Persistence |
 
 This architecture enables scalable development with clear ownership, type safety, and sophisticated real-time collaboration capabilities.

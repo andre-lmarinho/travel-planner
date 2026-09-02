@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { trpc } from "@/trpc/react";
 import { ConfirmationDialog } from "@/ui/components/dialog/ConfirmationDialog";
 import { Trash2 } from "@/ui/components/icon";
 import { cn } from "@/ui/utils/cn";
-import { usePlannerContext } from "../hooks/PlannerContext";
 
 type DeletePlanDialogProps = {
   className?: string;

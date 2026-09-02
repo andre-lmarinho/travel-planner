@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { DayPlan } from "@/features/activity/types";
 import type { CategoryKey, Entry } from "@/features/budget/types";
-import { usePlannerContext } from "@/features/plan/hooks/PlannerContext";
+import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { trpc } from "@/trpc/react";
 
 import { CategoryChart } from "./CategoryChart";

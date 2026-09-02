@@ -4,7 +4,7 @@ import { addDays } from "date-fns";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
-
+import type { CreatePlannerPlanResult } from "@/features/plan/services/PlanService";
 import { LocationSearchInput } from "@/features/search/components/LocationSearchInput";
 import { useDestinationAutocomplete } from "@/features/search/hooks/useDestinationAutocomplete";
 import type { AutocompletePlace } from "@/features/search/types";
@@ -12,8 +12,6 @@ import { trpc } from "@/trpc/react";
 import { Button } from "@/ui/components/button/Button";
 import { DateRangePicker } from "@/ui/components/calendar/DateRangePicker";
 import { LoadingScreen } from "@/ui/components/loading/LoadingScreen";
-
-import type { CreatePlannerPlanResult } from "../services/PlanService";
 
 type PlannerCreationFormProps = {
   onPlanCreated: (plan: CreatePlannerPlanResult) => void;

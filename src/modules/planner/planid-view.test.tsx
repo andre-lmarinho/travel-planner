@@ -1,18 +1,37 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 
-import type { PlannerMode } from "./ModeToggleButton";
-import { PlannerWorkspace } from "./PlannerWorkspace";
+import type { PlannerExperience } from "@/features/plan/services/PlanService";
+import type { PlannerMode } from "./components/ModeToggleButton";
+import { PlanIdView } from "./planid-view";
 
 const { updatePlanTitleMock } = vi.hoisted(() => ({
   updatePlanTitleMock: vi.fn().mockResolvedValue(undefined),
+}));
+
+const experience = {
+  planId: "p1",
+  destination: "Trip",
+  viewerUserId: null,
+  isDemo: false,
+  canEdit: true,
+  isOwner: false,
+  canManageMembers: false,
+  isPublic: false,
+  initialDays: [],
+  initialEntries: [],
+} satisfies PlannerExperience;
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("@/trpc/react", () => ({
   trpc: { viewer: { plan: { updateTitle: { useMutation: () => ({ mutateAsync: updatePlanTitleMock }) } } } },
 }));
 
-vi.mock("@/features/plan/hooks/PlannerContext", () => ({
+vi.mock("@/modules/planner/hooks/PlannerContext", () => ({
   PlannerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   usePlannerContext: () => ({
     planId: "p1",
@@ -24,15 +43,11 @@ vi.mock("@/features/plan/hooks/PlannerContext", () => ({
   }),
 }));
 
-vi.mock("@/features/activity/components/dnd/PlannerBoard", () => ({
-  PlannerBoard: () => <div data-testid="planner-board" />,
-}));
-
 vi.mock("@/modules/planner/views/BudgetView/BudgetView", () => ({
   BudgetView: () => <div data-testid="budget-board" />,
 }));
 
-vi.mock("@/features/mapBoard/MapBoard", () => ({
+vi.mock("@/modules/planner/views/MapView/MapView", () => ({
   __esModule: true,
   default: () => <div data-testid="map-board" />,
 }));
@@ -41,11 +56,11 @@ vi.mock("@/features/activity/components/dialog/ActivityDialog", () => ({
   ActivityDialog: () => null,
 }));
 
-vi.mock("@/features/members/SharePlannerDialog", () => ({
+vi.mock("@/modules/planner/components/SharePlannerDialog", () => ({
   SharePlannerDialog: () => null,
 }));
 
-vi.mock("@/features/plan/components/DeletePlanDialog", () => ({
+vi.mock("@/modules/planner/components/DeletePlanDialog", () => ({
   DeletePlanDialog: () => null,
 }));
 
@@ -62,9 +77,9 @@ vi.mock("@/ui/components/calendar", () => ({
   DateRangePickerIcon: () => null,
 }));
 
-describe("PlannerWorkspace", () => {
+describe("PlanIdView", () => {
   it("restores the initial title when blurred empty", async () => {
-    render(<PlannerWorkspace planId="p1" title="Trip" />);
+    render(<PlanIdView experience={experience} />);
 
     const input = screen.getByLabelText("Planner title");
     fireEvent.change(input, { target: { value: "" } });
@@ -75,7 +90,7 @@ describe("PlannerWorkspace", () => {
   });
 
   it("persists the title on blur when editable", async () => {
-    render(<PlannerWorkspace planId="p1" title="Trip" />);
+    render(<PlanIdView experience={experience} />);
 
     const input = screen.getByLabelText("Planner title");
     fireEvent.change(input, { target: { value: "New Title" } });

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
-import { PlannerProvider, usePlannerContext } from "@/features/plan/hooks/PlannerContext";
+import { PlannerProvider, usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 
 vi.mock("@/features/events/hooks/usePlanCollaboration", () => ({
   usePlanCollaboration: vi.fn(),
