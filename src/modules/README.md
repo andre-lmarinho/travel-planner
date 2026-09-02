@@ -24,8 +24,8 @@ The `src/modules` directory implements a **presentation layer architecture** tha
 | Module | Feature Dependencies | Primary Role |
 |--------|---------------------|--------------|
 | `auth` | `features/auth` | Authentication UI |
-| `planner` | `features/activityBoard`, `features/budget`, `features/plan`, `features/mapBoard`, `features/members` | Main Workspace |
-| `user` | `features/plan`, `features/search`, `features/mapBoard` | User Dashboard |
+| `planner` | `modules/planner/views/BoardView`, `features/budget`, `features/plan`, `features/members` | Main Workspace |
+| `user` | `features/plan`, `features/search` | User Dashboard |
 
 
 ## Integration Patterns
@@ -51,8 +51,8 @@ Modules import business logic from features:
 import { signInWithPassword } from "@/features/auth/handlers/signInWithPassword";
 
 // Planner module  
-import { ActivityBoard } from "@/features/activityBoard/components/ActivityBoard";
-import { PlannerProvider } from "@/features/plan/hooks/PlannerContext";
+import BoardView from "@/modules/planner/views/BoardView";
+import { usePlannerDocument } from "@/modules/planner/hooks/usePlannerDocument";
 
 // User module
 import { PlannerCreationForm } from "@/features/plan/components/PlannerCreationForm";

@@ -17,15 +17,12 @@ The travel planner application follows a **feature-based architecture** with cle
 **Core data models and orchestration**
 
 - **`activity`** - Fundamental data structures (Activity, DayPlan, ActivityColor)
-- **`plan`** - Central orchestration via PlannerContext
+- **`plan`** - Central plan metadata and server-side access orchestration
 
 ### 🎨 User Interface Layer  
 **Visual planning interfaces**
 
-- **`activityBoard`** - Drag-and-drop board for organizing activities
-- **`activityDialog`** - Forms and dialogs for activity management
 - **`budget`** - Financial tracking and expense management
-- **`mapBoard`** - Geographic visualization of activities
 
 ### 🤝 Collaboration Layer
 **Real-time features and data persistence**
@@ -50,9 +47,9 @@ The travel planner application follows a **feature-based architecture** with cle
 
 ## Key Integration Points
 
-### **PlannerContext** - Central State Hub
-Connects: `activity`, `activityBoard`, `mapBoard`, `budget`, `events`
-Provides: Plan state, permissions, editing capabilities, collaboration state
+### **Planner document** - Client document state
+Connects: `activity`, planner module views and components, `budget`, `events`
+Provides: optimistic day state and collaboration persistence
 
 ### **Event System** - Real-time Backbone
 Connects: All UI features via `events` → `snapshots` → state updates
@@ -63,7 +60,7 @@ Used by: 10+ features for type safety and data consistency
 Defines: Core data structures across the application
 
 ### **Search Services** - External Integration
-Connects: `activityDialog` → `search` → external APIs
+Connects: planner `ActivityDialog` → `search` → external APIs
 Provides: Location suggestions and activity recommendations
 
 ## Data Flow Patterns
@@ -80,7 +77,7 @@ User Action → Event Generation → Event Persistence → Real-time Broadcast �
 
 ### **Permission Check**
 ```
-Plan Access → Member Check → Permission Context → Feature Authorization
+Plan Access → Member Check → Planner document permissions → Feature Authorization
 ```
 
 ## Feature Boundaries
@@ -100,18 +97,13 @@ Plan Access → Member Check → Permission Context → Feature Authorization
 | Feature | Direct Dependencies | Role |
 |---------|-------------------|------|
 | `activity` | None | Core Domain |
-| `activityBoard` | `activity`, `activityDialog` | UI - Drag & Drop |
-| `activityDialog` | `activity`, `search` | UI - Activity Editing |
 | `auth` | `profile` | Infrastructure - Authentication |
 | `budget` | `activity`, `plan` | UI - Financial Tracking |
 | `events` | `activity`, `snapshots` | Infrastructure - Event Sourcing |
-| `inspirations` | `activity`, `budget` | Content - Templates |
-| `mapBoard` | `activity`, `plan` | UI - Geographic View |
 | `members` | `plan`, `profile`, `shareLink` | UI - Collaboration |
-| `plan` | `activity`, `activityDialog`, `events`, `search`, `budget`, `snapshots` | Central Orchestrator |
+| `plan` | `activity`, `events`, `search`, `budget`, `snapshots` | Central Orchestrator |
 | `profile` | None | User Data |
 | `search` | None | External Service |
-| `shareLink` | `auth`, `plan` | UI - Public Sharing |
 | `snapshots` | `activity`, `events` | Infrastructure - State Persistence |
 
 This architecture enables scalable development with clear ownership, type safety, and sophisticated real-time collaboration capabilities.

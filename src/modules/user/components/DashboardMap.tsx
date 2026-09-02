@@ -2,13 +2,13 @@
 
 import dynamic from "next/dynamic";
 
-import type { MapPin as MapPinType } from "@/features/mapBoard/DestinationsMap";
+import type { MapPin as MapPinType } from "@/modules/user/components/DestinationsMap";
 import { MapPin } from "@/ui/components/icon";
 
 // react-leaflet touches window on import, so the map is client-only. Fixed height
 // reserves space (no CLS) and the skeleton fills it while the chunk loads.
 const DestinationsMap = dynamic(
-  () => import("@/features/mapBoard/DestinationsMap").then((m) => m.DestinationsMap),
+  () => import("@/modules/user/components/DestinationsMap").then((m) => m.DestinationsMap),
   {
     ssr: false,
     loading: () => <div className="bg-muted h-full w-full animate-pulse" />,

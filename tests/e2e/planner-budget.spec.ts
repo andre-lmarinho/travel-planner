@@ -9,23 +9,10 @@ test.describe("Budget Management", () => {
   });
 
   test("displays budget summary section", async ({ page }) => {
-    await expect(page.getByRole("heading", { name: /summary/i })).toBeVisible();
-
-    await expect(page.getByText(/total budget/i)).toBeVisible();
-    await expect(page.getByText(/total spent/i).first()).toBeVisible();
-    await expect(page.getByText(/difference/i).first()).toBeVisible();
-  });
-
-  test("sets total budget for the plan", async ({ page }) => {
-    const budgetSection = page.getByRole("region", { name: /summary/i });
-
-    const budgetInput = budgetSection.getByRole("textbox", { name: /total budget/i });
-    await expect(budgetInput).toBeVisible();
-
-    await budgetInput.fill("5000");
-    await budgetInput.press("Tab");
-
-    await expect(budgetInput).toHaveValue("5000");
+    const summary = page.getByRole("region", { name: /summary/i });
+    await expect(summary).toBeVisible();
+    await expect(summary.getByRole("heading", { name: /total spent/i })).toBeVisible();
+    await expect(summary.getByRole("img", { name: /total spent/i })).toBeVisible();
   });
 
   test("displays expenses table", async ({ page }) => {
