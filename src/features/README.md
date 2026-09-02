@@ -22,8 +22,6 @@ The travel planner application follows a **feature-based architecture** with cle
 ### 🎨 User Interface Layer  
 **Visual planning interfaces**
 
-- **`activityBoard`** - Drag-and-drop board for organizing activities
-- **`activityDialog`** - Forms and dialogs for activity management
 - **`budget`** - Financial tracking and expense management
 
 ### 🤝 Collaboration Layer
@@ -50,7 +48,7 @@ The travel planner application follows a **feature-based architecture** with cle
 ## Key Integration Points
 
 ### **PlannerContext** - Central State Hub
-Connects: `activity`, `activityBoard`, `mapBoard`, `budget`, `events`
+Connects: `activity`, planner module views and components, `budget`, `events`
 Provides: Plan state, permissions, editing capabilities, collaboration state
 
 ### **Event System** - Real-time Backbone
@@ -62,7 +60,7 @@ Used by: 10+ features for type safety and data consistency
 Defines: Core data structures across the application
 
 ### **Search Services** - External Integration
-Connects: `activityDialog` → `search` → external APIs
+Connects: planner `ActivityDialog` → `search` → external APIs
 Provides: Location suggestions and activity recommendations
 
 ## Data Flow Patterns
@@ -99,13 +97,11 @@ Plan Access → Member Check → Permission Context → Feature Authorization
 | Feature | Direct Dependencies | Role |
 |---------|-------------------|------|
 | `activity` | None | Core Domain |
-| `activityBoard` | `activity`, `activityDialog` | UI - Drag & Drop |
-| `activityDialog` | `activity`, `search` | UI - Activity Editing |
 | `auth` | `profile` | Infrastructure - Authentication |
 | `budget` | `activity`, `plan` | UI - Financial Tracking |
 | `events` | `activity`, `snapshots` | Infrastructure - Event Sourcing |
 | `members` | `plan`, `profile`, `shareLink` | UI - Collaboration |
-| `plan` | `activity`, `activityDialog`, `events`, `search`, `budget`, `snapshots` | Central Orchestrator |
+| `plan` | `activity`, `events`, `search`, `budget`, `snapshots` | Central Orchestrator |
 | `profile` | None | User Data |
 | `search` | None | External Service |
 | `snapshots` | `activity`, `events` | Infrastructure - State Persistence |

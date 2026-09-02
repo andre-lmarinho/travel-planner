@@ -12,10 +12,9 @@ import { EMPTY_ACTIVITY_TITLE } from "@/features/activity/constants";
 import { useCardColors } from "@/features/activity/hooks/useActivityColors";
 import { getActivity } from "@/features/activity/lib/activityOperations";
 import type { Activity, DayPlan } from "@/features/activity/types";
-import { AddActivity } from "@/features/activityDialog/components/AddActivity";
 import { useDragHandlers } from "@/modules/planner/hooks/useDragHandlers";
 import { containerCollisionDetection } from "@/modules/planner/lib/dragUtils";
-import { DollarSign, Hourglass } from "@/ui/components/icon";
+import { DollarSign, Hourglass, Plus } from "@/ui/components/icon";
 import { cn } from "@/ui/utils/cn";
 
 interface BoardProps {
@@ -357,7 +356,13 @@ export const DayColumn = memo(function DayColumn({
 
       {canEdit ? (
         <div className="border-t px-2 py-2">
-          <AddActivity dayId={day.id} insertIndex={day.activities.length} onAddActivity={onFallbackAdd} />
+          <button
+            type="button"
+            onClick={() => onFallbackAdd?.(day.id, day.activities.length)}
+            className="bg-background hover:bg-muted text-foreground flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed px-3 py-2 text-left text-sm font-medium transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100">
+            <Plus size={18} aria-hidden="true" />
+            <span>{"Add activity"}</span>
+          </button>
         </div>
       ) : null}
     </section>

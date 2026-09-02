@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Activity } from "@/features/activity/types";
-import { useEditorState } from "./useEditorState";
+import { useEditorState } from "@/modules/planner/hooks/useEditorState";
 
 function createActivity(id: string, title: string = "Activity"): Activity {
   return {

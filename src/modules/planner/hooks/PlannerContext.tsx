@@ -16,8 +16,8 @@ import {
 import { buildInitialDays, syncDaysWithRange } from "@/features/activity/lib/dayOperations";
 import { createBlankActivity } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
-import { useEditorState } from "@/features/activityDialog/hooks/useEditorState";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
+import { useEditorState } from "@/modules/planner/hooks/useEditorState";
 import { trpc } from "@/trpc/react";
 
 interface DestCoords {
@@ -346,10 +346,23 @@ export function usePlannerContextValue({
   const save = useCallback(
     (updates: Partial<Activity>) => {
       if (!selectedActivity) return;
-      handleUpdateActivity(selectedActivity.id, updates);
+
+      const currentDay = days.find((day) => day.id === selectedActivity.dayId);
+      if (!currentDay) return;
+
+      const existingActivity = currentDay.activities.some((activity) => activity.id === selectedActivity.id);
+      if (!existingActivity) {
+        const { dayId, ...activity } = selectedActivity;
+        const nextActivity = { ...activity, ...updates };
+        if (!nextActivity.title.trim()) return;
+        setDays(addActivityAtIndex(days, dayId, nextActivity, currentDay.activities.length));
+      } else {
+        handleUpdateActivity(selectedActivity.id, updates);
+      }
+
       editor.updateActivity(updates);
     },
-    [editor, handleUpdateActivity, selectedActivity]
+    [days, editor, handleUpdateActivity, selectedActivity, setDays]
   );
 
   // Delete selected activity

@@ -4,9 +4,10 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FocusEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { ActivityDialog } from "@/features/activityDialog/components/ActivityDialog";
+import { createBlankActivity } from "@/features/activity/lib/placeholders";
 import type { Entry } from "@/features/budget/types";
 import type { PlannerExperience } from "@/features/plan/services/PlanService";
+import { ActivityDialog } from "@/modules/planner/components/ActivityDialog";
 import { DeletePlanDialog } from "@/modules/planner/components/DeletePlanDialog";
 import { SharePlannerDialog } from "@/modules/planner/components/SharePlannerDialog";
 import { PlannerProvider, usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
@@ -43,7 +44,6 @@ function PlannerContent({
     handleRangeChange,
     selectedActivity,
     setSelectedActivity,
-    addActivityWithTitle,
     save,
     deleteActivity,
     changeColor,
@@ -56,11 +56,11 @@ function PlannerContent({
   const updateTitleMutation = trpc.viewer.plan.updateTitle.useMutation();
 
   const handleFallbackAdd = useCallback(
-    async (dayId: string, index: number) => {
-      const activity = await addActivityWithTitle(dayId, "", index);
-      if (activity) setSelectedActivity({ ...activity, dayId });
+    (dayId: string) => {
+      const activity = createBlankActivity();
+      setSelectedActivity({ ...activity, dayId });
     },
-    [addActivityWithTitle, setSelectedActivity]
+    [setSelectedActivity]
   );
 
   useEffect(() => {

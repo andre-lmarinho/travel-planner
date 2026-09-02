@@ -52,7 +52,7 @@ vi.mock("@/modules/planner/views/MapView/MapView", () => ({
   default: () => <div data-testid="map-board" />,
 }));
 
-vi.mock("@/features/activity/components/dialog/ActivityDialog", () => ({
+vi.mock("@/modules/planner/components/ActivityDialog", () => ({
   ActivityDialog: () => null,
 }));
 

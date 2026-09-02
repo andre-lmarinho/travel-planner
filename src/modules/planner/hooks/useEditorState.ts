@@ -4,7 +4,11 @@ import { useCallback, useState } from "react";
 
 import type { Activity } from "@/features/activity/types";
 
-import type { EditorState } from "../types";
+interface EditorState {
+  activity: Activity | null;
+  dayId: string | null;
+  isOpen: boolean;
+}
 
 /**
  * Hook to manage which activity is being edited.

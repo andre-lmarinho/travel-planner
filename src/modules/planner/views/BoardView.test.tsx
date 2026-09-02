@@ -43,13 +43,6 @@ vi.mock("@/features/activity/lib/activityOperations", () => ({
 vi.mock("@/modules/planner/hooks/useDragHandlers", () => ({
   useDragHandlers: (...args: unknown[]) => shared.useDragHandlersMock(...args),
 }));
-vi.mock("@/features/activityDialog/components/AddActivity", () => ({
-  AddActivity: ({ onAddActivity }: { onAddActivity?: (dayId: string, index: number) => void }) => (
-    <button type="button" onClick={() => onAddActivity?.("d1", 1)}>
-      Add activity
-    </button>
-  ),
-}));
 
 const activity: Activity = { id: "a1", title: "Museum", color: "bg-[var(--color-1)]" };
 const days: DayPlan[] = [
