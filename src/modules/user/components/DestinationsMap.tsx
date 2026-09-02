@@ -145,10 +145,10 @@ export function DestinationsMap({ countries }: { countries: TravelCountry[] }) {
       center={[20, 0]}
       zoom={2}
       zoomControl={false}
-      zoomDelta={0.5}
-      zoomSnap={0.5}
+      zoomDelta={0.25}
+      zoomSnap={0.25}
       wheelDebounceTime={100}
-      wheelPxPerZoomLevel={120}
+      wheelPxPerZoomLevel={240}
       worldCopyJump
       scrollWheelZoom
       style={{ width: "100%", height: "100%" }}>

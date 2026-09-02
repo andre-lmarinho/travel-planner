@@ -24,16 +24,20 @@ interface TripViewProps {
   onActivitySelect: (activity: Activity, dayId: string) => void;
   onDaysChange: (days: DayPlan[]) => void;
   onFallbackAdd: (dayId: string, index: number) => void;
+  onDayHover?: (dayId: string | null) => void;
+  onActivityHover?: (activityId: string | null) => void;
 }
 
 function TripActivityCard({
   activity,
   onSelect,
   dragHandle,
+  onHover,
 }: {
   activity: Activity;
   onSelect?: () => void;
   dragHandle?: ReactNode;
+  onHover?: (isHovered: boolean) => void;
 }) {
   const { bg } = useActivityColors(activity.color);
   const title = activity.title.trim() || ACTIVITY_TEXT.untitledFallback;
@@ -47,6 +51,8 @@ function TripActivityCard({
         role="button"
         tabIndex={0}
         onClick={onSelect}
+        onMouseEnter={() => onHover?.(true)}
+        onMouseLeave={() => onHover?.(false)}
         data-no-drag-scroll
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) return;
@@ -72,7 +78,9 @@ function TripActivityCard({
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-baseline gap-2">
-            <span className="truncate text-sm font-medium">{title}</span>
+            <Tooltip content={title}>
+              <span className="truncate text-sm font-medium">{title}</span>
+            </Tooltip>
             {activity.startTime ? (
               <span className="text-muted-foreground shrink-0 text-[11px] tabular-nums">
                 {activity.startTime}
@@ -89,7 +97,15 @@ function TripActivityCard({
   );
 }
 
-function SortableTripActivity({ activity, onSelect }: { activity: Activity; onSelect: () => void }) {
+function SortableTripActivity({
+  activity,
+  onSelect,
+  onHover,
+}: {
+  activity: Activity;
+  onSelect: () => void;
+  onHover?: (isHovered: boolean) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: activity.id,
     animateLayoutChanges: () => false,
@@ -103,6 +119,7 @@ function SortableTripActivity({ activity, onSelect }: { activity: Activity; onSe
       <TripActivityCard
         activity={activity}
         onSelect={onSelect}
+        onHover={onHover}
         dragHandle={
           <Tooltip content="Reorder activity">
             <button
@@ -129,6 +146,8 @@ interface TripDayProps {
   canEdit: boolean;
   onActivitySelect: (activity: Activity, dayId: string) => void;
   onFallbackAdd: (dayId: string, index: number) => void;
+  onDayHover: (dayId: string | null) => void;
+  onActivityHover: (activityId: string | null) => void;
 }
 
 function TripDay({
@@ -139,6 +158,8 @@ function TripDay({
   canEdit,
   onActivitySelect,
   onFallbackAdd,
+  onDayHover = () => {},
+  onActivityHover = () => {},
 }: TripDayProps) {
   const { setNodeRef, isOver } = useDroppable({ id: day.id, disabled: !canEdit });
   const activityIds = useMemo(() => day.activities.map((activity) => activity.id), [day.activities]);
@@ -152,7 +173,11 @@ function TripDay({
     <li
       ref={canEdit ? setNodeRef : undefined}
       className={cn("bg-background overflow-hidden border-b", isOver && "ring-primary/40 ring-2")}>
-      <div className="bg-muted/55 flex items-center justify-between gap-3 px-3 py-2.5">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: the date row is a hover target for map highlighting. */}
+      <div
+        className="bg-muted/55 flex items-center justify-between gap-3 px-3 py-2.5"
+        onMouseEnter={() => onDayHover(day.id)}
+        onMouseLeave={() => onDayHover(null)}>
         <div className="flex min-w-0 items-center gap-2">
           <span className="bg-primary text-primary-foreground inline-flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold">
             {dayNumber}
@@ -195,6 +220,7 @@ function TripDay({
                   key={activity.id}
                   activity={activity}
                   onSelect={() => onActivitySelect(activity, day.id)}
+                  onHover={(isHovered) => onActivityHover(isHovered ? activity.id : null)}
                 />
               ))}
             </SortableContext>
@@ -204,6 +230,7 @@ function TripDay({
                 key={activity.id}
                 activity={activity}
                 onSelect={() => onActivitySelect(activity, day.id)}
+                onHover={(isHovered) => onActivityHover(isHovered ? activity.id : null)}
               />
             ))
           )}
@@ -219,7 +246,15 @@ function TripDay({
   );
 }
 
-export function TripView({ days, canEdit, onActivitySelect, onDaysChange, onFallbackAdd }: TripViewProps) {
+export function TripView({
+  days,
+  canEdit,
+  onActivitySelect,
+  onDaysChange,
+  onFallbackAdd,
+  onDayHover = () => {},
+  onActivityHover = () => {},
+}: TripViewProps) {
   const [isItineraryOpen, setIsItineraryOpen] = useState(true);
   const [collapsedDayIds, setCollapsedDayIds] = useState<Set<string>>(() => new Set());
   const [draftDays, setDraftDays] = useState(days);
@@ -299,6 +334,8 @@ export function TripView({ days, canEdit, onActivitySelect, onDaysChange, onFall
                     canEdit={canEdit}
                     onActivitySelect={onActivitySelect}
                     onFallbackAdd={onFallbackAdd}
+                    onDayHover={onDayHover}
+                    onActivityHover={onActivityHover}
                   />
                 ))}
               </ol>

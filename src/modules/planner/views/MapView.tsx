@@ -3,39 +3,46 @@
 import type { LatLngExpression, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
 import React, { useEffect, useMemo, useRef } from "react";
-import { MapContainer, Marker, Polyline, TileLayer, useMap, ZoomControl } from "react-leaflet";
+import {
+  Tooltip as LeafletTooltip,
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  ZoomControl,
+} from "react-leaflet";
+
 import { getDefaultColor } from "@/features/activity/constants";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { plannerTileUrl, tileAttribution } from "@/ui/components/map/config";
 import { cn } from "@/ui/utils/cn";
 
-// Extract the CSS color from a Tailwind class like "bg-[var(--color-X)]"
-const getCssColor = (cls?: string): string | undefined => {
+function getCssColor(cls?: string): string | undefined {
   if (!cls) return undefined;
-  const m = cls.match(/^bg-\[(.+)\]$/);
-  return m ? m[1] : cls;
-};
+  const match = cls.match(/^bg-\[(.+)\]$/);
+  return match ? match[1] : cls;
+}
 
-// Fit map view to all markers whenever coordinates change
+function escapeAttribute(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
 function FitAllMarkers({ coords }: { coords: LatLngExpression[] }) {
   const map = useMap();
-  const prev = useRef<LatLngExpression[] | null>(null);
+  const previousCoords = useRef<LatLngExpression[] | null>(null);
 
   useEffect(() => {
     if (coords.length === 0) return;
-
-    const same =
-      prev.current &&
-      prev.current.length === coords.length &&
-      prev.current.every((c, i) => {
-        const a = L.latLng(c);
-        const b = L.latLng(coords[i]);
-        return a.equals(b);
-      });
-
-    if (!same) {
+    const unchanged =
+      previousCoords.current?.length === coords.length &&
+      previousCoords.current.every((coord, index) => L.latLng(coord).equals(L.latLng(coords[index])));
+    if (!unchanged) {
       map.fitBounds(L.latLngBounds(coords), { padding: [50, 50] });
-      prev.current = coords;
+      previousCoords.current = coords;
     }
   }, [coords, map]);
 
@@ -46,6 +53,9 @@ interface MapViewProps {
   days: DayPlan[];
   destCoords: { lat: number; lng: number } | null;
   onActivitySelect: (activity: Activity, dayId: string) => void;
+  highlightedDayId?: string | null;
+  highlightedActivityId?: string | null;
+  onDayHover?: (dayId: string | null) => void;
   className?: string;
 }
 
@@ -53,99 +63,86 @@ export const MapView = React.memo(function MapView({
   days,
   destCoords,
   onActivitySelect,
+  highlightedDayId,
+  highlightedActivityId,
+  onDayHover,
   className,
 }: MapViewProps) {
-  const centerCoords = destCoords ?? undefined;
-  const defaultBg = useMemo(() => getCssColor(getDefaultColor()) ?? "var(--color-0)", []);
+  const defaultBg = getCssColor(getDefaultColor()) ?? "var(--color-0)";
   const dayPaths = useMemo(
     () =>
-      days
-        .map((day, dayIdx) => {
-          const acts = day.activities.filter((a) => a.latitude != null && a.longitude != null);
-          const coords = acts.map((a) => [Number(a.latitude), Number(a.longitude)] as LatLngExpression);
-          return { day, dayIdx, coords, acts };
-        })
-        .filter((d) => d.coords.length > 0),
+      days.flatMap((day, dayIndex) => {
+        const activities = day.activities.filter(
+          (activity) => activity.latitude != null && activity.longitude != null
+        );
+        if (activities.length === 0) return [];
+        return [
+          {
+            day,
+            dayIndex,
+            activities,
+            coords: activities.map(
+              (activity) => [Number(activity.latitude), Number(activity.longitude)] as [number, number]
+            ),
+          },
+        ];
+      }),
     [days]
   );
 
-  const allCoords = useMemo(() => dayPaths.flatMap((d) => d.coords), [dayPaths]);
-  const center: LatLngExpression = allCoords.length
-    ? allCoords[0]
-    : centerCoords
-      ? [centerCoords.lat, centerCoords.lng]
-      : [0, 0];
+  const allCoords = dayPaths.flatMap((path) => path.coords);
+  const center: LatLngExpression = allCoords[0] ?? (destCoords ? [destCoords.lat, destCoords.lng] : [0, 0]);
+
   return (
-    <div
-      className={cn(
-        "relative isolate w-full overflow-hidden rounded-xl border",
-        className ?? "h-full min-h-[calc(100dvh-12rem)]"
-      )}>
+    <div className={cn("relative isolate w-full overflow-hidden rounded-xl border", className ?? "h-full")}>
       <MapContainer
         center={center}
         zoom={13}
         zoomControl={false}
-        zoomDelta={0.5}
-        zoomSnap={0.5}
+        zoomDelta={0.25}
+        zoomSnap={0.25}
         wheelDebounceTime={100}
-        wheelPxPerZoomLevel={120}
+        wheelPxPerZoomLevel={240}
         style={{ width: "100%", height: "100%" }}
         aria-label="Itinerary map">
         <FitAllMarkers coords={allCoords} />
         <ZoomControl position="bottomright" />
         <TileLayer url={plannerTileUrl} attribution={tileAttribution} maxZoom={20} />
-        {dayPaths.map(({ day, dayIdx, coords, acts }) => (
+        {dayPaths.map(({ day, dayIndex, activities, coords }) => (
           <React.Fragment key={day.id}>
-            {coords.length > 1 ? (
-              <Polyline
-                key={`${day.id}-path`}
-                positions={coords}
-                pathOptions={{
-                  color: getCssColor(acts[0]?.color) ?? "var(--primary)",
-                  weight: 3,
-                  opacity: 0.72,
-                  lineCap: "round",
-                  lineJoin: "round",
-                }}
-              />
-            ) : null}
-            {coords.map((pos, i) => {
-              const act = acts[i];
-              const bg = getCssColor(act.color) ?? defaultBg;
-              const number = dayIdx + 1;
+            {coords.map((position, index) => {
+              const activity = activities[index];
+              const background = getCssColor(activity.color) ?? defaultBg;
+              const isDimmed = highlightedActivityId
+                ? highlightedActivityId !== activity.id
+                : highlightedDayId != null && highlightedDayId !== day.id;
+              const image = activity.imageUrl?.trim()
+                ? `<img src="${escapeAttribute(activity.imageUrl.trim())}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+                : "";
               const icon = L.divIcon({
-                html: `
-                  <div style="
-                    background: ${bg};
-                    color: var(--foreground);
-                    width: 32px; height: 32px;
-                    border: 2px solid var(--background);
-                    border-radius: 50%;
-                    line-height: 32px;
-                    text-align: center;
-                    font-weight: bold;
-                    box-shadow: 0 0 4px rgba(0,0,0,0.5);
-                  ">${number}</div>
-                `,
+                html: `<div style="position: relative; width: 40px; height: 40px; opacity: ${isDimmed ? 0.35 : 1}; transform: ${isDimmed ? "scale(0.9)" : "scale(1)"}; transition: opacity 120ms ease, transform 120ms ease; border: 2px solid ${background}; border-radius: 50%; overflow: visible; background: transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.35);"><div style="width: 100%; height: 100%; border-radius: 50%; background: ${background};">${image}</div><span style="position: absolute; right: -3px; bottom: -3px; width: 16px; height: 16px; border: 2px solid var(--card); border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: 9px; line-height: 12px; text-align: center; font-weight: 700;">${dayIndex + 1}</span></div>`,
                 className: "",
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
+                iconSize: [40, 40],
+                iconAnchor: [20, 20],
               });
-
               return (
                 <Marker
-                  key={act.id}
-                  position={pos}
+                  key={activity.id}
+                  position={position}
                   icon={icon}
-                  title={act.title}
                   eventHandlers={{
-                    click: () => onActivitySelect(act, day.id),
-                    contextmenu: (e: LeafletMouseEvent) => {
-                      e.originalEvent.preventDefault();
-                      onActivitySelect(act, day.id);
+                    click: () => onActivitySelect(activity, day.id),
+                    mouseover: () => onDayHover?.(day.id),
+                    mouseout: () => onDayHover?.(null),
+                    contextmenu: (event: LeafletMouseEvent) => {
+                      event.originalEvent.preventDefault();
+                      onActivitySelect(activity, day.id);
                     },
-                  }}
-                />
+                  }}>
+                  <LeafletTooltip direction="top" offset={[0, -16]}>
+                    {activity.title.trim() || "Untitled activity"}
+                  </LeafletTooltip>
+                </Marker>
               );
             })}
           </React.Fragment>
