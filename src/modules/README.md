@@ -52,7 +52,7 @@ import { signInWithPassword } from "@/features/auth/handlers/signInWithPassword"
 
 // Planner module  
 import BoardView from "@/modules/planner/views/BoardView";
-import { PlannerProvider } from "@/features/plan/hooks/PlannerContext";
+import { usePlannerDocument } from "@/modules/planner/hooks/usePlannerDocument";
 
 // User module
 import { PlannerCreationForm } from "@/features/plan/components/PlannerCreationForm";

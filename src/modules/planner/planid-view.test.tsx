@@ -31,15 +31,15 @@ vi.mock("@/trpc/react", () => ({
   trpc: { viewer: { plan: { updateTitle: { useMutation: () => ({ mutateAsync: updatePlanTitleMock }) } } } },
 }));
 
-vi.mock("@/modules/planner/hooks/PlannerContext", () => ({
-  PlannerProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  usePlannerContext: () => ({
+vi.mock("@/modules/planner/hooks/usePlannerDocument", () => ({
+  usePlannerDocument: () => ({
     planId: "p1",
+    days: [],
+    setDays: vi.fn(),
+    dest: "Trip",
+    destCoords: null,
     currentRange: undefined,
     handleRangeChange: vi.fn(),
-    viewerUserId: null,
-    days: [],
-    updateActivity: vi.fn(),
   }),
 }));
 

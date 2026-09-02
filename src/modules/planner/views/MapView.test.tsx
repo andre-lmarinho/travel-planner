@@ -3,7 +3,6 @@ import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DayPlan } from "@/features/activity/types";
-import { PlannerProvider } from "@/modules/planner/hooks/PlannerContext";
 
 import { MapView } from "./MapView";
 
@@ -47,83 +46,11 @@ vi.mock("leaflet", () => ({
   },
 }));
 
-vi.mock("@/modules/planner/hooks/PlannerContext", () => {
-  return {
-    __esModule: true,
-    PlannerProvider: ({ children }: { children: React.ReactNode; planId?: string }) => <>{children}</>,
-    usePlannerContext: () => ({
-      planId: "p1",
-      dest: "rome",
-      days: shared.mockDays,
-      destCoords: shared.mockDestCoords,
-      setSelectedActivity: shared.setSelectedActivity,
-      setDays: vi.fn(),
-      sensors: undefined,
-      collisionDetection: vi.fn(),
-      handleDragStart: vi.fn(),
-      handleDragOver: vi.fn(),
-      handleDragEnd: vi.fn(),
-      addBlankAndSelect: vi.fn(),
-      changeDay: vi.fn(),
-      changePosition: vi.fn(),
-      changeColor: vi.fn(),
-      insertActivityAt: vi.fn(),
-      replaceActivity: vi.fn(),
-      removeActivity: vi.fn(),
-      updateActivity: vi.fn(),
-      selectedActivity: null,
-      currentRange: undefined,
-      handleRangeChange: vi.fn(),
-      canEdit: true,
-    }),
-  };
-});
-
-vi.mock("@/features/activity/hooks/state/planner/usePlanner", () => ({
-  usePlanner: () => ({
-    planId: "p1",
-    dest: "rome",
-    days: shared.mockDays,
-    destCoords: shared.mockDestCoords,
-    setDays: vi.fn(),
-    currentRange: undefined,
-    handleRangeChange: vi.fn(),
-    activeId: null,
-    sensors: [],
-    collisionDetection: vi.fn(),
-    handleDragStart: vi.fn(),
-    handleDragOver: vi.fn(),
-    handleDragEnd: vi.fn(),
-    addActivity: vi.fn(),
-    removeActivity: vi.fn(),
-    updateActivity: vi.fn(),
-    addBlankActivity: vi.fn(),
-    insertActivityAt: vi.fn(),
-    replaceActivity: vi.fn(),
-  }),
-}));
-
-vi.mock("@/features/activity/hooks/state/planner/useSelectedActivity", () => ({
-  useSelectedActivity: () => ({
-    selectedActivity: null,
-    setSelectedActivity: shared.setSelectedActivity,
-    changeDay: vi.fn(),
-    changePosition: vi.fn(),
-    addBlankAndSelect: vi.fn(),
-    closeDialog: vi.fn(),
-    save: vi.fn(),
-    deleteActivity: vi.fn(),
-    changeColor: vi.fn(),
-  }),
-}));
-
 function renderMapView(days: DayPlan[], destCoords: { lat: number; lng: number } | null = null) {
   shared.mockDays = days;
   shared.mockDestCoords = destCoords;
   return render(
-    <PlannerProvider planId="p1">
-      <MapView />
-    </PlannerProvider>
+    <MapView days={days} destCoords={destCoords} onActivitySelect={shared.setSelectedActivity} />
   );
 }
 
@@ -152,17 +79,21 @@ describe.skip("FitAllMarkers effect", () => {
     shared.mockDays = buildDays([1, 1]);
 
     const { rerender } = render(
-      <PlannerProvider planId="p1">
-        <MapView />
-      </PlannerProvider>
+      <MapView
+        days={shared.mockDays}
+        destCoords={shared.mockDestCoords}
+        onActivitySelect={shared.setSelectedActivity}
+      />
     );
 
     expect(shared.map.fitBounds).toHaveBeenCalledTimes(1);
 
     rerender(
-      <PlannerProvider planId="p1">
-        <MapView />
-      </PlannerProvider>
+      <MapView
+        days={shared.mockDays}
+        destCoords={shared.mockDestCoords}
+        onActivitySelect={shared.setSelectedActivity}
+      />
     );
 
     expect(shared.map.fitBounds).toHaveBeenCalledTimes(1);
@@ -170,9 +101,11 @@ describe.skip("FitAllMarkers effect", () => {
     shared.mockDays = buildDays([2, 2]);
 
     rerender(
-      <PlannerProvider planId="p1">
-        <MapView />
-      </PlannerProvider>
+      <MapView
+        days={shared.mockDays}
+        destCoords={shared.mockDestCoords}
+        onActivitySelect={shared.setSelectedActivity}
+      />
     );
 
     expect(shared.map.fitBounds).toHaveBeenCalledTimes(2);
@@ -250,9 +183,7 @@ describe("map render integration", () => {
     renderMapView(days);
     shared.markers[0].eventHandlers?.click?.();
 
-    expect(shared.setSelectedActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a1", dayId: "d1" })
-    );
+    expect(shared.setSelectedActivity).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }), "d1");
   });
 
   it("handles activities missing coordinates", () => {
@@ -304,9 +235,7 @@ describe("map render integration", () => {
     } as unknown as { originalEvent: { preventDefault: () => void } });
 
     expect(preventDefault).toHaveBeenCalled();
-    expect(shared.setSelectedActivity).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "a1", dayId: "d1" })
-    );
+    expect(shared.setSelectedActivity).toHaveBeenCalledWith(expect.objectContaining({ id: "a1" }), "d1");
   });
 
   it("falls back to default center when no coordinates provided", () => {

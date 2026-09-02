@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import type { DayPlan } from "@/features/activity/types";
 import type { BudgetRowInputsResult, CategoryKey, Entry } from "@/features/budget/types";
 import { CATEGORIES, CHART_COLORS } from "@/features/budget/types";
-import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { trpc } from "@/trpc/react";
 import { Check, DollarSign, Pencil, Plus, Trash2, X } from "@/ui/components/icon";
 
@@ -14,12 +13,13 @@ const currencySymbol = "\u0024";
 const inputClasses =
   "h-11 w-full rounded-xl border border-border bg-background px-3 pl-8 text-right text-base font-semibold tabular-nums outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1";
 interface Props {
+  planId: string;
+  days: DayPlan[];
   initialEntries?: Entry[];
   canEdit?: boolean;
 }
 
-export function BudgetView({ initialEntries = [], canEdit = true }: Props) {
-  const { planId, days } = usePlannerContext();
+export function BudgetView({ planId, days, initialEntries = [], canEdit = true }: Props) {
   const activitiesTotal = days.reduce(
     (sum, day: DayPlan) =>
       sum + day.activities.reduce((total, activity) => total + (activity.budget ?? 0), 0),

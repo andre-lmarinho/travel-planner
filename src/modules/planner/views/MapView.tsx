@@ -4,9 +4,8 @@ import type { LatLngExpression, LeafletMouseEvent } from "leaflet";
 import L from "leaflet";
 import React, { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
-
 import { getDefaultColor } from "@/features/activity/constants";
-import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
+import type { Activity, DayPlan } from "@/features/activity/types";
 import { tileAttribution, tileUrl } from "@/ui/components/map/geoapifyTiles";
 import { cn } from "@/ui/utils/cn";
 
@@ -44,11 +43,18 @@ function FitAllMarkers({ coords }: { coords: LatLngExpression[] }) {
 }
 
 interface MapViewProps {
+  days: DayPlan[];
+  destCoords: { lat: number; lng: number } | null;
+  onActivitySelect: (activity: Activity, dayId: string) => void;
   className?: string;
 }
 
-export const MapView = React.memo(function MapView({ className }: MapViewProps) {
-  const { days, setSelectedActivity, destCoords } = usePlannerContext();
+export const MapView = React.memo(function MapView({
+  days,
+  destCoords,
+  onActivitySelect,
+  className,
+}: MapViewProps) {
   const centerCoords = destCoords ?? undefined;
   const defaultBg = useMemo(() => getCssColor(getDefaultColor()) ?? "var(--color-0)", []);
   const dayPaths = useMemo(
@@ -115,17 +121,10 @@ export const MapView = React.memo(function MapView({ className }: MapViewProps) 
                   icon={icon}
                   title={act.title}
                   eventHandlers={{
-                    click: () =>
-                      setSelectedActivity({
-                        ...act,
-                        dayId: day.id,
-                      }),
+                    click: () => onActivitySelect(act, day.id),
                     contextmenu: (e: LeafletMouseEvent) => {
                       e.originalEvent.preventDefault();
-                      setSelectedActivity({
-                        ...act,
-                        dayId: day.id,
-                      });
+                      onActivitySelect(act, day.id);
                     },
                   }}
                 />

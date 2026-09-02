@@ -17,7 +17,7 @@ The travel planner application follows a **feature-based architecture** with cle
 **Core data models and orchestration**
 
 - **`activity`** - Fundamental data structures (Activity, DayPlan, ActivityColor)
-- **`plan`** - Central orchestration via PlannerContext
+- **`plan`** - Central plan metadata and server-side access orchestration
 
 ### 🎨 User Interface Layer  
 **Visual planning interfaces**
@@ -47,9 +47,9 @@ The travel planner application follows a **feature-based architecture** with cle
 
 ## Key Integration Points
 
-### **PlannerContext** - Central State Hub
+### **Planner document** - Client document state
 Connects: `activity`, planner module views and components, `budget`, `events`
-Provides: Plan state, permissions, editing capabilities, collaboration state
+Provides: optimistic day state and collaboration persistence
 
 ### **Event System** - Real-time Backbone
 Connects: All UI features via `events` → `snapshots` → state updates
@@ -77,7 +77,7 @@ User Action → Event Generation → Event Persistence → Real-time Broadcast �
 
 ### **Permission Check**
 ```
-Plan Access → Member Check → Permission Context → Feature Authorization
+Plan Access → Member Check → Planner document permissions → Feature Authorization
 ```
 
 ## Feature Boundaries

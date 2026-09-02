@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { trpc } from "@/trpc/react";
 import { ConfirmationDialog } from "@/ui/components/dialog/ConfirmationDialog";
 import { Trash2 } from "@/ui/components/icon";
@@ -10,10 +9,11 @@ import { cn } from "@/ui/utils/cn";
 type DeletePlanDialogProps = {
   className?: string;
   isDemo?: boolean;
+  planId: string;
+  isOwner: boolean;
 };
 
-export function DeletePlanDialog({ className, isDemo = false }: DeletePlanDialogProps) {
-  const { planId, isOwner } = usePlannerContext();
+export function DeletePlanDialog({ className, isDemo = false, planId, isOwner }: DeletePlanDialogProps) {
   const deleteMutation = trpc.viewer.plan.delete.useMutation();
   const isPending = deleteMutation.isPending;
   const router = useRouter();

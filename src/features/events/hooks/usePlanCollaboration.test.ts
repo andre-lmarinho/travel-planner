@@ -228,4 +228,113 @@ describe("usePlanCollaboration", () => {
       expect(result.current.version).toBe(4);
     });
   });
+  test("keeps seeded days optimistic while collaboration loads", async () => {
+    const initialDays = [baseDay];
+    const updatedDays = [
+      { ...baseDay, activities: [{ ...baseDay.activities[0], title: "Breakfast at hotel" }] },
+    ];
+    let resolveSnapshot: (snapshot: Snapshot) => void = () => undefined;
+    fetchSnapshot.mockReturnValueOnce(
+      new Promise<Snapshot>((resolve) => {
+        resolveSnapshot = resolve;
+      })
+    );
+    fetchEvents.mockResolvedValue([]);
+    appendEvents.mockImplementation(async ({ events }) => ({
+      version: 2,
+      events: events.map((event) => ({
+        ...event,
+        version: 2,
+        createdAt: new Date().toISOString(),
+      })) as EventRecord[],
+    }));
+
+    const { result } = renderHook(() => usePlanCollaboration("p1", { initialDays }));
+    expect(result.current.data).toEqual(initialDays);
+
+    act(() => result.current.persistDays.mutate(updatedDays));
+    expect(result.current.data?.[0].activities[0].title).toBe("Breakfast at hotel");
+
+    resolveSnapshot({ version: 1, days: initialDays, updatedAt: new Date().toISOString() });
+    await waitFor(() => expect(appendEvents).toHaveBeenCalled());
+  });
+
+  test("keeps deferred edits available after an append failure and retries them", async () => {
+    const initialDays = [baseDay];
+    const updatedDays = [
+      { ...baseDay, activities: [{ ...baseDay.activities[0], title: "Breakfast at hotel" }] },
+    ];
+    const snapshot: Snapshot = {
+      version: 1,
+      days: initialDays,
+      updatedAt: new Date().toISOString(),
+    };
+    fetchSnapshot.mockResolvedValue(snapshot);
+    fetchEvents.mockResolvedValue([]);
+    appendEvents.mockRejectedValueOnce(new Error("append failed"));
+    appendEvents.mockImplementationOnce(async ({ events }) => ({
+      version: 2,
+      events: events.map((event) => ({
+        ...event,
+        version: 2,
+        createdAt: new Date().toISOString(),
+      })) as EventRecord[],
+    }));
+
+    const { result } = renderHook(() => usePlanCollaboration("p1", { initialDays }));
+    act(() => result.current.persistDays.mutate(updatedDays));
+
+    await waitFor(() => expect(result.current.hasPendingChanges).toBe(true));
+    expect(appendEvents).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.retryPending();
+    });
+
+    expect(appendEvents).toHaveBeenCalledTimes(2);
+    expect(result.current.hasPendingChanges).toBe(false);
+  });
+
+  test("rebases deferred operations onto remote changes", async () => {
+    const initialDays = [baseDay];
+    const updatedDays = [
+      { ...baseDay, activities: [{ ...baseDay.activities[0], title: "Breakfast at hotel" }] },
+    ];
+    const remoteDays = [
+      {
+        ...baseDay,
+        activities: [
+          ...baseDay.activities,
+          { id: "remote", title: "Museum", color: "bg-[var(--color-2)]", position: "2048" },
+        ],
+      },
+    ];
+    let resolveSnapshot: (snapshot: Snapshot) => void = () => undefined;
+    fetchSnapshot.mockReturnValueOnce(
+      new Promise<Snapshot>((resolve) => {
+        resolveSnapshot = resolve;
+      })
+    );
+    fetchEvents.mockResolvedValue([]);
+    appendEvents.mockImplementation(async ({ events }) => ({
+      version: 2,
+      events: events.map((event) => ({
+        ...event,
+        version: 2,
+        createdAt: new Date().toISOString(),
+      })) as EventRecord[],
+    }));
+
+    const { result } = renderHook(() => usePlanCollaboration("p1", { initialDays }));
+    act(() => result.current.persistDays.mutate(updatedDays));
+    resolveSnapshot({ version: 1, days: remoteDays, updatedAt: new Date().toISOString() });
+
+    await waitFor(() => expect(appendEvents).toHaveBeenCalled());
+
+    const events = appendEvents.mock.calls[0][0].events;
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("activity.updated");
+    expect(result.current.data?.[0].activities).toHaveLength(2);
+    expect(result.current.data?.[0].activities[0].title).toBe("Breakfast at hotel");
+  });
 });

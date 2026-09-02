@@ -4,13 +4,20 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FocusEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
+import {
+  addActivityAtIndex,
+  moveActivityPosition,
+  moveActivityToDay,
+  removeActivity,
+  updateActivity,
+} from "@/features/activity/lib/activityOperations";
 import { createBlankActivity } from "@/features/activity/lib/placeholders";
+import type { Activity, DayPlan } from "@/features/activity/types";
 import type { Entry } from "@/features/budget/types";
 import type { PlannerExperience } from "@/features/plan/services/PlanService";
 import { ActivityDialog } from "@/modules/planner/components/ActivityDialog";
 import { DeletePlanDialog } from "@/modules/planner/components/DeletePlanDialog";
 import { SharePlannerDialog } from "@/modules/planner/components/SharePlannerDialog";
-import { PlannerProvider, usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { BoardView } from "@/modules/planner/views/BoardView";
 import { BudgetView } from "@/modules/planner/views/BudgetView";
 import { trpc } from "@/trpc/react";
@@ -18,6 +25,7 @@ import { DateRangePickerIcon } from "@/ui/components/calendar";
 
 import type { PlannerMode } from "./components/ModeToggleButton";
 import { ModeToggleButton } from "./components/ModeToggleButton";
+import { usePlannerDocument } from "./hooks/usePlannerDocument";
 import { TripView } from "./views/TripView";
 
 const MapView = dynamic(() => import("@/modules/planner/views/MapView"), {
@@ -29,39 +37,83 @@ function PlannerContent({
   canEdit,
   isDemo,
   initialEntries,
+  planId,
+  initialDays,
+  destination,
+  viewerUserId,
+  isOwner,
+  canManageMembers,
+  isPublic,
 }: {
   title: string;
   canEdit: boolean;
   isDemo: boolean;
   initialEntries?: Entry[];
+  planId: string;
+  initialDays?: DayPlan[];
+  destination?: string;
+  viewerUserId: string | null;
+  isOwner: boolean;
+  canManageMembers: boolean;
+  isPublic: boolean;
 }) {
   const [mode, setMode] = useState<PlannerMode>("overview");
   const {
-    planId,
+    planId: documentPlanId,
     days,
     setDays,
     currentRange,
     handleRangeChange,
-    selectedActivity,
-    setSelectedActivity,
-    save,
-    deleteActivity,
-    changeColor,
-    changeDay,
-    changePosition,
-    closeDialog,
     destCoords,
-  } = usePlannerContext();
+  } = usePlannerDocument({ initialDays, planId, dest: destination, canEdit, viewerUserId });
+  const [selectedActivity, setSelectedActivity] = useState<(Activity & { dayId: string }) | null>(null);
+  const selectActivity = useCallback((activity: Activity, dayId: string) => {
+    setSelectedActivity({ ...activity, dayId });
+  }, []);
+  const save = useCallback(
+    (updates: Partial<Activity>) => {
+      if (!selectedActivity) return;
+      const currentDay = days.find((day) => day.id === selectedActivity.dayId);
+      if (!currentDay) return;
+      const nextActivity = { ...selectedActivity, ...updates };
+      const exists = currentDay.activities.some((activity) => activity.id === selectedActivity.id);
+      if (!exists) {
+        if (!nextActivity.title.trim()) return;
+        setDays(addActivityAtIndex(days, selectedActivity.dayId, nextActivity, currentDay.activities.length));
+      } else {
+        setDays(updateActivity(days, selectedActivity.id, updates));
+      }
+      setSelectedActivity(nextActivity);
+    },
+    [days, selectedActivity, setDays]
+  );
+  const changeDay = useCallback(
+    (newDayId: string) => {
+      if (!selectedActivity || selectedActivity.dayId === newDayId) return;
+      setDays(moveActivityToDay(days, selectedActivity.id, newDayId));
+      setSelectedActivity({ ...selectedActivity, dayId: newDayId });
+    },
+    [days, selectedActivity, setDays]
+  );
+  const changePosition = useCallback(
+    (newIndex: number) => {
+      if (selectedActivity) setDays(moveActivityPosition(days, selectedActivity.id, newIndex));
+    },
+    [days, selectedActivity, setDays]
+  );
+  const deleteActivity = useCallback(() => {
+    if (!selectedActivity) return;
+    setDays(removeActivity(days, selectedActivity.id));
+    setSelectedActivity(null);
+  }, [days, selectedActivity, setDays]);
+  const closeDialog = useCallback(() => setSelectedActivity(null), []);
   const [title, setTitle] = useState(initialTitle);
   const updateTitleMutation = trpc.viewer.plan.updateTitle.useMutation();
 
-  const handleFallbackAdd = useCallback(
-    (dayId: string) => {
-      const activity = createBlankActivity();
-      setSelectedActivity({ ...activity, dayId });
-    },
-    [setSelectedActivity]
-  );
+  const handleFallbackAdd = useCallback((dayId: string) => {
+    const activity = createBlankActivity();
+    setSelectedActivity({ ...activity, dayId });
+  }, []);
 
   useEffect(() => {
     document.title = `${title} | Turistar App`;
@@ -72,7 +124,7 @@ function PlannerContent({
       setTitle(initialTitle);
       return;
     }
-    if (canEdit) await updateTitleMutation.mutateAsync({ planId, title: title.trim() });
+    if (canEdit) await updateTitleMutation.mutateAsync({ planId: documentPlanId, title: title.trim() });
   };
 
   return (
@@ -102,8 +154,15 @@ function PlannerContent({
         </h1>
         <div className="flex flex-none items-center gap-1 self-end md:self-end">
           <DateRangePickerIcon value={currentRange} onChange={handleRangeChange} disabled={!canEdit} />
-          {canEdit && !isDemo ? <SharePlannerDialog planId={planId} /> : null}
-          <DeletePlanDialog isDemo={isDemo} />
+          {canEdit && !isDemo ? (
+            <SharePlannerDialog
+              planId={documentPlanId}
+              isPublic={isPublic}
+              canManageMembers={canManageMembers}
+              viewerUserId={viewerUserId}
+            />
+          ) : null}
+          <DeletePlanDialog planId={documentPlanId} isOwner={isOwner} isDemo={isDemo} />
           <div className="hidden pl-2 xl:inline">
             <ModeToggleButton
               value={mode === "map" ? "overview" : mode}
@@ -117,7 +176,12 @@ function PlannerContent({
       <div className="relative w-full flex-1 overflow-visible">
         {mode === "overview" || mode === "map" ? (
           <div className={`absolute inset-0 z-0 ${mode === "overview" ? "invisible xl:visible" : ""}`}>
-            <MapView className="h-full" />
+            <MapView
+              days={days}
+              destCoords={destCoords}
+              onActivitySelect={selectActivity}
+              className="h-full"
+            />
           </div>
         ) : null}
         {mode === "overview" || mode === "map" ? (
@@ -126,7 +190,7 @@ function PlannerContent({
               <BoardView
                 days={days}
                 canEdit={canEdit}
-                onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
+                onActivitySelect={selectActivity}
                 onDaysChange={setDays}
                 onFallbackAdd={handleFallbackAdd}
               />
@@ -135,7 +199,7 @@ function PlannerContent({
               <TripView
                 days={days}
                 canEdit={canEdit}
-                onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
+                onActivitySelect={selectActivity}
                 onDaysChange={setDays}
                 onFallbackAdd={handleFallbackAdd}
               />
@@ -146,14 +210,19 @@ function PlannerContent({
             <BoardView
               days={days}
               canEdit={canEdit}
-              onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}
+              onActivitySelect={selectActivity}
               onDaysChange={setDays}
               onFallbackAdd={handleFallbackAdd}
             />
           </div>
         ) : (
           <div className="absolute inset-0">
-            <BudgetView initialEntries={initialEntries} canEdit={canEdit} />
+            <BudgetView
+              planId={documentPlanId}
+              days={days}
+              initialEntries={initialEntries}
+              canEdit={canEdit}
+            />
           </div>
         )}
       </div>
@@ -165,7 +234,6 @@ function PlannerContent({
         onSave={save}
         onDelete={deleteActivity}
         onClose={closeDialog}
-        onColorChange={changeColor}
         onDayChange={changeDay}
         onPositionChange={changePosition}
         destCoords={destCoords}
@@ -198,21 +266,18 @@ export function PlanIdView({ experience }: { experience: PlannerExperience }) {
   }, [search, router, experience.slug]);
 
   return (
-    <PlannerProvider
-      initialDays={experience.initialDays}
-      planId={experience.planId}
-      dest={experience.destination}
+    <PlannerContent
+      title={title}
       canEdit={experience.canEdit}
+      isDemo={experience.isDemo}
+      initialEntries={experience.initialEntries}
+      planId={experience.planId}
+      initialDays={experience.initialDays}
+      destination={experience.destination}
       viewerUserId={experience.viewerUserId}
       isOwner={experience.isOwner}
       canManageMembers={experience.canManageMembers}
-      isPublic={experience.isPublic}>
-      <PlannerContent
-        title={title}
-        canEdit={experience.canEdit}
-        isDemo={experience.isDemo}
-        initialEntries={experience.initialEntries}
-      />
-    </PlannerProvider>
+      isPublic={experience.isPublic}
+    />
   );
 }

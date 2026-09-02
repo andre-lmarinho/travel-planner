@@ -5,20 +5,6 @@ import type { Entry } from "@/features/budget/types";
 import { BudgetView } from "./BudgetView";
 
 const shared = vi.hoisted(() => ({ createEntry: vi.fn(), invalidate: vi.fn() }));
-vi.mock("@/modules/planner/hooks/PlannerContext", () => ({
-  usePlannerContext: () => ({
-    planId: "plan-1",
-    days: [
-      {
-        id: "day-1",
-        label: "Mon, 05 Jul",
-        activities: [
-          { id: "activity-1", title: "Museum", color: "bg-[var(--color-1)]", budget: 40 } satisfies Activity,
-        ],
-      },
-    ],
-  }),
-}));
 vi.mock("@/trpc/react", () => ({
   trpc: {
     useUtils: () => ({ viewer: { budget: { get: { invalidate: shared.invalidate } } } }),
@@ -32,6 +18,15 @@ vi.mock("@/trpc/react", () => ({
     },
   },
 }));
+const days = [
+  {
+    id: "day-1",
+    label: "Mon, 05 Jul",
+    activities: [
+      { id: "activity-1", title: "Museum", color: "bg-[var(--color-1)]", budget: 40 } satisfies Activity,
+    ],
+  },
+];
 const entry: Entry = { id: "entry-1", description: "Airport transfer", category: "transport", amount: 85 };
 beforeEach(() => {
   shared.createEntry.mockReset();
@@ -40,14 +35,14 @@ beforeEach(() => {
 });
 describe("BudgetView", () => {
   it("shows total, categories, and entries", () => {
-    render(<BudgetView initialEntries={[entry]} />);
+    render(<BudgetView planId="plan-1" days={days} initialEntries={[entry]} />);
     expect(screen.getByLabelText("Total spent: $125.00")).toBeInTheDocument();
     expect(screen.getAllByText("Transportation")[0]).toBeInTheDocument();
     expect(screen.getAllByText("Tours & Activities")[0]).toBeInTheDocument();
     expect(screen.getByText("Airport transfer")).toBeInTheDocument();
   });
   it("creates an expense from the table", async () => {
-    render(<BudgetView initialEntries={[]} />);
+    render(<BudgetView planId="plan-1" days={days} initialEntries={[]} />);
     fireEvent.change(screen.getByLabelText("Description"), { target: { value: "Dinner" } });
     fireEvent.change(screen.getByLabelText("Amount"), { target: { value: "45" } });
     fireEvent.click(screen.getByRole("button", { name: "Add expense" }));

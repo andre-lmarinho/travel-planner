@@ -5,7 +5,6 @@ import type { FormEventHandler, KeyboardEventHandler } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ShareMember, ShareTier } from "@/features/members/types";
 import { SHARE_TIER_OPTIONS } from "@/features/members/types";
-import { usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { trpc } from "@/trpc/react";
 import { Avatar } from "@/ui/components/avatar";
 import { Button } from "@/ui/components/button";
@@ -14,7 +13,19 @@ import { Share2 } from "@/ui/components/icon";
 import { SelectMenu, type SelectMenuOption } from "@/ui/components/select/SelectMenu";
 import { cn } from "@/ui/utils/cn";
 
-export function SharePlannerDialog({ planId, isDemo = false }: { planId: string; isDemo?: boolean }) {
+export function SharePlannerDialog({
+  planId,
+  isDemo = false,
+  isPublic,
+  canManageMembers,
+  viewerUserId,
+}: {
+  planId: string;
+  isDemo?: boolean;
+  isPublic: boolean;
+  canManageMembers: boolean;
+  viewerUserId: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   if (isDemo) {
@@ -35,9 +46,9 @@ export function SharePlannerDialog({ planId, isDemo = false }: { planId: string;
           description="Publish your plan publicly, invite people, and manage planner members."
         />
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
-          <VisibilitySection />
-          <InviteForm planId={planId} />
-          <MembersSection planId={planId} />
+          <VisibilitySection planId={planId} isPublic={isPublic} canManageMembers={canManageMembers} />
+          <InviteForm planId={planId} canManageMembers={canManageMembers} />
+          <MembersSection planId={planId} canManageMembers={canManageMembers} viewerUserId={viewerUserId} />
         </div>
       </DialogContent>
     </Dialog>
@@ -51,8 +62,15 @@ const VISIBILITY_OPTIONS: ReadonlyArray<SelectMenuOption<Visibility>> = [
   { value: "public", label: "Public" },
 ];
 
-function VisibilitySection() {
-  const { planId, isPublic, canManageMembers } = usePlannerContext();
+function VisibilitySection({
+  planId,
+  isPublic,
+  canManageMembers,
+}: {
+  planId: string;
+  isPublic: boolean;
+  canManageMembers: boolean;
+}) {
   const [visibility, setVisibility] = useState<Visibility>(isPublic ? "public" : "private");
   const visibilityMutation = trpc.viewer.plan.setVisibility.useMutation();
   const pending = visibilityMutation.isPending;
@@ -112,8 +130,7 @@ const getInviteErrorMessage = (error: unknown) => {
   return "We could not add this member. Please try again.";
 };
 
-function InviteForm({ planId }: { planId: string }) {
-  const { canManageMembers } = usePlannerContext();
+function InviteForm({ planId, canManageMembers }: { planId: string; canManageMembers: boolean }) {
   const { addMember, isLoading } = useShareMembers(planId, {
     enabled: Boolean(planId),
   });
@@ -376,7 +393,15 @@ function ShareMemberRow({
   );
 }
 
-function MembersSection({ planId }: { planId: string }) {
+function MembersSection({
+  planId,
+  canManageMembers,
+  viewerUserId,
+}: {
+  planId: string;
+  canManageMembers: boolean;
+  viewerUserId: string | null;
+}) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -418,7 +443,6 @@ function MembersSection({ planId }: { planId: string }) {
     enabled: Boolean(planId),
   });
   const memberMutations = { updateTier, removeMember, leave };
-  const { viewerUserId, canManageMembers } = usePlannerContext();
   const { handleLeave, isLeaving } = useLeaveRedirect({
     planIdOrSlug: planId,
     viewerUserId,

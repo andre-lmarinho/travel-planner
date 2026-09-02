@@ -9,16 +9,6 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/modules/planner/hooks/PlannerContext", () => ({
-  usePlannerContext: () => ({
-    planId: "plan-1",
-    isPublic: false,
-    canManageMembers: true,
-    viewerUserId: null,
-    isOwner: true,
-  }),
-}));
-
 vi.mock("@/trpc/react", () => ({
   trpc: {
     useUtils: () => ({
@@ -55,7 +45,9 @@ vi.mock("@/trpc/react", () => ({
 
 describe("SharePlannerDialog", () => {
   it("provides an accessible description", () => {
-    render(<SharePlannerDialog planId="plan-1" />);
+    render(
+      <SharePlannerDialog planId="plan-1" isPublic={false} canManageMembers={true} viewerUserId={null} />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Share planner" }));
 
