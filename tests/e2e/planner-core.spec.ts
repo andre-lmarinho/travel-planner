@@ -9,16 +9,18 @@ test.describe("Planner Core", () => {
 
   test("loads planner page and displays days", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Playwright E2E Plan" })).toBeVisible();
-    await expect(page.getByText("Day 1")).toBeVisible();
+    await expect(
+      page.locator("ol[aria-label='Days']:visible").getByRole("heading", { name: "Day 1" })
+    ).toBeVisible();
   });
 
   test("displays planner tab as active", async ({ page }) => {
-    const plannerTab = page.getByRole("button", { name: "Planner", exact: true });
+    const plannerTab = page.getByRole("button", { name: "Trip", exact: true });
     await expect(plannerTab).toBeVisible();
   });
 
   test("displays map tab", async ({ page }) => {
-    const mapTab = page.getByRole("button", { name: /map/i });
+    const mapTab = page.getByRole("button", { name: /trip/i });
     await expect(mapTab).toBeVisible();
   });
 

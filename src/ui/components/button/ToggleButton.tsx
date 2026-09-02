@@ -11,6 +11,7 @@ export interface ToggleButtonProps<T extends string = string> {
   onChange: (value: T) => void;
   disabled?: boolean;
   className?: string;
+  getOptionTestId?: (option: T) => string;
   renderOption?: (option: T) => {
     label: React.ReactNode;
     icon?: React.ComponentType<{ className?: string }>;
@@ -18,7 +19,16 @@ export interface ToggleButtonProps<T extends string = string> {
 }
 
 function ToggleButtonInner<T extends string = string>(
-  { options, value, onChange, disabled = false, className, renderOption, ...props }: ToggleButtonProps<T>,
+  {
+    options,
+    value,
+    onChange,
+    disabled = false,
+    className,
+    renderOption,
+    getOptionTestId,
+    ...props
+  }: ToggleButtonProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const handleOptionClick = (option: T) => {
@@ -62,6 +72,7 @@ function ToggleButtonInner<T extends string = string>(
             type="button"
             onClick={() => handleOptionClick(option)}
             disabled={disabled}
+            data-testid={getOptionTestId?.(option)}
             aria-pressed={isSelected}
             style={
               isSelected

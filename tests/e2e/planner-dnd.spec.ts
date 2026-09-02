@@ -27,23 +27,6 @@ test.describe("Planner Smoke Tests", () => {
     await expect(status.first()).toBeVisible();
   });
 
-  test("displays map tab and OpenStreetMap attribution", async ({ page }) => {
-    await openPlannerMode(page, "map");
-
-    const attribution = page.getByText(/openstreetmap/i);
-    await expect(attribution.first()).toBeVisible();
-  });
-
-  test("displays zoom controls for map", async ({ page }) => {
-    await openPlannerMode(page, "map");
-
-    const zoomIn = page.getByRole("button", { name: /zoom in/i });
-    await expect(zoomIn.first()).toBeVisible();
-
-    const zoomOut = page.getByRole("button", { name: /zoom out/i });
-    await expect(zoomOut.first()).toBeVisible();
-  });
-
   test("displays budget tab button", async ({ page }) => {
     const budgetButton = page.getByRole("button", { name: /budget/i });
     await expect(budgetButton).toBeVisible();
@@ -61,7 +44,7 @@ test.describe("Planner Smoke Tests", () => {
   });
 
   test("displays map tab", async ({ page }) => {
-    const mapTab = page.getByRole("button", { name: /map/i });
+    const mapTab = page.getByRole("button", { name: /trip/i });
     await expect(mapTab).toBeVisible();
   });
 

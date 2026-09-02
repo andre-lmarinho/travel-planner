@@ -285,7 +285,9 @@ export function TripOverview({
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}>
             {draftDays.length > 0 ? (
-              <ol className="flex-1 overflow-y-auto [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
+              <ol
+                aria-label="Days"
+                className="flex-1 overflow-y-auto [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
                 {draftDays.map((day, dayIndex) => (
                   <TripDay
                     key={day.id}

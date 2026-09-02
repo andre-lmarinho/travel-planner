@@ -34,7 +34,7 @@ test.describe("Planner Activities", () => {
     const cancelButton = page.getByRole("button", { name: /cancel/i }).first();
     await expect(cancelButton).toBeVisible();
 
-    const addActivityButton = page.getByRole("button", { name: /add activity/i }).first();
-    await expect(addActivityButton).toBeVisible();
+    const saveButton = page.getByRole("button", { name: /done/i }).first();
+    await expect(saveButton).toBeVisible();
   });
 });

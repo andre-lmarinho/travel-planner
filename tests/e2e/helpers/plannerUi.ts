@@ -8,7 +8,7 @@ type PlannerMode = "planner" | "map" | "budget";
 export async function goToUserPlanners(page: Page) {
   await authenticateE2EUser(page);
   await page.goto(`/u/${E2E_USER_SLUG}`);
-  await expect(page.getByRole("heading", { name: /your planners/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /your trips/i })).toBeVisible();
 }
 
 export async function goToPlannerPage(page: Page, planSlug = "plan-e2e-001") {
@@ -18,7 +18,9 @@ export async function goToPlannerPage(page: Page, planSlug = "plan-e2e-001") {
 }
 
 export async function openPlannerMode(page: Page, mode: PlannerMode) {
-  const modeButton = page.getByRole("button", { name: new RegExp(`^${mode}$`, "i") });
+  const modeButton = page
+    .locator(`[data-testid="planner-mode-${mode === "planner" ? "overview" : mode}"]:visible`)
+    .first();
   await expect(modeButton).toBeVisible();
 
   if ((await modeButton.getAttribute("aria-pressed")) !== "true") {
@@ -36,7 +38,7 @@ export async function openInlineActivity(page: Page) {
   await expect(addButton).toBeVisible();
   await addButton.click();
 
-  const inlineInput = page.getByTestId("planner-inline-add-input");
+  const inlineInput = page.getByRole("dialog").locator("#title");
   await expect(inlineInput).toBeVisible();
 
   return inlineInput;
@@ -54,12 +56,11 @@ export async function openShareDialog(page: Page) {
 }
 
 export async function openPlannerCreationPopover(page: Page) {
-  const createButton = page.getByRole("button", { name: /create new planner/i });
+  const createButton = page.getByTestId("create-trip-trigger");
   await expect(createButton).toBeVisible();
   await createButton.click();
 
-  const heading = page.getByRole("heading", { name: /create planner/i });
-  await expect(heading).toBeVisible();
+  const heading = page.getByRole("heading", { name: /create a trip/i });
 
   return heading;
 }

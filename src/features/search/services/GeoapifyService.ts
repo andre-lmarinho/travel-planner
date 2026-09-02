@@ -67,6 +67,9 @@ async function fetchGeoapifyAutocompleteInternal({
   lon,
   allowedResultTypes,
 }: AutocompleteOptions): Promise<GeoapifyFeature[]> {
+  if (process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_E2E === "1") {
+    return [];
+  }
   const key = getGeoapifyKey();
 
   let url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(
