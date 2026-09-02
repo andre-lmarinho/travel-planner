@@ -65,7 +65,7 @@ describe("TripView", () => {
       />
     );
     expect(screen.getByText("Itinerary")).toBeInTheDocument();
-    expect(screen.getByText("Mon, 05 Jul")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Mon, 05 Jul" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Museum" }));
     expect(onActivitySelect).toHaveBeenCalledWith(activity, "day-1");
   });

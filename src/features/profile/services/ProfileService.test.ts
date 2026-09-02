@@ -5,12 +5,14 @@ import { ProfileService } from "./ProfileService";
 
 const repositoryMocks = vi.hoisted(() => ({
   fetchProfileByUserId: vi.fn(),
+  updateProfile: vi.fn(),
   upsertProfile: vi.fn(),
 }));
 
 function makeService(): ProfileService {
   return new ProfileService({
     fetchProfileByUserId: repositoryMocks.fetchProfileByUserId,
+    updateProfile: repositoryMocks.updateProfile,
     upsertProfile: repositoryMocks.upsertProfile,
   } as unknown as ProfileRepository);
 }
@@ -18,6 +20,7 @@ function makeService(): ProfileService {
 describe("ProfileService", () => {
   beforeEach(() => {
     repositoryMocks.fetchProfileByUserId.mockReset();
+    repositoryMocks.updateProfile.mockReset();
     repositoryMocks.upsertProfile.mockReset();
   });
 
@@ -31,6 +34,39 @@ describe("ProfileService", () => {
 
     await expect(makeService().getViewerProfile("user-1")).resolves.toMatchObject({ slug: "ada" });
     expect(repositoryMocks.fetchProfileByUserId).toHaveBeenCalledWith("user-1");
+  });
+
+  it("updates the viewer profile with normalized values", async () => {
+    repositoryMocks.updateProfile.mockResolvedValue({
+      avatarUrl: null,
+      displayName: "Grace Hopper",
+      slug: "grace-hopper",
+      userId: "user-1",
+    });
+
+    await expect(
+      makeService().updateViewerProfile("user-1", { displayName: "  Grace Hopper ", slug: " Grace-Hopper " })
+    ).resolves.toMatchObject({ displayName: "Grace Hopper", slug: "grace-hopper" });
+    expect(repositoryMocks.updateProfile).toHaveBeenCalledWith({
+      displayName: "Grace Hopper",
+      slug: "grace-hopper",
+      userId: "user-1",
+    });
+  });
+
+  it("rejects an invalid username before writing", async () => {
+    await expect(
+      makeService().updateViewerProfile("user-1", { displayName: "Grace", slug: "not valid" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(repositoryMocks.updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("maps a duplicate username to a conflict", async () => {
+    repositoryMocks.updateProfile.mockRejectedValue(new Error("duplicate", { cause: { code: "23505" } }));
+
+    await expect(
+      makeService().updateViewerProfile("user-1", { displayName: "Grace", slug: "grace" })
+    ).rejects.toMatchObject({ code: "CONFLICT", message: "Username is already in use." });
   });
 
   it("raises NOT_FOUND when the authenticated user has no profile", async () => {

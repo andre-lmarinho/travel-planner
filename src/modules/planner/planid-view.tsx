@@ -67,6 +67,16 @@ function PlannerContent({
     destCoords,
   } = usePlannerDocument({ initialDays, planId, dest: destination, canEdit, viewerUserId });
   const [selectedActivity, setSelectedActivity] = useState<(Activity & { dayId: string }) | null>(null);
+  const [hoveredDayId, setHoveredDayId] = useState<string | null>(null);
+  const [hoveredActivityId, setHoveredActivityId] = useState<string | null>(null);
+  const highlightDay = useCallback((dayId: string | null) => {
+    setHoveredDayId(dayId);
+    setHoveredActivityId(null);
+  }, []);
+  const highlightActivity = useCallback((activityId: string | null) => {
+    setHoveredActivityId(activityId);
+    setHoveredDayId(null);
+  }, []);
   const selectActivity = useCallback((activity: Activity, dayId: string) => {
     setSelectedActivity({ ...activity, dayId });
   }, []);
@@ -180,6 +190,9 @@ function PlannerContent({
               days={days}
               destCoords={destCoords}
               onActivitySelect={selectActivity}
+              highlightedDayId={hoveredDayId}
+              highlightedActivityId={hoveredActivityId}
+              onDayHover={highlightDay}
               className="h-full"
             />
           </div>
@@ -202,6 +215,8 @@ function PlannerContent({
                 onActivitySelect={selectActivity}
                 onDaysChange={setDays}
                 onFallbackAdd={handleFallbackAdd}
+                onDayHover={highlightDay}
+                onActivityHover={highlightActivity}
               />
             </div>
           </>

@@ -15,12 +15,9 @@ type UserProfile = {
 async function getUserProfile(): Promise<UserProfile> {
   try {
     const viewer = await getViewer();
-    if (!viewer) {
-      return { slug: null, displayName: null, email: null };
-    }
+    if (!viewer) return { slug: null, displayName: null, email: null };
 
     const profile = await new ProfileRepository(createSupabaseServerClient()).fetchProfileByUserId(viewer.id);
-
     return {
       slug: profile?.slug ?? null,
       displayName: profile?.displayName ?? null,
@@ -33,22 +30,22 @@ async function getUserProfile(): Promise<UserProfile> {
 
 export async function AppBar() {
   const { slug, displayName, email } = await getUserProfile();
-  const targetHref = slug ? `/u/${slug}` : "/login";
   const isLoggedIn = Boolean(email);
 
   return (
-    <header className="text-foreground border-border bg-background sticky top-0 z-40 shrink-0 border-b">
-      <nav className="mx-auto flex h-full w-full items-center justify-between p-1">
-        <Logo href={targetHref} />
-
+    <header className="border-border bg-background text-foreground sticky top-0 z-40 shrink-0 border-b">
+      <nav className="flex min-h-16 w-full items-center justify-between gap-4 px-3 md:px-6 xl:px-8">
+        <Logo href={slug ? `/u/${slug}` : "/login"} />
         {isLoggedIn ? (
-          <AvatarMenu displayName={displayName} email={email} />
+          <AvatarMenu displayName={displayName} email={email} slug={slug} />
         ) : (
-          <div className="flex flex-row items-center justify-start gap-3 px-2">
-            <Button href="/login" variant="ghost">
+          <div className="flex items-center gap-1.5">
+            <Button href="/login" variant="ghost" className="min-h-11 px-3">
               Log in
             </Button>
-            <Button href="/">Get started</Button>
+            <Button href="/" className="min-h-11 rounded-xl px-4 shadow-sm">
+              Get started
+            </Button>
           </div>
         )}
       </nav>

@@ -57,10 +57,15 @@ export type PublicPlanSummary = {
 };
 
 export type UserDestination = {
+  planId: string;
+  planTitle: string;
+  startDate: string | null;
+  endDate: string | null;
   name: string;
   country: string | null;
   lat: number | null;
   lng: number | null;
+  activityCount: number;
 };
 
 // private row types kept local to the repo; consumers see the mapped *Record types above.
@@ -97,6 +102,19 @@ function mapPlanRow(row: PlanRow): PlanRecord {
 function mapMembers(rows: PlanMemberRow[] | null): PlanMemberRecord[] {
   if (!rows) return [];
   return rows.map((row) => ({ userId: row.user_id, tier: row.tier }));
+}
+
+function countSnapshotActivities(state: unknown): number {
+  if (!state || typeof state !== "object" || !("days" in state)) return 0;
+  const days = state.days;
+  if (!Array.isArray(days)) return 0;
+
+  return days.reduce((total, day) => {
+    if (!day || typeof day !== "object" || !("activities" in day) || !Array.isArray(day.activities)) {
+      return total;
+    }
+    return total + day.activities.length;
+  }, 0);
 }
 
 export class PlanRepository {
@@ -290,7 +308,7 @@ export class PlanRepository {
     const memberPlanIds = memberships?.map((m) => m.plan_id) ?? [];
     const query = this.client
       .from("plans")
-      .select("destination_name, destination_country, latitude, longitude");
+      .select("id, title, start_date, end_date, destination_name, destination_country, latitude, longitude");
     const scopedQuery = memberPlanIds.length
       ? query.or(`user_id.eq.${userId},id.in.(${memberPlanIds.join(",")})`)
       : query.eq("user_id", userId);
@@ -300,19 +318,26 @@ export class PlanRepository {
       throw formatSupabaseError({ operation: "getUserDestinations", identifiers: { userId }, error });
     }
 
-    const byName = new Map<string, UserDestination>();
-    for (const row of data ?? []) {
-      const name = row.destination_name?.trim();
-      if (!name || byName.has(name)) continue;
-      byName.set(name, {
-        name,
-        country: row.destination_country,
-        lat: row.latitude,
-        lng: row.longitude,
-      });
-    }
+    const destinations = await Promise.all(
+      (data ?? []).map(async (row) => {
+        const name = row.destination_name?.trim();
+        if (!name) return null;
+        const snapshot = await this.fetchLatestSnapshot(row.id);
+        return {
+          planId: row.id,
+          planTitle: row.title?.trim() || "Untitled trip",
+          startDate: row.start_date,
+          endDate: row.end_date,
+          name,
+          country: row.destination_country,
+          lat: row.latitude,
+          lng: row.longitude,
+          activityCount: countSnapshotActivities(snapshot?.state),
+        };
+      })
+    );
 
-    return Array.from(byName.values());
+    return destinations.filter((destination): destination is UserDestination => destination !== null);
   }
 
   async setPlanVisibility(planId: string, isPublic: boolean): Promise<void> {

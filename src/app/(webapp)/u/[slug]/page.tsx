@@ -37,12 +37,5 @@ export default async function UserDashboardPage({ params }: UserDashboardPagePro
   const { service } = createPlanService(viewer);
   const [plans, destinations] = await Promise.all([service.getUserPlanners(), service.getUserDestinations()]);
 
-  return (
-    <DashboardView
-      displayName={profile.displayName}
-      plans={plans}
-      destinations={destinations}
-      isDemo={isDemo}
-    />
-  );
+  return <DashboardView plans={plans} destinations={destinations} isDemo={isDemo} />;
 }

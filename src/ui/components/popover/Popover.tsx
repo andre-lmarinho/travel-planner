@@ -26,7 +26,7 @@ function PopoverContent({
 }: PopoverContentProps) {
   return (
     <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Positioner align={align} side={side} sideOffset={sideOffset} className="z-60">
+      <PopoverPrimitive.Positioner align={align} side={side} sideOffset={sideOffset} className="fixed z-60">
         <PopoverPrimitive.Popup
           className={cn(
             "bg-background text-popover-foreground data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 rounded-md border shadow-md outline-hidden",

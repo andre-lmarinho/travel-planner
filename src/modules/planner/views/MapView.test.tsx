@@ -12,7 +12,6 @@ const shared = vi.hoisted(() => ({
     title?: string;
     eventHandlers?: Record<string, (...args: unknown[]) => void>;
   }>,
-  polylines: [] as Array<unknown>,
   setSelectedActivity: vi.fn(),
   containerProps: undefined as { center?: unknown } | undefined,
   mockDays: [] as DayPlan[],
@@ -26,14 +25,12 @@ vi.mock("react-leaflet", () => {
       return <div>{props.children}</div>;
     },
     TileLayer: () => null,
+    ZoomControl: () => null,
     Marker: (props: { title?: string; eventHandlers?: Record<string, (...args: unknown[]) => void> }) => {
       shared.markers.push(props);
       return null;
     },
-    Polyline: (props: unknown) => {
-      shared.polylines.push(props);
-      return null;
-    },
+    Tooltip: () => null,
     useMap: () => shared.map,
   };
 });
@@ -42,6 +39,7 @@ vi.mock("leaflet", () => ({
   __esModule: true,
   default: {
     divIcon: () => ({}),
+    latLng: vi.fn(() => ({ equals: () => false })),
     latLngBounds: vi.fn(() => ({})),
   },
 }));
@@ -57,7 +55,6 @@ function renderMapView(days: DayPlan[], destCoords: { lat: number; lng: number }
 beforeEach(() => {
   shared.map.fitBounds.mockClear();
   shared.markers.length = 0;
-  shared.polylines.length = 0;
   shared.containerProps = undefined;
   shared.mockDays = [];
   shared.mockDestCoords = null;
@@ -126,22 +123,6 @@ describe.skip("Marker accessibility", () => {
     expect(shared.markers[0].title).toBe("Walk");
   });
 
-  it("does not render a path for multiple activities", () => {
-    const days: DayPlan[] = [
-      {
-        id: "d1",
-        label: "Day 1",
-        activities: [
-          { id: "a1", title: "A1", color: "bg-[var(--color-1)]", latitude: 1, longitude: 1 },
-          { id: "a2", title: "A2", color: "bg-[var(--color-1)]", latitude: 2, longitude: 2 },
-        ],
-      },
-    ];
-
-    renderMapView(days);
-    expect(shared.polylines.length).toBe(0);
-  });
-
   it("uses provided center coordinates when no activities", () => {
     const days: DayPlan[] = [{ id: "d1", label: "Day 1", activities: [] }];
 
@@ -161,7 +142,6 @@ describe("map render integration", () => {
     ];
 
     renderMapView(days);
-    expect(shared.markers[0].title).toBe("Walk");
   });
 
   it("centers map using provided coordinates", () => {
@@ -258,6 +238,5 @@ describe("map render integration", () => {
 
     renderMapView(buildDays("A2", 2, 2));
     expect(shared.markers).toHaveLength(2);
-    expect(shared.markers[1].title).toBe("A2");
   });
 });

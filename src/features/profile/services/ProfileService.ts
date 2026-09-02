@@ -2,6 +2,7 @@ import "server-only";
 import slugify from "@sindresorhus/slugify";
 import type { Viewer } from "@/features/auth/lib/session";
 import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
+import { normalizeUsername, validUsername } from "@/features/auth/utils/validUsername";
 import { ApplicationError } from "@/lib/errors";
 import { isRecord, readString } from "@/lib/typeGuards";
 
@@ -19,6 +20,30 @@ export class ProfileService {
     }
 
     return profile;
+  }
+
+  async updateViewerProfile(
+    userId: string,
+    input: { slug: string; displayName: string }
+  ): Promise<ProfileSummary> {
+    const slug = normalizeUsername(input.slug);
+    const displayName = input.displayName.trim();
+
+    if (!validUsername(slug)) {
+      throw new ApplicationError("BAD_REQUEST", "Username must use lowercase letters, numbers, or hyphens.");
+    }
+    if (!displayName) {
+      throw new ApplicationError("BAD_REQUEST", "Display name is required.");
+    }
+
+    try {
+      return await this.repo.updateProfile({ userId, slug, displayName });
+    } catch (error) {
+      if (extractSupabaseErrorCode(error) === "23505") {
+        throw new ApplicationError("CONFLICT", "Username is already in use.");
+      }
+      throw error;
+    }
   }
 
   async ensureProfile(viewer: Viewer): Promise<string> {

@@ -2,12 +2,13 @@ import { cn } from "@/ui/utils/cn";
 
 type AvatarProps = {
   displayName: string | null;
-  size?: "sm" | "lg";
+  size?: "sm" | "lg" | "xl";
 };
 
 export function Avatar({ displayName, size = "sm" }: AvatarProps) {
   const initial = displayName?.trim().charAt(0)?.toUpperCase() || "T";
-  const sizeClasses = size === "lg" ? "h-8 w-8 p-2 text-base" : "h-6 w-6 p-1 text-xs";
+  const sizeClasses =
+    size === "xl" ? "h-10 w-10 text-lg" : size === "lg" ? "h-8 w-8 p-2 text-base" : "h-6 w-6 p-1 text-xs";
 
   return (
     <div
