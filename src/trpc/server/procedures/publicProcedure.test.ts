@@ -16,7 +16,7 @@ const testRouter = router({
 
 function createTestContext() {
   return createTRPCInnerContext({
-    auth: null,
+    viewer: null,
     requestMeta: { ip: null, requestId: "test", userAgent: null },
     supabase: {} as SupabaseClient<Database>,
   });

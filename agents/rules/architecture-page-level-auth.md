@@ -9,7 +9,7 @@ tags: security, nextjs, authorization, architecture
 
 **Impact: CRITICAL (Prevents unauthorized access to sensitive data)**
 
-Authorization checks must be performed in `page.tsx` or server components, never in `layout.tsx`. Layouts don't intercept all requests and can be bypassed.
+Resolve authentication in the page or Server Component that renders private data, and authorize each protected Server Action, Route Handler, and tRPC procedure independently. Do not use a layout as the only authorization check: layouts can persist across navigations and do not re-render for every route change.
 
 **Incorrect (auth checks in layout):**
 
@@ -44,13 +44,15 @@ export default async function AdminPage() {
 ```
 
 **Why layouts are unsafe for auth:**
-- Layouts don't intercept all requests (direct navigation, refreshes)
-- APIs and server actions bypass layouts entirely
-- Risk of data leaks if layout check is skipped
+- Partial rendering means layouts can persist across navigations without re-running their checks.
+- APIs, Server Actions, Route Handlers, and tRPC procedures are independent entry points; protected operations must authorize themselves.
+- A layout check alone can therefore leave a data or mutation entry point unprotected.
 
 **Key rules:**
-- Check permissions inside every restricted `page.tsx`
-- Validate session/user/role before querying sensitive data
-- Redirect or return nothing to unauthorized users before running restricted code
+- Resolve the session in a restricted `page.tsx` or Server Component with `getViewer()`.
+- Keep resource membership and role checks in the owning Service; RLS remains the final authorization boundary.
+- Redirect before rendering private UI, but do not duplicate resource policy in pages or proxy.
+- Every protected Server Action, Route Handler, and tRPC procedure must authorize its own operation; UI and Proxy checks are not sufficient.
+- Proxy only refreshes the Supabase session and emits transport headers; it does not decide access.
 
 Reference: [Next.js Security Best Practices](https://nextjs.org/docs/app/building-your-application/authentication)

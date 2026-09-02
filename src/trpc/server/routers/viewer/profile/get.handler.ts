@@ -11,5 +11,5 @@ type GetProfileHandlerOpts = {
 
 export function getProfileHandler({ ctx, input: _input }: GetProfileHandlerOpts) {
   const service = new ProfileService(new ProfileRepository(ctx.supabase));
-  return service.getViewerProfile(ctx.auth.userId);
+  return service.getViewerProfile(ctx.viewer.id);
 }

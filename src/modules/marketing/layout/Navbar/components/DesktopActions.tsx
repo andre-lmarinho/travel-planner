@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatSupabaseError } from "@/lib/errors";
 import { supabase } from "@/supabase/client";
+import { trpc } from "@/trpc/react";
 import { Button } from "@/ui/components/button";
 
 type Profile = { slug: string | null };
 
 export function DesktopActions() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const profileUtils = trpc.useUtils();
 
   useEffect(() => {
     let active = true;
@@ -19,28 +20,20 @@ export function DesktopActions() {
         return;
       }
 
-      const { data, error } = await supabase.from("profiles").select("slug").eq("id", userId).maybeSingle();
-      if (error) {
-        console.error(
-          formatSupabaseError({
-            operation: "DesktopActions.loadProfile:selectProfile",
-            identifiers: { userId },
-            error,
-          })
-        );
+      try {
+        const profile = await profileUtils.viewer.profile.get.fetch({});
+        if (active) setProfile({ slug: profile.slug });
+      } catch {
         if (active) setProfile(null);
-        return;
       }
-
-      const slug =
-        data && typeof data === "object" && "slug" in data && typeof data.slug === "string"
-          ? data.slug
-          : null;
-
-      if (active) setProfile({ slug });
     }
 
-    void supabase.auth.getSession().then(({ data }) => loadProfile(data.session?.user?.id));
+    void supabase.auth
+      .getSession()
+      .then(({ data }) => loadProfile(data.session?.user?.id))
+      .catch(() => {
+        if (active) setProfile(null);
+      });
 
     const {
       data: { subscription },
@@ -52,7 +45,7 @@ export function DesktopActions() {
       active = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [profileUtils]);
 
   const destination = profile?.slug ? `/u/${profile.slug}` : null;
 

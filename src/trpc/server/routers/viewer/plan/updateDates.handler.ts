@@ -16,7 +16,8 @@ export async function updatePlanDatesHandler({
   const service = new PlanService(
     new PlanRepository(ctx.supabase),
     new BudgetRepository(ctx.supabase),
-    new ProfileRepository(ctx.supabase)
+    new ProfileRepository(ctx.supabase),
+    ctx.viewer
   );
   return service.updatePlanDates(input.planId, new Date(input.from), new Date(input.to));
 }

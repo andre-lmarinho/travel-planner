@@ -10,11 +10,7 @@ const USER_ID = "00000000-0000-4000-8000-000000000001";
 function createCaller() {
   return createCallerFactory(appRouter)(
     createTRPCInnerContext({
-      auth: {
-        email: "user@example.com",
-        user: { email: "user@example.com", id: USER_ID },
-        userId: USER_ID,
-      },
+      viewer: { email: "user@example.com", id: USER_ID },
       requestMeta: { ip: null, requestId: "test", userAgent: null },
       supabase: createMockSupabaseClient({
         fromData: {

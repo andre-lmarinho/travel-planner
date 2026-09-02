@@ -1,7 +1,6 @@
 import type { AuthResponse } from "@supabase/auth-js";
 import type { Session } from "@supabase/supabase-js";
 
-import { extractErrorMessage } from "@/features/auth/utils/extractErrorMessage";
 import { supabase } from "@/supabase/client";
 
 type SignInWithPasswordInput = {
@@ -34,27 +33,6 @@ export async function signInWithPassword({
 
   if (!session) {
     throw new Error(`signIn failed: reason=no_session`);
-  }
-
-  const userId = session.user?.id;
-
-  if (!userId) {
-    return { slug: await resolveProfile() };
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("slug")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (profileError) {
-    const message = extractErrorMessage(profileError) ?? "unknown";
-    throw new Error(`getProfileSlug failed: userId=${userId} message=${message}`);
-  }
-
-  if (profile?.slug) {
-    return { slug: profile.slug };
   }
 
   return { slug: await resolveProfile() };

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
+import { getViewer } from "@/features/auth/lib/session";
+
 import { createPlanService } from "@/features/plan/services/createPlanService";
 import type { PlannerExperience } from "@/features/plan/services/PlanService";
 import { ApplicationError } from "@/lib/errors";
@@ -13,13 +15,9 @@ type PageProps = {
   searchParams: Promise<{ dest?: string }>;
 };
 
-function buildPlannerContext() {
-  return createPlanService();
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { planId } = await params;
-  const { repo } = buildPlannerContext();
+  const { repo } = createPlanService();
   const metadata = await repo.fetchPlanMetadata(planId);
   const titleFromPlan = metadata.title?.trim();
   const titleFromDest = metadata.destinationName?.trim();
@@ -33,7 +31,8 @@ export default async function PlannerPlanPage({ params, searchParams }: PageProp
 
   let experience: PlannerExperience;
   try {
-    experience = await buildPlannerContext().service.getPlannerExperience({
+    const viewer = await getViewer();
+    experience = await createPlanService(viewer).service.getPlannerExperience({
       identifier: planId,
       dest,
     });

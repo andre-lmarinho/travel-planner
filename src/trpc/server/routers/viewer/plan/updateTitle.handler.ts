@@ -16,7 +16,8 @@ export async function updatePlanTitleHandler({
   const service = new PlanService(
     new PlanRepository(ctx.supabase),
     new BudgetRepository(ctx.supabase),
-    new ProfileRepository(ctx.supabase)
+    new ProfileRepository(ctx.supabase),
+    ctx.viewer
   );
   return service.updatePlanTitle(input.planId, input.title);
 }

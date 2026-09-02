@@ -10,7 +10,8 @@ export async function createPlanHandler({ ctx, input }: { ctx: AuthedTRPCContext
   const service = new PlanService(
     new PlanRepository(ctx.supabase),
     new BudgetRepository(ctx.supabase),
-    new ProfileRepository(ctx.supabase)
+    new ProfileRepository(ctx.supabase),
+    ctx.viewer
   );
   return service.createUserPlan(input);
 }

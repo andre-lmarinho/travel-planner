@@ -2,16 +2,10 @@ import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { getCurrentUser, type SupabaseUser } from "@/features/auth/lib/session";
+import { getViewer, type Viewer } from "@/features/auth/lib/session";
 import { createRequestCtx } from "@/lib/errors/requestCtx";
 import { createSupabaseServerClient } from "@/supabase/server";
 import type { Database } from "@/supabase/types";
-
-export type AuthContext = {
-  email: string | null;
-  user: SupabaseUser;
-  userId: string;
-};
 
 export type TRPCRequestMeta = {
   ip: string | null;
@@ -20,20 +14,10 @@ export type TRPCRequestMeta = {
 };
 
 export type CreateTRPCInnerContextInput = {
-  auth: AuthContext | null;
   requestMeta: TRPCRequestMeta;
   supabase: SupabaseClient<Database>;
+  viewer: Viewer | null;
 };
-
-export function buildAuthContext(user: SupabaseUser | null): AuthContext | null {
-  if (!user) return null;
-
-  return {
-    email: user.email ?? null,
-    user,
-    userId: user.id,
-  };
-}
 
 export function createTRPCInnerContext(input: CreateTRPCInnerContextInput) {
   return input;
@@ -54,12 +38,12 @@ export async function createTRPCContext({ req }: FetchCreateContextFnOptions) {
   const supabase = createSupabaseServerClient();
 
   try {
-    const user = await getCurrentUser(supabase);
+    const viewer = await getViewer(supabase);
 
     return createTRPCInnerContext({
-      auth: buildAuthContext(user),
       requestMeta: createRequestMeta(req),
       supabase,
+      viewer,
     });
   } catch (error) {
     const pathname = new URL(req.url).pathname;
@@ -70,4 +54,4 @@ export async function createTRPCContext({ req }: FetchCreateContextFnOptions) {
 }
 
 export type TRPCContext = Awaited<ReturnType<typeof createTRPCInnerContext>>;
-export type AuthedTRPCContext = TRPCContext & { auth: AuthContext };
+export type AuthedTRPCContext = TRPCContext & { viewer: Viewer };

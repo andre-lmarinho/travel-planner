@@ -16,7 +16,7 @@ vi.mock("@/features/auth/lib/isUsernameAvailable", () => ({
 function createCaller() {
   return createCallerFactory(appRouter)(
     createTRPCInnerContext({
-      auth: null,
+      viewer: null,
       requestMeta: { ip: null, requestId: "public-profile-test", userAgent: null },
       supabase: createMockSupabaseClient(),
     })

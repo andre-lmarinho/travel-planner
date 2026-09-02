@@ -1,4 +1,5 @@
-import { ensureProfile } from "@/features/auth/lib/ensureProfile";
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
+import { ProfileService } from "@/features/profile/services/ProfileService";
 
 import type { AuthedTRPCContext } from "../../../createContext";
 import type { EnsureProfileInput } from "./ensure.schema";
@@ -10,5 +11,5 @@ export async function ensureProfileHandler({
   ctx: AuthedTRPCContext;
   input: EnsureProfileInput;
 }) {
-  return ensureProfile({ client: ctx.supabase });
+  return new ProfileService(new ProfileRepository(ctx.supabase)).ensureProfile(ctx.viewer);
 }
