@@ -284,8 +284,8 @@ describe("usePlanCollaboration", () => {
     const { result } = renderHook(() => usePlanCollaboration("p1", { initialDays }));
     act(() => result.current.persistDays.mutate(updatedDays));
 
-    await waitFor(() => expect(result.current.hasPendingChanges).toBe(true));
-    expect(appendEvents).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(appendEvents).toHaveBeenCalledTimes(1));
+    expect(result.current.hasPendingChanges).toBe(true);
 
     await act(async () => {
       await result.current.retryPending();
