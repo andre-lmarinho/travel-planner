@@ -9,7 +9,9 @@ test.describe("Planner Core", () => {
 
   test("loads planner page and displays days", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "Playwright E2E Plan" })).toBeVisible();
-    await expect(page.getByText("Day 1").first()).toBeVisible();
+    await expect(
+      page.locator("ol[aria-label='Days']:visible").getByRole("heading", { name: "Day 1" })
+    ).toBeVisible();
   });
 
   test("displays planner tab as active", async ({ page }) => {

@@ -12,7 +12,7 @@ test.describe("User dashboard", () => {
     await openPlannerCreationPopover(page);
 
     await page.getByPlaceholder("Destination").fill("Paris");
-    await page.getByRole("button", { name: "Create trip" }).click();
+    await page.getByTestId("create-trip-submit").click();
 
     await expect(page).toHaveURL(/\/p\/plan-e2e-001/);
   });

@@ -18,8 +18,9 @@ export async function goToPlannerPage(page: Page, planSlug = "plan-e2e-001") {
 }
 
 export async function openPlannerMode(page: Page, mode: PlannerMode) {
-  const modeLabel = mode === "map" || mode === "planner" ? "Trip" : "Budget";
-  const modeButton = page.getByRole("button", { name: modeLabel, exact: true });
+  const modeButton = page
+    .locator(`[data-testid="planner-mode-${mode === "planner" ? "overview" : mode}"]:visible`)
+    .first();
   await expect(modeButton).toBeVisible();
 
   if ((await modeButton.getAttribute("aria-pressed")) !== "true") {
@@ -55,7 +56,7 @@ export async function openShareDialog(page: Page) {
 }
 
 export async function openPlannerCreationPopover(page: Page) {
-  const createButton = page.getByRole("button", { name: "Create a trip", exact: true });
+  const createButton = page.getByTestId("create-trip-trigger");
   await expect(createButton).toBeVisible();
   await createButton.click();
 

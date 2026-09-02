@@ -131,7 +131,7 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
           />
         </fieldset>
 
-        <Button type="submit" disabled={loading} className="w-full">
+        <Button data-testid="create-trip-submit" type="submit" disabled={loading} className="w-full">
           Create trip
         </Button>
 

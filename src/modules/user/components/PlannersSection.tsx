@@ -26,7 +26,9 @@ function CreateTripDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTriggerButton className="border-primary bg-primary text-primary-foreground group flex min-h-48 w-full cursor-pointer flex-col items-center justify-center rounded-xl border p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <DialogTriggerButton
+        data-testid="create-trip-trigger"
+        className="border-primary bg-primary text-primary-foreground group flex min-h-48 w-full cursor-pointer flex-col items-center justify-center rounded-xl border p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <span className="bg-primary-foreground/15 flex size-10 items-center justify-center rounded-full">
           <Plus className="size-5" aria-hidden="true" />
         </span>

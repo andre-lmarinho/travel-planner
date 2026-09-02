@@ -27,6 +27,7 @@ export function ModeToggleButton({ value, onChange, modes = modeOrder }: ModeTog
       value={value}
       onChange={(mode) => onChange(mode as PlannerMode)}
       renderOption={(mode) => MODE_CONFIG[mode as PlannerMode]}
+      getOptionTestId={(mode) => `planner-mode-${mode}`}
     />
   );
 }
