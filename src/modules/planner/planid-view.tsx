@@ -18,7 +18,7 @@ import { DateRangePickerIcon } from "@/ui/components/calendar";
 
 import type { PlannerMode } from "./components/ModeToggleButton";
 import { ModeToggleButton } from "./components/ModeToggleButton";
-import { TripOverview } from "./components/TripOverview";
+import { TripView } from "./views/TripView/TripView";
 
 const MapView = dynamic(() => import("@/modules/planner/views/MapView/MapView"), {
   ssr: false,
@@ -133,7 +133,7 @@ function PlannerContent({
               />
             </div>
             <div className="pointer-events-none absolute inset-0 z-10 hidden xl:block">
-              <TripOverview
+              <TripView
                 days={days}
                 canEdit={canEdit}
                 onActivitySelect={(activity, dayId) => setSelectedActivity({ ...activity, dayId })}

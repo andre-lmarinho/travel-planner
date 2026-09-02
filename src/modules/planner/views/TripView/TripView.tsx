@@ -18,7 +18,7 @@ import { ChevronDown, Eye, EyeOff, GripVertical, List, Plus } from "@/ui/compone
 import { Tooltip } from "@/ui/components/tooltip";
 import { cn } from "@/ui/utils/cn";
 
-interface TripOverviewProps {
+interface TripViewProps {
   days: DayPlan[];
   canEdit: boolean;
   onActivitySelect: (activity: Activity, dayId: string) => void;
@@ -219,13 +219,7 @@ function TripDay({
   );
 }
 
-export function TripOverview({
-  days,
-  canEdit,
-  onActivitySelect,
-  onDaysChange,
-  onFallbackAdd,
-}: TripOverviewProps) {
+export function TripView({ days, canEdit, onActivitySelect, onDaysChange, onFallbackAdd }: TripViewProps) {
   const [isItineraryOpen, setIsItineraryOpen] = useState(true);
   const [collapsedDayIds, setCollapsedDayIds] = useState<Set<string>>(() => new Set());
   const [draftDays, setDraftDays] = useState(days);
