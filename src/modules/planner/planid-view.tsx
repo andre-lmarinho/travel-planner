@@ -11,7 +11,7 @@ import { DeletePlanDialog } from "@/modules/planner/components/DeletePlanDialog"
 import { SharePlannerDialog } from "@/modules/planner/components/SharePlannerDialog";
 import { PlannerProvider, usePlannerContext } from "@/modules/planner/hooks/PlannerContext";
 import { BoardView } from "@/modules/planner/views/BoardView";
-import { BudgetView } from "@/modules/planner/views/BudgetView/BudgetView";
+import { BudgetView } from "@/modules/planner/views/BudgetView";
 import { trpc } from "@/trpc/react";
 import { DateRangePickerIcon } from "@/ui/components/calendar";
 

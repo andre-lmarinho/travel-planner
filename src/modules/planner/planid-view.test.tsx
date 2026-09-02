@@ -43,7 +43,7 @@ vi.mock("@/modules/planner/hooks/PlannerContext", () => ({
   }),
 }));
 
-vi.mock("@/modules/planner/views/BudgetView/BudgetView", () => ({
+vi.mock("@/modules/planner/views/BudgetView", () => ({
   BudgetView: () => <div data-testid="budget-board" />,
 }));
 
