@@ -8,7 +8,7 @@ import { appRouter } from "../_app";
 function createUnauthenticatedCaller() {
   return createCallerFactory(appRouter)(
     createTRPCInnerContext({
-      auth: null,
+      viewer: null,
       requestMeta: { ip: null, requestId: "viewer-auth-test", userAgent: null },
       supabase: createMockSupabaseClient(),
     })

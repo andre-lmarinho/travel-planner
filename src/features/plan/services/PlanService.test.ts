@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getCurrentUser, requireUser } from "@/features/auth/lib/session";
+import type { Viewer } from "@/features/auth/lib/session";
 import type { BudgetRepository } from "@/features/budget/repositories/BudgetRepository";
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
@@ -8,13 +8,6 @@ import type { PlanRepository } from "../repositories/PlanRepository";
 import { PlanService } from "./PlanService";
 
 const { fetchProfileSlugByUserId } = vi.hoisted(() => ({ fetchProfileSlugByUserId: vi.fn() }));
-
-vi.mock("@/features/auth/lib/session", async () => {
-  const actual = await vi.importActual<typeof import("@/features/auth/lib/session")>(
-    "@/features/auth/lib/session"
-  );
-  return { ...actual, getCurrentUser: vi.fn(), requireUser: vi.fn() };
-});
 vi.mock("@/features/search/services/GeoapifyService", () => ({
   fetchGeoapifyPlaceDetails: vi.fn(),
 }));
@@ -37,36 +30,30 @@ const OWNED_PLAN = {
   isPublic: false,
 };
 
-function makeService(repo: Partial<PlanRepository>) {
+function makeService(repo: Partial<PlanRepository>, viewer: Viewer | null = { id: "owner-1" }) {
   const budgetRepo = {
     fetchPlanBudgetEntries: vi.fn().mockResolvedValue([]),
   } as unknown as BudgetRepository;
   const profileRepo = { fetchProfileSlugByUserId } as unknown as ProfileRepository;
-  return new PlanService(repo as PlanRepository, budgetRepo, profileRepo);
+  return new PlanService(repo as PlanRepository, budgetRepo, profileRepo, viewer);
 }
 
 describe("PlanService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getCurrentUser).mockResolvedValue(null);
-    vi.mocked(requireUser).mockResolvedValue({ id: "owner-1" });
     vi.mocked(fetchProfileSlugByUserId).mockResolvedValue(null);
   });
 
   describe("getPlannerExperience — membership-only access", () => {
-    it("throws UNAUTHORIZED for an anonymous visitor", async () => {
-      const service = makeService({
-        fetchPlanByIdWithMembers: vi.fn(),
-        fetchPlanBySlug: vi.fn(),
-      });
+    it("does not expose a private planner to an anonymous visitor", async () => {
+      const service = makeService({ fetchPublicPlanBySlug: vi.fn().mockResolvedValue(null) }, null);
 
       await expect(service.getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
-        code: "UNAUTHORIZED",
+        code: "NOT_FOUND",
       });
     });
 
     it("throws NOT_FOUND when the plan does not exist", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "owner-1" });
       const service = makeService({
         fetchPlanBySlug: vi.fn().mockResolvedValue(null),
       });
@@ -77,10 +64,10 @@ describe("PlanService", () => {
     });
 
     it("throws FORBIDDEN for a non-member", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "stranger" });
-      const service = makeService({
-        fetchPlanBySlug: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [], isPublic: true }),
-      });
+      const service = makeService(
+        { fetchPlanBySlug: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [], isPublic: false }) },
+        { id: "stranger" }
+      );
 
       await expect(service.getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
         code: "FORBIDDEN",
@@ -90,7 +77,7 @@ describe("PlanService", () => {
 
   describe("deletePlan", () => {
     it("throws BAD_REQUEST for an empty id", async () => {
-      const service = makeService({});
+      const service = makeService({}, null);
       await expect(service.deletePlan("   ")).rejects.toMatchObject({ code: "BAD_REQUEST" });
     });
 
@@ -103,16 +90,15 @@ describe("PlanService", () => {
     });
 
     it("throws FORBIDDEN for a non-owner", async () => {
-      vi.mocked(requireUser).mockResolvedValue({ id: "other" });
-      const service = makeService({
-        fetchPlanByIdWithMembers: vi.fn().mockResolvedValue(OWNED_PLAN),
-      });
+      const service = makeService(
+        { fetchPlanByIdWithMembers: vi.fn().mockResolvedValue(OWNED_PLAN) },
+        { id: "other" }
+      );
 
       await expect(service.deletePlan("plan-1")).rejects.toMatchObject({ code: "FORBIDDEN" });
     });
 
     it("deletes the plan and resolves a redirect to the user's public page", async () => {
-      vi.mocked(requireUser).mockResolvedValue({ id: "owner-1" });
       vi.mocked(fetchProfileSlugByUserId).mockResolvedValue("owner-slug");
       const deleteFn = vi.fn().mockResolvedValue(undefined);
       const service = makeService({
@@ -135,17 +121,33 @@ describe("PlanService", () => {
       ],
       ["setPlanVisibility", (s: PlanService) => s.setPlanVisibility("plan-1", true)],
     ])("throws UNAUTHORIZED for an anonymous %s caller without hitting the repo", async (_name, call) => {
-      const service = makeService({});
+      const service = makeService({}, null);
       await expect(call(service)).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
   });
 
   describe("setPlanVisibility", () => {
-    it("throws FORBIDDEN for a non-member on a private plan", async () => {
-      vi.mocked(getCurrentUser).mockResolvedValueOnce({ id: "stranger" });
-      const service = makeService({
-        fetchPlanByIdWithMembers: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [] }),
+    it("throws FORBIDDEN for a non-admin member", async () => {
+      const service = makeService(
+        {
+          fetchPlanByIdWithMembers: vi.fn().mockResolvedValue({
+            ...OWNED_PLAN,
+            members: [{ userId: "member-1", tier: "member" }],
+          }),
+        },
+        { id: "member-1" }
+      );
+
+      await expect(service.setPlanVisibility("plan-1", true)).rejects.toMatchObject({
+        code: "FORBIDDEN",
       });
+    });
+
+    it("throws FORBIDDEN for a non-member on a private plan", async () => {
+      const service = makeService(
+        { fetchPlanByIdWithMembers: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [] }) },
+        { id: "stranger" }
+      );
 
       await expect(service.setPlanVisibility("plan-1", true)).rejects.toMatchObject({
         code: "FORBIDDEN",

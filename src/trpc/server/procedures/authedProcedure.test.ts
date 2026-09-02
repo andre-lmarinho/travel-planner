@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
-
+import type { Viewer } from "@/features/auth/lib/session";
 import type { Database } from "@/supabase/types";
-import { type AuthContext, createTRPCInnerContext } from "../createContext";
+import { createTRPCInnerContext } from "../createContext";
 import { createCallerFactory, router } from "../trpc";
 import { authedProcedure } from "./authedProcedure";
 
@@ -12,15 +12,9 @@ const testRouter = router({
   ping: authedProcedure.query(() => "pong"),
 });
 
-function createTestContext(
-  auth: AuthContext | null = {
-    email: "user@example.com",
-    user: { email: "user@example.com", id: USER_ID },
-    userId: USER_ID,
-  }
-) {
+function createTestContext(viewer: Viewer | null = { email: "user@example.com", id: USER_ID }) {
   return createTRPCInnerContext({
-    auth,
+    viewer,
     requestMeta: { ip: null, requestId: "test", userAgent: null },
     supabase: {} as SupabaseClient<Database>,
   });

@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { createSupabaseServerClient } from "@/supabase/server";
 import type { Database } from "@/supabase/types";
 
-export type SupabaseUser = {
+export type Viewer = {
   id: string;
   email?: string | null;
   user_metadata?: Record<string, unknown> | null;
@@ -15,7 +15,7 @@ export type SupabaseUser = {
 const isE2E = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_E2E === "1";
 const E2E_USER_ID_COOKIE = "e2e-user-id";
 
-async function getE2EUserFromCookies(): Promise<SupabaseUser | null> {
+async function getE2EUserFromCookies(): Promise<Viewer | null> {
   if (!isE2E) {
     return null;
   }
@@ -37,37 +37,43 @@ async function getE2EUserFromCookies(): Promise<SupabaseUser | null> {
   }
 }
 
-export class UnauthorizedError extends Error {
-  constructor(message = "Authentication required.") {
-    super(message);
-    this.name = "UnauthorizedError";
-  }
-}
-
 export function isAuthSessionMissingError(error: unknown): boolean {
   if (typeof error !== "object" || error === null) {
     return false;
   }
 
-  const maybeError = error as { message?: string; status?: number };
+  const maybeError = error as { code?: string; message?: string; status?: number };
+  const message = maybeError.message?.toLowerCase() ?? "";
   return (
     maybeError.status === 400 &&
-    typeof maybeError.message === "string" &&
-    maybeError.message.toLowerCase().includes("auth session missing")
+    (message.includes("auth session missing") ||
+      message.includes("invalid refresh token") ||
+      maybeError.code === "refresh_token_not_found")
   );
 }
 
-export async function getCurrentUser(
+export async function getViewer(
   supabase: SupabaseClient<Database> = createSupabaseServerClient()
-): Promise<SupabaseUser | null> {
+): Promise<Viewer | null> {
   const e2eUser = await getE2EUserFromCookies();
   if (e2eUser) {
     return e2eUser;
   }
 
   try {
-    const { data } = await supabase.auth.getUser();
-    return data.user as SupabaseUser | null;
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      if (isAuthSessionMissingError(error)) return null;
+      throw error;
+    }
+
+    return data.user
+      ? {
+          id: data.user.id,
+          email: data.user.email,
+          user_metadata: data.user.user_metadata,
+        }
+      : null;
   } catch (error) {
     if (!isAuthSessionMissingError(error)) {
       throw error;
@@ -75,14 +81,4 @@ export async function getCurrentUser(
   }
 
   return null;
-}
-
-export async function requireUser(): Promise<SupabaseUser> {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    throw new UnauthorizedError();
-  }
-
-  return user;
 }

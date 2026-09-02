@@ -1,3 +1,4 @@
+import { getViewer } from "@/features/auth/lib/session";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { createSupabaseServerClient } from "@/supabase/server";
 import { Button } from "@/ui/components/button";
@@ -13,22 +14,17 @@ type UserProfile = {
 
 async function getUserProfile(): Promise<UserProfile> {
   try {
-    const supabase = createSupabaseServerClient();
-    const { data: authData } = await supabase.auth.getUser();
-    const typedUser = authData.user as { id?: string; email?: string | null } | null;
-    const userId = typedUser?.id ?? null;
-    const email = typedUser?.email ?? null;
-
-    if (!userId) {
+    const viewer = await getViewer();
+    if (!viewer) {
       return { slug: null, displayName: null, email: null };
     }
 
-    const profile = await new ProfileRepository(supabase).fetchProfileByUserId(userId);
+    const profile = await new ProfileRepository(createSupabaseServerClient()).fetchProfileByUserId(viewer.id);
 
     return {
       slug: profile?.slug ?? null,
       displayName: profile?.displayName ?? null,
-      email: email ?? null,
+      email: viewer.email ?? null,
     };
   } catch {
     return { slug: null, displayName: null, email: null };

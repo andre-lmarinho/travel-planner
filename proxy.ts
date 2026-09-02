@@ -21,7 +21,7 @@ export async function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set("Content-Security-Policy", csp);
 
   // E2E runs against a mocked Supabase; server components own auth there.
@@ -41,6 +41,12 @@ export async function proxy(request: NextRequest) {
           // Write the refreshed session back to the browser here. A Server
           // Component cannot set cookies, so without this the rotated refresh
           // token is lost and idle sessions get dropped mid-navigation.
+          for (const { name, value } of cookiesToSet) {
+            request.cookies.set(name, value);
+          }
+          requestHeaders.set("cookie", request.cookies.toString());
+          response = NextResponse.next({ request: { headers: requestHeaders } });
+          response.headers.set("Content-Security-Policy", csp);
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
           }
@@ -53,7 +59,7 @@ export async function proxy(request: NextRequest) {
   // A transient auth-service failure must not 500 every page: page-level guards
   // still enforce access, the session just isn't refreshed on this pass.
   try {
-    await supabase.auth.getUser();
+    await supabase.auth.getClaims();
   } catch {
     // ignore
   }

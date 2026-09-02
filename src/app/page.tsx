@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { ensureProfile } from "@/features/auth/lib/ensureProfile";
 import { resolveNextPath } from "@/features/auth/lib/redirect";
 import { redirectIfAuthenticated } from "@/features/auth/lib/redirectServer";
+import { getViewer } from "@/features/auth/lib/session";
+import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
+import { ProfileService } from "@/features/profile/services/ProfileService";
+import { ApplicationError } from "@/lib/errors";
 import { SITE_URL } from "@/lib/urls/siteUrl";
 import { SignupView } from "@/modules/auth/signup-view";
 import SeoJsonLd from "@/modules/marketing/seo/SeoJsonLd";
+import { createSupabaseServerClient } from "@/supabase/server";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -51,7 +55,9 @@ export default async function SignupRoute({ searchParams }: { searchParams?: Pro
 
   async function finalizeProfileAction() {
     "use server";
-    return ensureProfile();
+    const viewer = await getViewer();
+    if (!viewer) throw new ApplicationError("UNAUTHORIZED", "Sign in to create a profile.");
+    return new ProfileService(new ProfileRepository(createSupabaseServerClient())).ensureProfile(viewer);
   }
 
   return (
