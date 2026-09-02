@@ -41,12 +41,13 @@ export class ProfileService {
     const baseSlug =
       slugify(base, { separator: "-", lowercase: true }) ||
       slugify(viewer.id, { separator: "-", lowercase: true });
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      const slug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt}`;
+    const viewerSlug = slugify(viewer.id, { separator: "-", lowercase: true });
+    const slugs = [baseSlug, `${baseSlug}-${viewerSlug}`];
+    for (const slug of slugs) {
       try {
         return (await this.repo.upsertProfile({ userId: viewer.id, slug, displayName, avatarUrl })).slug;
       } catch (error) {
-        if (extractSupabaseErrorCode(error) === "23505") continue;
+        if (extractSupabaseErrorCode(error) === "23505" && slug !== slugs[slugs.length - 1]) continue;
         const code = extractSupabaseErrorCode(error);
         const message = extractErrorMessage(error);
         throw new Error(
