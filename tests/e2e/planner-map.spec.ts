@@ -22,7 +22,7 @@ test.describe("Map View", () => {
   });
 
   test("map tab has correct aria state when active", async ({ page }) => {
-    const mapTab = page.getByRole("button", { name: /map/i });
+    const mapTab = page.getByRole("button", { name: /trip/i });
     await expect(mapTab).toHaveAttribute("aria-pressed", "true");
   });
 

@@ -45,7 +45,7 @@ test.describe("Search & Autocomplete", () => {
     await goToUserPlanners(page);
     await openPlannerCreationPopover(page);
 
-    const startButton = page.getByRole("button", { name: /start your planning/i });
+    const startButton = page.getByRole("button", { name: /create trip/i });
     await expect(startButton).toBeVisible();
   });
 

@@ -8,6 +8,12 @@ import type { Database } from "@/supabase/types";
 let serviceRoleClient: SupabaseClient<Database> | null = null;
 
 export function createSupabaseServiceRoleClient(): SupabaseClient<Database> {
+  const isE2E = process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_E2E === "1";
+  if (isE2E) {
+    const { getSupabaseMock } =
+      require("../../tests/e2e/mocks/supabase") as typeof import("../../tests/e2e/mocks/supabase");
+    return getSupabaseMock();
+  }
   const existingClient = serviceRoleClient;
   if (existingClient) {
     return existingClient;

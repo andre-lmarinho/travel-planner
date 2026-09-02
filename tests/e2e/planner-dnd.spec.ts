@@ -61,7 +61,7 @@ test.describe("Planner Smoke Tests", () => {
   });
 
   test("displays map tab", async ({ page }) => {
-    const mapTab = page.getByRole("button", { name: /map/i });
+    const mapTab = page.getByRole("button", { name: /trip/i });
     await expect(mapTab).toBeVisible();
   });
 

@@ -6,13 +6,13 @@ test.describe("User dashboard", () => {
   test("loads planners and creates a new planner", async ({ page }) => {
     await goToUserPlanners(page);
 
-    await expect(page.getByRole("heading", { name: "Your planners" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your trips" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Playwright E2E Plan" })).toBeVisible();
 
     await openPlannerCreationPopover(page);
 
     await page.getByPlaceholder("Destination").fill("Paris");
-    await page.getByRole("button", { name: "Start Your Planning" }).click();
+    await page.getByRole("button", { name: "Create trip" }).click();
 
     await expect(page).toHaveURL(/\/p\/plan-e2e-001/);
   });
