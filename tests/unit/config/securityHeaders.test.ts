@@ -40,7 +40,9 @@ describe("security headers", () => {
     expect(csp).toContain("img-src 'self' data: blob: https://i.pravatar.cc");
     expect(csp).not.toContain("geoapify.com");
     expect(csp).toContain("frame-src https://vercel.live https://www.youtube-nocookie.com");
-    expect(csp).toContain("connect-src 'self' https://*.supabase.co wss://*.supabase.co");
+    expect(csp).toContain(
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com"
+    );
     const imageSrc = csp.split("; ").find((directive) => directive.startsWith("img-src")) ?? "";
     expect(imageSrc.split(" ")).not.toContain("https:");
   });
