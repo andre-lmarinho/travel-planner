@@ -33,7 +33,7 @@ export function buildCsp({ isDev, nonce }: { isDev: boolean; nonce: string }): s
     common.push(
       `script-src 'self' 'strict-dynamic' 'nonce-${nonce}'`,
       `script-src-elem 'self' 'nonce-${nonce}'`,
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://us.i.posthog.com",
       "worker-src 'self'"
     );
   }
