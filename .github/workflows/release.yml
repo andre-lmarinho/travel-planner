@@ -1,9 +1,7 @@
 name: Release
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+  push:
     branches: [main]
 
 permissions:
@@ -15,88 +13,58 @@ concurrency:
 
 jobs:
   release:
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-
-      - name: Detect release version
-        id: version
+      - name: Create release when package version is pending
         env:
-          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           VERSION="$(node -p "require('./package.json').version")"
-          PREVIOUS_VERSION="$(git show "${RELEASE_SHA}^:package.json" | node -e 'let source = ""; process.stdin.on("data", (chunk) => { source += chunk; }).on("end", () => console.log(JSON.parse(source).version));')"
-
-          if [ "${VERSION}" = "${PREVIOUS_VERSION}" ]; then
-            echo "package.json version did not change; nothing to release."
-            echo "should_release=false" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
-
           if ! printf '%s' "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
             echo "::error::Invalid package version: ${VERSION}"
             exit 1
           fi
 
           TAG="v${VERSION}"
-          if git rev-parse "${TAG}^{commit}" >/dev/null 2>&1; then
-            TAG_SHA="$(git rev-parse "${TAG}^{commit}")"
-            if [ "${TAG_SHA}" != "${RELEASE_SHA}" ]; then
-              echo "::error::Tag ${TAG} points to ${TAG_SHA}, expected ${RELEASE_SHA}."
-              exit 1
-            fi
-            echo "Tag ${TAG} already points to this release commit."
-          fi
-
           LATEST_TAG="$(git tag -l 'v[0-9]*' --sort=-version:refname | head -1)"
+
           if [ -n "${LATEST_TAG}" ] && [ "${LATEST_TAG}" != "${TAG}" ]; then
-            LATEST_VERSION="${LATEST_TAG#v}"
-            LOWEST="$(printf '%s\n' "${LATEST_VERSION}" "${VERSION}" | sort -V | head -1)"
-            if [ "${LOWEST}" != "${LATEST_VERSION}" ]; then
+            LOWEST="$(printf '%s\n' "${LATEST_TAG#v}" "${VERSION}" | sort -V | head -1)"
+            if [ "${LOWEST}" != "${LATEST_TAG#v}" ]; then
               echo "::error::${VERSION} is older than the latest release ${LATEST_TAG}."
               exit 1
             fi
           fi
 
-          echo "should_release=true" >> "${GITHUB_OUTPUT}"
-          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          if git rev-parse "${TAG}^{commit}" >/dev/null 2>&1; then
+            TAG_SHA="$(git rev-parse "${TAG}^{commit}")"
+            if [ "${TAG_SHA}" != "${GITHUB_SHA}" ]; then
+              echo "::error::Tag ${TAG} points to ${TAG_SHA}, expected ${GITHUB_SHA}."
+              exit 1
+            fi
 
-      - name: Create tag and GitHub Release
-        if: steps.version.outputs.should_release == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
-          TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          set -euo pipefail
+            if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+              echo "Release ${TAG} already exists."
+              exit 0
+            fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if ! git rev-parse "${TAG}^{commit}" >/dev/null 2>&1; then
-            git tag -a "${TAG}" "${RELEASE_SHA}" -m "Release ${TAG}"
-            git push origin "${TAG}"
-          fi
-
-          if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            echo "GitHub Release ${TAG} already exists."
-            exit 0
+            echo "Tag ${TAG} exists without a GitHub Release; recovering it."
+          elif [ -n "${LATEST_TAG}" ] && [ "${LATEST_TAG}" = "${TAG}" ]; then
+            echo "::error::Latest tag ${TAG} was not found locally."
+            exit 1
+          else
+            echo "Release ${TAG} is pending."
           fi
 
           gh release create "${TAG}" \
             --repo "${GITHUB_REPOSITORY}" \
-            --target "${RELEASE_SHA}" \
+            --target "${GITHUB_SHA}" \
             --title "${TAG}" \
             --generate-notes
