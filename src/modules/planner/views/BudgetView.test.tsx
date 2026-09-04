@@ -34,6 +34,12 @@ beforeEach(() => {
   shared.invalidate.mockReset();
 });
 describe("BudgetView", () => {
+  it("renders without initial budget entries", () => {
+    render(<BudgetView planId="plan-1" days={[]} />);
+
+    expect(screen.getByLabelText("Total spent: $0.00")).toBeInTheDocument();
+  });
+
   it("shows total, categories, and entries", () => {
     render(<BudgetView planId="plan-1" days={days} initialEntries={[entry]} />);
     expect(screen.getByLabelText("Total spent: $125.00")).toBeInTheDocument();

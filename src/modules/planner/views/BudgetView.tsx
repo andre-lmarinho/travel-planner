@@ -10,6 +10,7 @@ import { trpc } from "@/trpc/react";
 import { Check, DollarSign, Pencil, Plus, Trash2, X } from "@/ui/components/icon";
 
 const currencySymbol = "\u0024";
+const EMPTY_ENTRIES: Entry[] = [];
 const inputClasses =
   "h-11 w-full rounded-xl border border-border bg-background px-3 pl-8 text-right text-base font-semibold tabular-nums outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1";
 interface Props {
@@ -19,13 +20,14 @@ interface Props {
   canEdit?: boolean;
 }
 
-export function BudgetView({ planId, days, initialEntries = [], canEdit = true }: Props) {
+export function BudgetView({ planId, days, initialEntries, canEdit = true }: Props) {
+  const seedEntries = initialEntries ?? EMPTY_ENTRIES;
   const activitiesTotal = days.reduce(
     (sum, day: DayPlan) =>
       sum + day.activities.reduce((total, activity) => total + (activity.budget ?? 0), 0),
     0
   );
-  const [entries, setEntries] = useState(initialEntries);
+  const [entries, setEntries] = useState(seedEntries);
   const [desc, setDesc] = useState("");
   const [cat, setCat] = useState<CategoryKey>("transport");
   const [amount, setAmount] = useState(0);
@@ -35,8 +37,8 @@ export function BudgetView({ planId, days, initialEntries = [], canEdit = true }
   const budgetQuery = trpc.viewer.budget.get.useQuery({ planId }, { enabled: persistEnabled });
 
   useEffect(() => {
-    setEntries(persistEnabled ? (budgetQuery.data?.entries ?? initialEntries) : initialEntries);
-  }, [budgetQuery.data, initialEntries, persistEnabled]);
+    setEntries(persistEnabled ? (budgetQuery.data?.entries ?? seedEntries) : seedEntries);
+  }, [budgetQuery.data, persistEnabled, seedEntries]);
 
   const categoryTotals: Record<CategoryKey, number> = {
     transport: 0,

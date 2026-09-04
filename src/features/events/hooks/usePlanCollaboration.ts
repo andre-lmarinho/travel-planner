@@ -75,13 +75,15 @@ export function usePlanCollaboration(
         sinceVersion: snapshot.version,
       });
       const reduced = reduceEvents(snapshot, events);
+      const baseDays =
+        reduced.version === 0 && reduced.days.length === 0 ? cloneDays(seedDaysRef.current) : reduced.days;
       versionRef.current = reduced.version;
-      snapshotRef.current = cloneDays(reduced.days);
+      snapshotRef.current = cloneDays(baseDays);
       const pendingOperations = pendingOperationsRef.current;
       const displayedDays =
         pendingOperations && !deferredPersistingRef.current
-          ? applyOperations(reduced.days, pendingOperations, reduced.version)
-          : reduced.days;
+          ? applyOperations(baseDays, pendingOperations, reduced.version)
+          : baseDays;
       setState({ version: reduced.version, days: displayedDays });
       setError(null);
       loadedRef.current = true;

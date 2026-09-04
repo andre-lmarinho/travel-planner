@@ -228,6 +228,21 @@ describe("usePlanCollaboration", () => {
       expect(result.current.version).toBe(4);
     });
   });
+  test("keeps date-derived days when the persisted snapshot is empty", async () => {
+    const initialDays = [baseDay];
+    fetchSnapshot.mockResolvedValue({ version: 0, days: [], updatedAt: new Date(0).toISOString() });
+    fetchEvents.mockResolvedValue([]);
+
+    const { result } = renderHook(() => usePlanCollaboration("p1", { initialDays }));
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data).toEqual(initialDays);
+    expect(result.current.version).toBe(0);
+  });
+
   test("keeps seeded days optimistic while collaboration loads", async () => {
     const initialDays = [baseDay];
     const updatedDays = [
