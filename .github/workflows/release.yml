@@ -23,6 +23,7 @@ jobs:
       - name: Create release when package version is pending
         env:
           GH_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
         run: |
           set -euo pipefail
 
@@ -33,6 +34,18 @@ jobs:
           fi
 
           TAG="v${VERSION}"
+          PREVIOUS_VERSION=""
+          if git cat-file -e "${GITHUB_EVENT_BEFORE}:package.json" 2>/dev/null; then
+            PREVIOUS_VERSION="$(git show "${GITHUB_EVENT_BEFORE}:package.json" | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)"
+          fi
+
+          if [ -n "${PREVIOUS_VERSION}" ] && [ "${PREVIOUS_VERSION}" = "${VERSION}" ] && git rev-parse "${TAG}^{commit}" >/dev/null 2>&1; then
+            TAG_SHA="$(git rev-parse "${TAG}^{commit}")"
+            if [ "${TAG_SHA}" != "${GITHUB_SHA}" ]; then
+              echo "Tag ${TAG} already exists on ${TAG_SHA}; skipping release."
+              exit 0
+            fi
+          fi
           LATEST_TAG="$(git tag -l 'v[0-9]*' --sort=-version:refname | head -1)"
 
           if [ -n "${LATEST_TAG}" ] && [ "${LATEST_TAG}" != "${TAG}" ]; then
