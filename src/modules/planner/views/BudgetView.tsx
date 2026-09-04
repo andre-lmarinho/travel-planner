@@ -1,10 +1,9 @@
 "use client";
 
-import type { FocusEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 import type { DayPlan } from "@/features/activity/types";
-import type { BudgetRowInputsResult, CategoryKey, Entry } from "@/features/budget/types";
+import type { CategoryKey, Entry } from "@/features/budget/types";
 import { CATEGORIES, CHART_COLORS } from "@/features/budget/types";
 import { trpc } from "@/trpc/react";
 import { Check, DollarSign, Pencil, Plus, Trash2, X } from "@/ui/components/icon";
@@ -20,24 +19,21 @@ interface Props {
 }
 
 export function BudgetView({ planId, days, initialEntries }: Props) {
-  const seedEntries = initialEntries ?? EMPTY_ENTRIES;
   const activitiesTotal = days.reduce(
     (sum, day: DayPlan) =>
       sum + day.activities.reduce((total, activity) => total + (activity.budget ?? 0), 0),
     0
   );
-  const [entries, setEntries] = useState(seedEntries);
-  const [desc, setDesc] = useState("");
-  const [cat, setCat] = useState<CategoryKey>("transport");
-  const [amount, setAmount] = useState(0);
   const [persistError, setPersistError] = useState<string | null>(null);
-  const persistEnabled = Boolean(planId);
   const utils = trpc.useUtils();
-  const budgetQuery = trpc.viewer.budget.get.useQuery({ planId }, { enabled: persistEnabled });
-
-  useEffect(() => {
-    setEntries(persistEnabled ? (budgetQuery.data?.entries ?? seedEntries) : seedEntries);
-  }, [budgetQuery.data, persistEnabled, seedEntries]);
+  const cache = utils.viewer.budget.get;
+  const { data } = trpc.viewer.budget.get.useQuery(
+    { planId },
+    {
+      initialData: { budget: 0, entries: initialEntries ?? EMPTY_ENTRIES },
+    }
+  );
+  const entries = data.entries;
 
   const categoryTotals: Record<CategoryKey, number> = {
     transport: 0,
@@ -50,62 +46,58 @@ export function BudgetView({ planId, days, initialEntries }: Props) {
   for (const entry of entries) categoryTotals[entry.category] += entry.amount;
   const totalSpent = Object.values(categoryTotals).reduce((sum, value) => sum + value, 0);
 
-  const createEntry = trpc.viewer.budget.createEntry.useMutation({
-    onSuccess: () => utils.viewer.budget.get.invalidate({ planId }),
-    onError: (_error, input) =>
-      setPersistError(`Failed to create budget entry: planId=${planId} category=${input.payload.category}`),
-  });
-  const updateEntry = trpc.viewer.budget.updateEntry.useMutation({
-    onSuccess: () => utils.viewer.budget.get.invalidate({ planId }),
-    onError: (_error, input) =>
-      setPersistError(`Failed to update budget entry: planId=${planId} entryId=${input.entry.id}`),
-  });
-  const deleteEntry = trpc.viewer.budget.deleteEntry.useMutation({
-    onSuccess: () => utils.viewer.budget.get.invalidate({ planId }),
-    onError: (_error, input) =>
-      setPersistError(`Failed to delete budget entry: planId=${planId} entryId=${input.entryId}`),
-  });
+  const createEntry = trpc.viewer.budget.createEntry.useMutation();
+  const updateEntry = trpc.viewer.budget.updateEntry.useMutation();
+  const deleteEntry = trpc.viewer.budget.deleteEntry.useMutation();
+  const isPending = createEntry.isPending || updateEntry.isPending || deleteEntry.isPending;
 
-  const handleAdd = async () => {
-    if (!desc || amount <= 0) return;
+  const saveEntry = async (entry: ExpenseInput) => {
+    await cache.cancel({ planId });
+    const previous = cache.getData({ planId });
     setPersistError(null);
-    const entry = { description: desc, category: cat, amount };
-
     try {
-      const id = persistEnabled
-        ? await createEntry.mutateAsync({ planId, payload: entry })
-        : crypto.randomUUID();
-      setEntries((current) => [...current, { id, ...entry }]);
-      setDesc("");
-      setAmount(0);
+      if (entry.id) {
+        const updated = { ...entry, id: entry.id };
+        cache.setData(
+          { planId },
+          (current) =>
+            current && {
+              ...current,
+              entries: current.entries.map((item) => (item.id === updated.id ? updated : item)),
+            }
+        );
+        await updateEntry.mutateAsync({ entry: updated });
+      } else {
+        const id = await createEntry.mutateAsync({ planId, payload: entry });
+        cache.setData(
+          { planId },
+          (current) => current && { ...current, entries: [...current.entries, { ...entry, id }] }
+        );
+      }
+      return true;
     } catch {
-      // mutation error is already exposed by onError
+      cache.setData({ planId }, previous);
+      setPersistError(`Failed to save budget entry: planId=${planId} entryId=${entry.id ?? "new"}`);
+      return false;
+    } finally {
+      void cache.invalidate({ planId });
     }
   };
-
-  const handleUpdate = async (index: number, entry: Entry) => {
-    if (index < 0 || index >= entries.length) return;
-    const previous = entries;
-    setEntries((current) => current.map((item, itemIndex) => (itemIndex === index ? entry : item)));
-    if (!persistEnabled) return;
-
+  const removeEntry = async (entryId: string) => {
+    await cache.cancel({ planId });
+    const previous = cache.getData({ planId });
+    setPersistError(null);
+    cache.setData(
+      { planId },
+      (current) => current && { ...current, entries: current.entries.filter((item) => item.id !== entryId) }
+    );
     try {
-      await updateEntry.mutateAsync({ entry });
+      await deleteEntry.mutateAsync({ entryId });
     } catch {
-      setEntries(previous);
-    }
-  };
-
-  const handleDelete = async (index: number) => {
-    if (index < 0 || index >= entries.length) return;
-    const entry = entries[index];
-    setEntries((current) => current.filter((_, itemIndex) => itemIndex !== index));
-    if (!persistEnabled) return;
-
-    try {
-      await deleteEntry.mutateAsync({ entryId: entry.id });
-    } catch {
-      setEntries((current) => [...current.slice(0, index), entry, ...current.slice(index)]);
+      cache.setData({ planId }, previous);
+      setPersistError(`Failed to delete budget entry: planId=${planId} entryId=${entryId}`);
+    } finally {
+      void cache.invalidate({ planId });
     }
   };
 
@@ -117,91 +109,23 @@ export function BudgetView({ planId, days, initialEntries }: Props) {
           <CategoryChart totalSpent={totalSpent} categoryTotals={categoryTotals} />
         </div>
         <div className="md:col-span-2 xl:col-span-1">
-          <ExpenseTable
-            entries={entries}
-            amount={amount}
-            desc={desc}
-            cat={cat}
-            onAdd={handleAdd}
-            onDelete={handleDelete}
-            onUpdate={handleUpdate}
-            onDescriptionChange={setDesc}
-            onCategoryChange={setCat}
-            onAmountChange={setAmount}
-          />
+          <ExpenseTable entries={entries} onSave={saveEntry} onDelete={removeEntry} disabled={isPending} />
         </div>
       </div>
     </div>
   );
 }
 
-export interface AmountDisplayProps {
-  value?: number | string;
-  variant: "input" | "span";
-  onValueChange?: (value: number) => void;
-  onBlur?: () => void;
-  ariaLabel?: string;
-  placeholder?: string;
-  inputId?: string;
-  compact?: boolean;
-}
-
-export function AmountDisplay({
-  value = 0,
-  variant,
-  onValueChange,
-  onBlur,
-  ariaLabel,
-  placeholder,
-  inputId,
+function AmountDisplay({
+  value,
   compact = false,
-}: AmountDisplayProps) {
-  const [inputValue, setInputValue] = useState(String(value));
-  const lastReportedValue = useRef<number>(Number(value) || 0);
-
-  const handleBlur = (_event: FocusEvent<HTMLInputElement>) => {
-    const parsedValue = Number(inputValue);
-    const normalized = Number.isFinite(parsedValue) ? parsedValue : 0;
-    if (onValueChange && normalized !== lastReportedValue.current) {
-      onValueChange(normalized);
-      lastReportedValue.current = normalized;
-    }
-    setInputValue(normalized ? String(normalized) : "0");
-    onBlur?.();
-  };
-
-  if (variant === "input") {
-    return (
-      <div className="relative">
-        <span className="text-muted-foreground pointer-events-none absolute inset-y-0 left-3 flex items-center text-base font-semibold">
-          {currencySymbol}
-        </span>
-        <input
-          id={inputId}
-          name={inputId}
-          type="text"
-          value={inputValue}
-          onChange={(event) => {
-            const nextValue = event.target.value;
-            setInputValue(nextValue);
-            const parsedValue = Number(nextValue);
-            const normalized = Number.isFinite(parsedValue) ? parsedValue : 0;
-            onValueChange?.(normalized);
-            lastReportedValue.current = normalized;
-          }}
-          onBlur={handleBlur}
-          autoComplete="off"
-          placeholder={placeholder}
-          className={inputClasses}
-          inputMode="decimal"
-          aria-label={ariaLabel}
-        />
-      </div>
-    );
-  }
-
-  const numericValue = typeof value === "string" ? parseFloat(value) || 0 : value;
-  const formattedValue = numericValue.toLocaleString("en-US", {
+  ariaLabel = "Amount",
+}: {
+  value: number;
+  compact?: boolean;
+  ariaLabel?: string;
+}) {
+  const formattedValue = value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -318,56 +242,78 @@ export function Summary({ totalSpent, persistError }: { totalSpent: number; pers
         </div>
 
         <div className="mt-6">
-          <AmountDisplay value={totalSpent} variant="span" ariaLabel="Total spent" />
+          <AmountDisplay value={totalSpent} ariaLabel="Total spent" />
         </div>
       </article>
     </section>
   );
 }
 
-const isValidCategoryKey = (value: string): value is CategoryKey =>
-  CATEGORIES.some(({ key }) => key === value);
+type ExpenseInput = Omit<Entry, "id"> & { id?: string };
+type ExpenseDraft = Omit<ExpenseInput, "amount"> & { amount: string };
+const EMPTY_DRAFT: ExpenseDraft = { description: "", category: "transport", amount: "" };
 
-function BudgetRowInputs({ description, category, amount }: BudgetRowInputsResult) {
-  const descriptionRef = useRef<HTMLInputElement | null>(null);
-
+function ExpenseEditor({
+  entry,
+  onSave,
+  onCancel,
+  disabled,
+}: {
+  entry?: Entry;
+  onSave: (entry: ExpenseInput) => Promise<boolean>;
+  onCancel?: () => void;
+  disabled: boolean;
+}) {
+  const [draft, setDraft] = useState<ExpenseDraft>(() =>
+    entry ? { ...entry, amount: String(entry.amount) } : EMPTY_DRAFT
+  );
+  const [submitting, setSubmitting] = useState(false);
+  const descriptionRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (!description.autoFocus) return;
-    descriptionRef.current?.focus();
-  }, [description.autoFocus]);
-
+    if (entry) descriptionRef.current?.focus();
+  }, [entry]);
+  const amount = Number(draft.amount);
+  const isInvalid = !Number.isFinite(amount) || !draft.description.trim() || amount <= 0;
+  const save = async () => {
+    if (submitting || isInvalid) return;
+    setSubmitting(true);
+    try {
+      if (await onSave({ ...draft, description: draft.description.trim(), amount })) {
+        if (entry) onCancel?.();
+        else setDraft({ ...EMPTY_DRAFT, category: draft.category });
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const id = entry?.id ?? "new-row";
   return (
-    <>
+    <tr className="border-border">
       <td className="p-2">
-        <label htmlFor={description.id} className="sr-only">
-          {description.ariaLabel ?? "Description"}
-        </label>
         <input
           ref={descriptionRef}
-          id={description.id}
+          id={`description-${id}`}
           name="description"
-          value={description.value}
+          aria-label="Description"
+          value={draft.description}
+          onChange={(event) => setDraft({ ...draft, description: event.target.value })}
+          placeholder="Description"
           autoComplete="off"
-          placeholder={description.placeholder}
-          onChange={(event) => description.onChange(event.target.value)}
-          aria-label={description.ariaLabel ?? "Description"}
-          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          disabled={disabled || submitting}
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
         />
       </td>
       <td className="p-2">
-        <label htmlFor={category.id} className="sr-only">
-          {category.ariaLabel ?? "Category"}
-        </label>
         <select
-          id={category.id}
-          name="category"
-          value={category.value}
+          id={`category-${id}`}
+          aria-label="Category"
+          value={draft.category}
+          disabled={disabled || submitting}
           onChange={(event) => {
-            const value = event.target.value;
-            if (isValidCategoryKey(value)) category.onChange(value);
+            const category = CATEGORIES.find(({ key }) => key === event.target.value);
+            if (category) setDraft({ ...draft, category: category.key });
           }}
-          aria-label={category.ariaLabel ?? "Category"}
-          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring focus:ring-offset-1">
+          className="h-10 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring">
           {CATEGORIES.map(({ key, label }) => (
             <option key={key} value={key}>
               {label}
@@ -376,200 +322,103 @@ function BudgetRowInputs({ description, category, amount }: BudgetRowInputsResul
         </select>
       </td>
       <td className="p-2 text-right">
-        <label htmlFor={amount.id} className="sr-only">
-          {amount.ariaLabel ?? "Amount"}
-        </label>
-        <AmountDisplay
-          inputId={amount.id}
-          value={amount.value}
-          variant="input"
-          onValueChange={amount.onValueChange}
-          onBlur={amount.onBlur}
-          ariaLabel={amount.ariaLabel ?? "Amount"}
-          placeholder={amount.placeholder}
-        />
+        <div className="relative">
+          <span className="text-muted-foreground pointer-events-none absolute inset-y-0 left-3 flex items-center">
+            {currencySymbol}
+          </span>
+          <input
+            id={`amount-${id}`}
+            aria-label="Amount"
+            value={draft.amount}
+            disabled={disabled || submitting}
+            onChange={(event) => setDraft({ ...draft, amount: event.target.value })}
+            type="text"
+            inputMode="decimal"
+            placeholder="Amount"
+            autoComplete="off"
+            className={inputClasses}
+          />
+        </div>
       </td>
-    </>
+      <td className="p-2 text-right">
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => void save()}
+            aria-label={entry ? "Save entry" : "Add expense"}
+            disabled={disabled || submitting || isInvalid}
+            className="border-border bg-background inline-flex size-8 items-center justify-center rounded-full border disabled:opacity-50">
+            {entry ? (
+              <Check className="size-4" aria-hidden="true" />
+            ) : (
+              <Plus className="size-4" aria-hidden="true" />
+            )}
+          </button>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              aria-label="Cancel edit"
+              disabled={disabled || submitting}
+              className="border-border bg-background inline-flex size-8 items-center justify-center rounded-full border">
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
   );
 }
 
-export function ExpenseTable({
+function ExpenseTable({
   entries,
-  amount,
-  desc,
-  cat,
-  onAdd,
+  onSave,
   onDelete,
-  onUpdate,
-  onDescriptionChange,
-  onCategoryChange,
-  onAmountChange,
+  disabled,
 }: {
   entries: Entry[];
-  amount: number;
-  desc: string;
-  cat: CategoryKey;
-  onAdd: () => Promise<void>;
-  onDelete: (index: number) => Promise<void>;
-  onUpdate: (index: number, entry: Entry) => Promise<void>;
-  onDescriptionChange: (value: string) => void;
-  onCategoryChange: (value: CategoryKey) => void;
-  onAmountChange: (value: number) => void;
+  onSave: (entry: ExpenseInput) => Promise<boolean>;
+  onDelete: (entryId: string) => Promise<void>;
+  disabled: boolean;
 }) {
-  const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [editEntry, setEditEntry] = useState<Entry | null>(null);
-  const [amountInput, onAmountChangeInput] = useState(amount ? String(amount) : "");
-  const [editAmountInput, setEditAmountInput] = useState("");
-
-  const startEdit = (index: number) => {
-    if (index < 0 || index >= entries.length) return;
-    setEditIndex(index);
-    setEditEntry(entries[index]);
-    setEditAmountInput(String(entries[index].amount));
-  };
-
-  const cancelEdit = () => {
-    setEditIndex(null);
-    setEditEntry(null);
-  };
-
-  const saveEdit = (index: number, entry: Entry) => {
-    onUpdate(index, entry);
-    cancelEdit();
-  };
-
-  const renderRow = (entry: Entry, index: number) => {
-    const isEditing = editIndex === index && editEntry;
-
-    if (isEditing) {
-      const editId = `edit-${index}`;
-
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const renderRow = (entry: Entry) => {
+    if (editingId === entry.id)
       return (
-        <tr key={entry.id} className="border-border">
-          <BudgetRowInputs
-            description={{
-              id: `description-${editId}`,
-              value: editEntry.description,
-              onChange: (value) => setEditEntry((prev) => (prev ? { ...prev, description: value } : prev)),
-              autoFocus: true,
-            }}
-            category={{
-              id: `category-${editId}`,
-              value: editEntry.category,
-              onChange: (value) => setEditEntry((prev) => (prev ? { ...prev, category: value } : prev)),
-            }}
-            amount={{
-              id: `amount-${editId}`,
-              value: editAmountInput,
-              onValueChange: (value) => setEditAmountInput(String(value)),
-              onBlur: () => {
-                const normalized = Number(editAmountInput) || 0;
-                setEditEntry((prev) => (prev ? { ...prev, amount: normalized } : prev));
-                setEditAmountInput(normalized ? String(normalized) : "0");
-              },
-            }}
-          />
-          <td className="p-2 text-right">
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => saveEdit(index, editEntry)}
-                aria-label="Save entry"
-                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-                <Check className="size-4" aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={cancelEdit}
-                aria-label="Cancel edit"
-                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-                <X className="size-4" aria-hidden="true" />
-              </button>
-            </div>
-          </td>
-        </tr>
+        <ExpenseEditor
+          key={entry.id}
+          entry={entry}
+          onSave={onSave}
+          onCancel={() => setEditingId(null)}
+          disabled={disabled}
+        />
       );
-    }
-
-    const formattedAmount = entry.amount.toFixed(2);
-    const categoryLabel = CATEGORIES.find((c) => c.key === entry.category)?.label ?? "Unknown";
-
     return (
       <tr key={entry.id} className="border-border">
         <th scope="row" className="p-2 text-left font-medium">
           {entry.description}
         </th>
-        <td className="p-2">{categoryLabel}</td>
+        <td className="p-2">{CATEGORIES.find(({ key }) => key === entry.category)?.label ?? "Unknown"}</td>
         <td className="p-2 text-right">
-          <AmountDisplay
-            value={entry.amount}
-            variant="span"
-            compact
-            ariaLabel={`Amount: $${formattedAmount}`}
-          />
+          <AmountDisplay value={entry.amount} compact />
         </td>
         <td className="p-2 text-right">
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              onClick={() => startEdit(index)}
+              onClick={() => setEditingId(entry.id)}
               aria-label="Edit entry"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+              disabled={disabled}
+              className="border-border bg-background inline-flex size-8 items-center justify-center rounded-full border">
               <Pencil className="size-4" aria-hidden="true" />
             </button>
             <button
               type="button"
-              onClick={() => onDelete(index)}
+              onClick={() => void onDelete(entry.id)}
               aria-label="Delete entry"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+              disabled={disabled}
+              className="border-border bg-background inline-flex size-8 items-center justify-center rounded-full border">
               <Trash2 className="size-4" aria-hidden="true" />
-            </button>
-          </div>
-        </td>
-      </tr>
-    );
-  };
-
-  const renderNewRow = () => {
-    const newId = "new-row";
-
-    return (
-      <tr className="border-border">
-        <BudgetRowInputs
-          description={{
-            id: `description-${newId}`,
-            value: desc,
-            onChange: onDescriptionChange,
-            placeholder: "Description",
-          }}
-          category={{
-            id: `category-${newId}`,
-            value: cat,
-            onChange: onCategoryChange,
-          }}
-          amount={{
-            id: `amount-${newId}`,
-            value: amountInput,
-            onValueChange: (value) => {
-              onAmountChangeInput(String(value));
-              onAmountChange(value);
-            },
-            onBlur: () => {
-              const normalized = Number(amountInput) || 0;
-              onAmountChange(normalized);
-              onAmountChangeInput(normalized ? String(normalized) : "0");
-            },
-            placeholder: "Amount",
-          }}
-        />
-        <td className="p-2 text-right">
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={onAdd}
-              aria-label="Add expense"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
-              <Plus className="size-4" aria-hidden="true" />
             </button>
           </div>
         </td>
@@ -608,7 +457,7 @@ export function ExpenseTable({
         </thead>
         <tbody className="[&>tr]:rounded-xl [&>tr]:border [&>tr]:bg-background [&>tr]:shadow-sm">
           {entries.map(renderRow)}
-          {renderNewRow()}
+          <ExpenseEditor onSave={onSave} disabled={disabled} />
         </tbody>
       </table>
     </section>

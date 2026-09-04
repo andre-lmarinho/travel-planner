@@ -33,34 +33,3 @@ export interface BudgetQueryResult {
   budget: number;
   entries: Entry[];
 }
-
-export type DescriptionConfig = {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  autoFocus?: boolean;
-  ariaLabel?: string;
-};
-
-export type CategoryConfig = {
-  id: string;
-  value: CategoryKey;
-  onChange: (value: CategoryKey) => void;
-  ariaLabel?: string;
-};
-
-export type AmountConfig = {
-  id: string;
-  value: string;
-  onValueChange: (value: number) => void;
-  onBlur?: () => void;
-  placeholder?: string;
-  ariaLabel?: string;
-};
-
-export type BudgetRowInputsResult = {
-  description: DescriptionConfig;
-  category: CategoryConfig;
-  amount: AmountConfig;
-};

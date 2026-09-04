@@ -24,6 +24,7 @@ export function SharePlannerDialog({
   viewerUserId: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const members = useShareMembers(planId, open);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -36,8 +37,13 @@ export function SharePlannerDialog({
       <DialogContent>
         <DialogHeader title="Share planner" description="Invite people and manage planner members." />
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
-          <InviteForm planId={planId} canManageMembers={canManageMembers} />
-          <MembersSection planId={planId} canManageMembers={canManageMembers} viewerUserId={viewerUserId} />
+          <InviteForm planId={planId} canManageMembers={canManageMembers} members={members} />
+          <MembersSection
+            planId={planId}
+            canManageMembers={canManageMembers}
+            viewerUserId={viewerUserId}
+            members={members}
+          />
         </div>
       </DialogContent>
     </Dialog>
@@ -57,10 +63,16 @@ const getInviteErrorMessage = (error: unknown) => {
   return "We could not add this member. Please try again.";
 };
 
-function InviteForm({ planId, canManageMembers }: { planId: string; canManageMembers: boolean }) {
-  const { addMember, isLoading } = useShareMembers(planId, {
-    enabled: Boolean(planId),
-  });
+function InviteForm({
+  planId,
+  canManageMembers,
+  members,
+}: {
+  planId: string;
+  canManageMembers: boolean;
+  members: ReturnType<typeof useShareMembers>;
+}) {
+  const { addMember, isLoading } = members;
   const [email, setEmail] = useState("");
   const [tier, setTier] = useState<ShareTier>("member");
   const [formError, setFormError] = useState("");
@@ -223,7 +235,6 @@ type ShareMemberRowProps = {
   viewerUserId: string | null;
   canManageMembers: boolean;
   mutations: MemberMutations;
-  onLeave: (member: ShareMember) => void;
 };
 
 function ShareMemberRow({
@@ -234,7 +245,6 @@ function ShareMemberRow({
   viewerUserId,
   canManageMembers,
   mutations,
-  onLeave,
 }: ShareMemberRowProps) {
   const isOwner = ownerId === member.userId;
   const isSelf = viewerUserId === member.userId;
@@ -265,7 +275,7 @@ function ShareMemberRow({
   const handleMenuChange = (nextValue: MemberMenuOption) => {
     if (nextValue === "leave") {
       if (canSelfLeave) {
-        onLeave(member);
+        mutations.leave.mutate({ planIdOrSlug: planId });
       }
       return;
     }
@@ -294,7 +304,6 @@ function ShareMemberRow({
         <Avatar size="lg" displayName={displayName} />
         <div className="min-w-0">
           <p className="text-foreground truncate text-sm font-medium">{displayLabel}</p>
-          {member.slug ? <p className="text-muted-foreground truncate text-xs"></p> : null}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -317,20 +326,17 @@ function MembersSection({
   planId,
   canManageMembers,
   viewerUserId,
+  members: query,
 }: {
   planId: string;
   canManageMembers: boolean;
   viewerUserId: string | null;
+  members: ReturnType<typeof useShareMembers>;
 }) {
-  const { data, isLoading, error, updateTier, removeMember, leave } = useShareMembers(planId, {
-    enabled: Boolean(planId),
-  });
+  const { data, isLoading, error, updateTier, removeMember, leave } = query;
   const memberMutations = { updateTier, removeMember, leave };
-  const { handleLeave, isLeaving } = useLeaveRedirect({
-    planIdOrSlug: planId,
-    viewerUserId,
-    leave: memberMutations.leave,
-  });
+  const isLeaving = leave.isPending;
+  const mutationError = updateTier.error || removeMember.error || leave.error;
 
   const ownerId = data?.ownerId ?? null;
   const members = data?.members ?? [];
@@ -349,6 +355,11 @@ function MembersSection({
       ) : null}
       {isLoading ? <p className="text-muted-foreground text-xs">Loading members…</p> : null}
       {error ? <p className="text-destructive text-xs">Unable to load members.</p> : null}
+      {mutationError ? (
+        <p role="alert" className="text-destructive text-xs">
+          Unable to update members. Please try again.
+        </p>
+      ) : null}
       {shouldShowEmpty ? <p className="text-muted-foreground text-xs">No members yet.</p> : null}
       {shouldShowList ? (
         <div className={cn("space-y-2", isLeaving && "pointer-events-none opacity-50")}>
@@ -362,7 +373,6 @@ function MembersSection({
               viewerUserId={viewerUserId}
               canManageMembers={canManageMembers}
               mutations={memberMutations}
-              onLeave={handleLeave}
             />
           ))}
         </div>
@@ -371,17 +381,10 @@ function MembersSection({
   );
 }
 
-type UseShareMembersOptions = {
-  enabled?: boolean;
-};
-
-function useShareMembers(planId: string, options: UseShareMembersOptions = {}) {
-  const enabled = options.enabled ?? true;
+function useShareMembers(planId: string, enabled: boolean) {
+  const router = useRouter();
   const utils = trpc.useUtils();
-  const query = trpc.viewer.members.get.useQuery(
-    { planIdOrSlug: planId },
-    { enabled: Boolean(planId) && enabled }
-  );
+  const query = trpc.viewer.members.get.useQuery({ planIdOrSlug: planId }, { enabled });
 
   const addMutation = trpc.viewer.members.add.useMutation({
     onSuccess: (result) => {
@@ -445,7 +448,11 @@ function useShareMembers(planId: string, options: UseShareMembersOptions = {}) {
   });
 
   const leaveMutation = trpc.viewer.members.leave.useMutation({
-    onSuccess: () => utils.viewer.members.get.reset({ planIdOrSlug: planId }),
+    onSuccess: (redirectTo) => {
+      router.push(redirectTo);
+      router.refresh();
+      void utils.viewer.members.get.reset({ planIdOrSlug: planId });
+    },
   });
 
   return {
@@ -455,61 +462,4 @@ function useShareMembers(planId: string, options: UseShareMembersOptions = {}) {
     removeMember: removeMutation,
     leave: leaveMutation,
   };
-}
-
-type UseLeaveMutation = {
-  mutateAsync: (input: { planIdOrSlug: string }) => Promise<unknown>;
-};
-
-type UseLeaveRedirectOptions = {
-  planIdOrSlug: string;
-  viewerUserId: string | null;
-  leave: UseLeaveMutation;
-};
-
-function useLeaveRedirect({ planIdOrSlug, viewerUserId, leave }: UseLeaveRedirectOptions) {
-  const router = useRouter();
-  const profileUtils = trpc.useUtils();
-  const ensureProfileMutation = trpc.viewer.profile.ensure.useMutation();
-  const [isLeaving, setIsLeaving] = useState(false);
-
-  const fetchProfileSlug = useCallback(async (): Promise<string | null> => {
-    try {
-      const profile = await profileUtils.viewer.profile.get.fetch({});
-      if (profile.slug?.trim()) return profile.slug;
-    } catch {
-      // Profile may not exist yet; the auth boundary below can create it.
-    }
-
-    if (!viewerUserId) return null;
-
-    try {
-      return await ensureProfileMutation.mutateAsync({});
-    } catch {
-      return null;
-    }
-  }, [ensureProfileMutation, profileUtils, viewerUserId]);
-
-  const handleLeave = useCallback(
-    async (member: ShareMember) => {
-      setIsLeaving(true);
-
-      try {
-        await leave.mutateAsync({ planIdOrSlug });
-
-        const slug = member.slug ?? (viewerUserId ? await fetchProfileSlug() : null);
-        const redirectUrl = slug ? `/u/${slug}` : null;
-
-        if (redirectUrl) {
-          router.push(redirectUrl);
-          router.refresh();
-        }
-      } finally {
-        setIsLeaving(false);
-      }
-    },
-    [fetchProfileSlug, leave, planIdOrSlug, router, viewerUserId]
-  );
-
-  return { handleLeave, isLeaving };
 }
