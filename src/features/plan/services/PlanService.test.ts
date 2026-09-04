@@ -4,6 +4,7 @@ import type { BudgetRepository } from "@/features/budget/repositories/BudgetRepo
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
+import type { SnapshotsService } from "@/features/snapshots/services/SnapshotsService";
 import type { PlanRepository } from "../repositories/PlanRepository";
 import { PlanService } from "./PlanService";
 
@@ -35,7 +36,10 @@ function makeService(repo: Partial<PlanRepository>, viewer: Viewer | null = { id
     fetchPlanBudgetEntries: vi.fn().mockResolvedValue([]),
   } as unknown as BudgetRepository;
   const profileRepo = { fetchProfileSlugByUserId } as unknown as ProfileRepository;
-  return new PlanService(repo as PlanRepository, budgetRepo, profileRepo, viewer);
+  const snapshots = {
+    fetchSnapshot: vi.fn().mockResolvedValue({ version: 0, days: [], updatedAt: new Date(0).toISOString() }),
+  } as unknown as SnapshotsService;
+  return new PlanService(repo as PlanRepository, budgetRepo, profileRepo, snapshots, viewer);
 }
 
 describe("PlanService", () => {

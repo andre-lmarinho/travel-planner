@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { Activity, DayPlan } from "../types";
 import {
-  addActivity,
   addActivityAtIndex,
   cloneDays,
-  findActivityDay,
   getActivity,
   moveActivityPosition,
   moveActivityToDay,
@@ -193,38 +191,6 @@ describe("removeActivity", () => {
   });
 });
 
-describe("addActivity", () => {
-  it("adds activity to specified day", () => {
-    const days = [createDay("1", [])];
-    const newActivity = createActivity("new");
-
-    const result = addActivity(days, "1", newActivity);
-
-    expect(result[0].activities).toHaveLength(1);
-    expect(result[0].activities[0].id).toBe("new");
-  });
-
-  it("returns original when day not found", () => {
-    const days = [createDay("1", [])];
-    const newActivity = createActivity("new");
-
-    const result = addActivity(days, "nonexistent", newActivity);
-
-    expect(result).toBe(days);
-  });
-
-  it("appends to existing activities", () => {
-    const existing = createActivity("existing");
-    const days = [createDay("1", [existing])];
-    const newActivity = createActivity("new");
-
-    const result = addActivity(days, "1", newActivity);
-
-    expect(result[0].activities).toHaveLength(2);
-    expect(result[0].activities[1].id).toBe("new");
-  });
-});
-
 describe("addActivityAtIndex", () => {
   it("inserts activity at specified index", () => {
     const a1 = createActivity("a1");
@@ -258,25 +224,6 @@ describe("addActivityAtIndex", () => {
 
     expect(result[0].activities[0].id).toBe("a2");
     expect(result[0].activities[1].id).toBe("a1");
-  });
-});
-
-describe("findActivityDay", () => {
-  it("returns the day containing the activity", () => {
-    const a1 = createActivity("a1");
-    const days = [createDay("1", []), createDay("2", [a1])];
-
-    const result = findActivityDay(days, "a1");
-
-    expect(result?.id).toBe("2");
-  });
-
-  it("returns undefined when activity not found", () => {
-    const days = [createDay("1", [createActivity("a1")])];
-
-    const result = findActivityDay(days, "nonexistent");
-
-    expect(result).toBeUndefined();
   });
 });
 

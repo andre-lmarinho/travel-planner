@@ -13,13 +13,6 @@ export function generateActivityId(): string {
 }
 
 /**
- * Generate a placeholder activity ID.
- */
-export function generatePlaceholderId(): string {
-  return generateId(PLACEHOLDER_PREFIX);
-}
-
-/**
  * Check if an activity is a placeholder (unsaved).
  * Returns true if:
  * - The ID has the placeholder prefix (explicitly unsaved), OR

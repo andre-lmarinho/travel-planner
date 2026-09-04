@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-
+import { SnapshotsRepository } from "@/features/snapshots/repositories/SnapshotsRepository";
 import { formatSupabaseError } from "@/lib/errors";
 import { isUuid } from "@/lib/uuid";
 import type { Database } from "@/supabase/types";
@@ -31,13 +31,6 @@ export type PlanWithMembersRecord = PlanRecord & {
   members: PlanMemberRecord[];
 };
 
-export type SnapshotRowRecord = {
-  plan_id: string;
-  version: number;
-  state: unknown;
-  updated_at: string;
-};
-
 export type UserPlannerSummary = {
   id: string;
   title: string;
@@ -47,13 +40,6 @@ export type UserPlannerSummary = {
   updatedAt: string | null;
   publicSlug: string;
   coverImage: string | null;
-};
-
-export type PublicPlanSummary = {
-  id: string;
-  title: string;
-  coverImage: string | null;
-  publicSlug: string;
 };
 
 export type UserDestination = {
@@ -118,7 +104,11 @@ function countSnapshotActivities(state: unknown): number {
 }
 
 export class PlanRepository {
-  constructor(private readonly client: SupabaseClient<Database>) {}
+  private readonly snapshots: SnapshotsRepository;
+
+  constructor(private readonly client: SupabaseClient<Database>) {
+    this.snapshots = new SnapshotsRepository(client);
+  }
 
   async fetchPlanIdentityById(planId: string): Promise<PlanIdentity | null> {
     const { data, error } = await this.client
@@ -208,33 +198,6 @@ export class PlanRepository {
     return data ? mapPlanRow(data) : null;
   }
 
-  async fetchLatestSnapshot(planId: string): Promise<SnapshotRowRecord | null> {
-    const { data, error } = await this.client
-      .from("plan_snapshots")
-      .select("plan_id, version, state, updated_at")
-      .eq("plan_id", planId)
-      .order("version", { ascending: false })
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchLatestSnapshot", identifiers: { planId }, error });
-    }
-
-    return data ?? null;
-  }
-
-  async fetchPlanTitle(planId: string): Promise<string | null> {
-    const { data, error } = await this.client.from("plans").select("title").eq("id", planId).single();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchPlanTitle", identifiers: { planId }, error });
-    }
-
-    return data?.title ?? null;
-  }
-
   async updatePlanTitle(planId: string, newTitle: string): Promise<void> {
     const { error } = await this.client.rpc("update_plan_title", {
       _plan_id: planId,
@@ -272,25 +235,6 @@ export class PlanRepository {
     });
   }
 
-  async getPublicPlans(): Promise<PublicPlanSummary[]> {
-    const { data, error } = await this.client
-      .from("plans")
-      .select("id, title, cover_image, public_slug")
-      .eq("is_public", true)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw formatSupabaseError({ operation: "getPublicPlans", error });
-    }
-
-    return (data ?? []).map((row) => ({
-      id: row.id,
-      title: row.title ?? "Untitled trip",
-      coverImage: row.cover_image,
-      publicSlug: row.public_slug,
-    }));
-  }
-
   async getUserDestinations(userId: string): Promise<UserDestination[]> {
     const { data: memberships, error: membershipsError } = await this.client
       .from("plan_members")
@@ -322,7 +266,7 @@ export class PlanRepository {
       (data ?? []).map(async (row) => {
         const name = row.destination_name?.trim();
         if (!name) return null;
-        const snapshot = await this.fetchLatestSnapshot(row.id);
+        const snapshot = await this.snapshots.fetchSnapshot(row.id);
         return {
           planId: row.id,
           planTitle: row.title?.trim() || "Untitled trip",

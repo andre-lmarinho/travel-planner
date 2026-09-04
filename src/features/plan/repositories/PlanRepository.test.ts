@@ -31,13 +31,6 @@ type PlanWithMembersRow = PlanRow & {
   plan_members: PlanMemberRow[] | null;
 };
 
-type SnapshotRow = {
-  plan_id: string;
-  version: number;
-  state: { days: unknown[] };
-  updated_at: string;
-};
-
 function makeRepo(client: SupabaseClient<Database>): PlanRepository {
   return new PlanRepository(client);
 }
@@ -216,31 +209,6 @@ describe("PlanRepository", () => {
 
       expect(result?.isPublic).toBe(false);
       expect(chain.eq).toHaveBeenCalledWith("id", "plan-21");
-    });
-  });
-
-  describe("fetchLatestSnapshot", () => {
-    it("returns the latest snapshot row", async () => {
-      const snapshot: SnapshotRow = {
-        plan_id: "plan-30",
-        version: 2,
-        state: { days: [] },
-        updated_at: "2024-03-01T00:00:00.000Z",
-      };
-      const {
-        supabase,
-        from,
-        chain: snapshotQuery,
-      } = buildSupabaseMock("plan_snapshots", {
-        data: snapshot,
-        error: null,
-      });
-
-      const result = await makeRepo(supabase).fetchLatestSnapshot("plan-30");
-
-      expect(result).toEqual(snapshot);
-      expect(from).toHaveBeenCalledWith("plan_snapshots");
-      expect(snapshotQuery.order).toHaveBeenNthCalledWith(1, "version", { ascending: false });
     });
   });
 

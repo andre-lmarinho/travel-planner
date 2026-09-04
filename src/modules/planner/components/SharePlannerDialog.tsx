@@ -1,7 +1,8 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { FormEventHandler, KeyboardEventHandler } from "react";
+import { useRouter } from "next/navigation";
+
+import type { SubmitEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ShareMember, ShareTier } from "@/features/members/types";
 import { SHARE_TIER_OPTIONS } from "@/features/members/types";
@@ -15,22 +16,16 @@ import { cn } from "@/ui/utils/cn";
 
 export function SharePlannerDialog({
   planId,
-  isDemo = false,
   isPublic,
   canManageMembers,
   viewerUserId,
 }: {
   planId: string;
-  isDemo?: boolean;
   isPublic: boolean;
   canManageMembers: boolean;
   viewerUserId: string | null;
 }) {
   const [open, setOpen] = useState(false);
-
-  if (isDemo) {
-    return null;
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -174,7 +169,7 @@ function InviteForm({ planId, canManageMembers }: { planId: string; canManageMem
     setFormSuccess("");
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!canManageMembers) {
       return;
@@ -246,13 +241,6 @@ function InviteForm({ planId, canManageMembers }: { planId: string; canManageMem
     </div>
   );
 }
-
-type ShareTab = "members" | "requests";
-
-const SHARE_TABS: { value: ShareTab; label: string }[] = [
-  { value: "members", label: "Members" },
-  { value: "requests", label: "Requests" },
-];
 
 type MemberMenuOption = ShareTier | "leave" | "remove";
 
@@ -402,43 +390,6 @@ function MembersSection({
   canManageMembers: boolean;
   viewerUserId: string | null;
 }) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const tab: ShareTab = searchParams.get("tab") === "requests" ? "requests" : "members";
-
-  const updateTab = (newTab: ShareTab) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (newTab === "members") {
-      params.delete("tab");
-    } else {
-      params.set("tab", newTab);
-    }
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  };
-
-  const focusTab = (nextTab: ShareTab) => {
-    setTimeout(() => {
-      document.getElementById(`share-tab-${nextTab}`)?.focus();
-    }, 0);
-  };
-
-  const handleTabKeyDown: KeyboardEventHandler<HTMLButtonElement> = (event) => {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
-      return;
-    }
-
-    event.preventDefault();
-    const currentIndex = SHARE_TABS.findIndex((tabItem) => tabItem.value === tab);
-    const direction = event.key === "ArrowRight" ? 1 : -1;
-    const nextIndex = (currentIndex + direction + SHARE_TABS.length) % SHARE_TABS.length;
-    const nextTab = SHARE_TABS[nextIndex].value;
-    updateTab(nextTab);
-    focusTab(nextTab);
-  };
-
   const { data, isLoading, error, updateTier, removeMember, leave } = useShareMembers(planId, {
     enabled: Boolean(planId),
   });
@@ -456,63 +407,34 @@ function MembersSection({
   const isReady = !isLoading && !error;
   const shouldShowEmpty = isReady && !hasMembers;
   const shouldShowList = isReady && hasMembers;
-  const isMembersTab = tab === "members";
 
   return (
     <div className="space-y-3">
-      <div
-        role="tablist"
-        aria-label="Share sections"
-        className="border-border flex items-center gap-3 border-b pb-2 text-sm font-medium">
-        {SHARE_TABS.map((tabItem) => (
-          <button
-            key={tabItem.value}
-            type="button"
-            role="tab"
-            id={`share-tab-${tabItem.value}`}
-            aria-selected={tab === tabItem.value}
-            aria-controls={`share-panel-${tabItem.value}`}
-            tabIndex={tab === tabItem.value ? 0 : -1}
-            onClick={() => updateTab(tabItem.value)}
-            onKeyDown={handleTabKeyDown}
-            className={`transition-colors ${tab === tabItem.value ? "text-primary" : "text-muted-foreground"}`}>
-            {tabItem.label}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel" id={`share-panel-${tab}`} aria-labelledby={`share-tab-${tab}`}>
-        {isMembersTab ? (
-          <>
-            {isLeaving ? (
-              <p className="text-muted-foreground text-xs" aria-live="polite">
-                Leaving planner…
-              </p>
-            ) : null}
-            {isLoading ? <p className="text-muted-foreground text-xs">Loading members…</p> : null}
-            {error ? <p className="text-destructive text-xs">Unable to load members.</p> : null}
-            {shouldShowEmpty ? <p className="text-muted-foreground text-xs">No members yet.</p> : null}
-            {shouldShowList ? (
-              <div className={cn("space-y-2", isLeaving && "pointer-events-none opacity-50")}>
-                {members.map((member) => (
-                  <ShareMemberRow
-                    key={member.userId}
-                    planId={planId}
-                    member={member}
-                    ownerId={ownerId}
-                    adminCount={adminCount}
-                    viewerUserId={viewerUserId}
-                    canManageMembers={canManageMembers}
-                    mutations={memberMutations}
-                    onLeave={handleLeave}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </>
-        ) : (
-          <p className="text-muted-foreground text-xs">No requests yet.</p>
-        )}
-      </div>
+      {isLeaving ? (
+        <p className="text-muted-foreground text-xs" aria-live="polite">
+          Leaving planner…
+        </p>
+      ) : null}
+      {isLoading ? <p className="text-muted-foreground text-xs">Loading members…</p> : null}
+      {error ? <p className="text-destructive text-xs">Unable to load members.</p> : null}
+      {shouldShowEmpty ? <p className="text-muted-foreground text-xs">No members yet.</p> : null}
+      {shouldShowList ? (
+        <div className={cn("space-y-2", isLeaving && "pointer-events-none opacity-50")}>
+          {members.map((member) => (
+            <ShareMemberRow
+              key={member.userId}
+              planId={planId}
+              member={member}
+              ownerId={ownerId}
+              adminCount={adminCount}
+              viewerUserId={viewerUserId}
+              canManageMembers={canManageMembers}
+              mutations={memberMutations}
+              onLeave={handleLeave}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
