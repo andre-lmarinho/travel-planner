@@ -28,7 +28,6 @@ const OWNED_PLAN = {
   budget: null,
   startDate: null,
   endDate: null,
-  isPublic: false,
 };
 
 function makeService(repo: Partial<PlanRepository>, viewer: Viewer | null = { id: "owner-1" }) {
@@ -49,14 +48,6 @@ describe("PlanService", () => {
   });
 
   describe("getPlannerExperience — membership-only access", () => {
-    it("does not expose a private planner to an anonymous visitor", async () => {
-      const service = makeService({ fetchPublicPlanBySlug: vi.fn().mockResolvedValue(null) }, null);
-
-      await expect(service.getPlannerExperience({ identifier: SLUG })).rejects.toMatchObject({
-        code: "NOT_FOUND",
-      });
-    });
-
     it("throws NOT_FOUND when the plan does not exist", async () => {
       const service = makeService({
         fetchPlanBySlug: vi.fn().mockResolvedValue(null),
@@ -69,7 +60,7 @@ describe("PlanService", () => {
 
     it("throws FORBIDDEN for a non-member", async () => {
       const service = makeService(
-        { fetchPlanBySlug: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [], isPublic: false }) },
+        { fetchPlanBySlug: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [] }) },
         { id: "stranger" }
       );
 
@@ -123,47 +114,16 @@ describe("PlanService", () => {
         "updatePlanDates",
         (s: PlanService) => s.updatePlanDates("plan-1", new Date("2024-01-10"), new Date("2024-01-15")),
       ],
-      ["setPlanVisibility", (s: PlanService) => s.setPlanVisibility("plan-1", true)],
     ])("throws UNAUTHORIZED for an anonymous %s caller without hitting the repo", async (_name, call) => {
       const service = makeService({}, null);
       await expect(call(service)).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     });
   });
 
-  describe("setPlanVisibility", () => {
-    it("throws FORBIDDEN for a non-admin member", async () => {
-      const service = makeService(
-        {
-          fetchPlanByIdWithMembers: vi.fn().mockResolvedValue({
-            ...OWNED_PLAN,
-            members: [{ userId: "member-1", tier: "member" }],
-          }),
-        },
-        { id: "member-1" }
-      );
-
-      await expect(service.setPlanVisibility("plan-1", true)).rejects.toMatchObject({
-        code: "FORBIDDEN",
-      });
-    });
-
-    it("throws FORBIDDEN for a non-member on a private plan", async () => {
-      const service = makeService(
-        { fetchPlanByIdWithMembers: vi.fn().mockResolvedValue({ ...OWNED_PLAN, members: [] }) },
-        { id: "stranger" }
-      );
-
-      await expect(service.setPlanVisibility("plan-1", true)).rejects.toMatchObject({
-        code: "FORBIDDEN",
-      });
-    });
-  });
-
   describe("createUserPlan", () => {
     it("requires a user and delegates to the repo, returning formatted output", async () => {
       const service = makeService({
-        createPlan: vi.fn().mockResolvedValue({ id: "plan-123", publicSlug: "slug-123" }),
-        setPlanVisibility: vi.fn().mockResolvedValue(undefined),
+        createPlan: vi.fn().mockResolvedValue({ id: "plan-123" }),
         updatePlanCoverImage: vi.fn().mockResolvedValue(undefined),
       });
 
@@ -174,26 +134,7 @@ describe("PlanService", () => {
         endDate: "2024-01-15T00:00:00Z",
       });
 
-      expect(result).toEqual({ planId: "plan-123", publicSlug: "slug-123" });
-    });
-
-    it("publishes the plan when isPublic is true", async () => {
-      const setVisibility = vi.fn().mockResolvedValue(undefined);
-      const service = makeService({
-        createPlan: vi.fn().mockResolvedValue({ id: "plan-123", publicSlug: "slug-123" }),
-        setPlanVisibility: setVisibility,
-        updatePlanCoverImage: vi.fn().mockResolvedValue(undefined),
-      });
-
-      await service.createUserPlan({
-        title: "Paris trip",
-        destination: { name: "Paris" },
-        startDate: "2024-01-10T00:00:00Z",
-        endDate: "2024-01-15T00:00:00Z",
-        isPublic: true,
-      });
-
-      expect(setVisibility).toHaveBeenCalledWith("plan-123", true);
+      expect(result).toEqual({ planId: "plan-123" });
     });
 
     it("updates cover image in the background when placeId is provided", async () => {
@@ -210,7 +151,7 @@ describe("PlanService", () => {
       const updateCover = vi.fn().mockResolvedValue(undefined);
 
       const service = makeService({
-        createPlan: vi.fn().mockResolvedValue({ id: "plan-123", publicSlug: "slug-123" }),
+        createPlan: vi.fn().mockResolvedValue({ id: "plan-123" }),
         updatePlanCoverImage: updateCover,
       });
 

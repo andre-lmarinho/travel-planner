@@ -10,7 +10,6 @@ const plan: UserPlannerSummary = {
   startDate: "2026-09-05",
   endDate: "2026-09-09",
   updatedAt: null,
-  publicSlug: "lisbon-escape",
   coverImage: null,
 };
 

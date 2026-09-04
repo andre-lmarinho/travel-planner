@@ -14,10 +14,8 @@ const experience = {
   destination: "Trip",
   viewerUserId: null,
   isDemo: false,
-  canEdit: true,
   isOwner: false,
   canManageMembers: false,
-  isPublic: false,
   initialDays: [],
   initialEntries: [],
 } satisfies PlannerExperience;

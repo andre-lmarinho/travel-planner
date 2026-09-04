@@ -63,7 +63,7 @@ export function UpcomingTripSection({ plan }: UpcomingTripSectionProps) {
   return (
     <section aria-labelledby="upcoming-trip-heading">
       <Link
-        href={`/p/${plan.publicSlug}`}
+        href={`/p/${plan.id}`}
         className="group relative block min-h-88 overflow-hidden rounded-2xl bg-muted shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
         <div
           aria-hidden="true"

@@ -122,21 +122,4 @@ describe("usePlannerDocument", () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
-
-  it("does not write when the document is read-only", () => {
-    const { result } = renderHook(() =>
-      usePlannerDocument({ planId: "plan-1", initialDays: days, canEdit: false, dest: "Salvador" })
-    );
-
-    act(() => {
-      result.current.setDays([]);
-      result.current.handleRangeChange({ from: new Date("2025-01-10T00:00:00.000Z") });
-    });
-
-    expect(mocks.persistDays).not.toHaveBeenCalled();
-    expect(mocks.fetch).toHaveBeenCalledWith(
-      "/api/places/city-country?text=Salvador",
-      expect.objectContaining({ signal: expect.any(AbortSignal) })
-    );
-  });
 });

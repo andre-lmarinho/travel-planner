@@ -16,12 +16,10 @@ import { cn } from "@/ui/utils/cn";
 
 export function SharePlannerDialog({
   planId,
-  isPublic,
   canManageMembers,
   viewerUserId,
 }: {
   planId: string;
-  isPublic: boolean;
   canManageMembers: boolean;
   viewerUserId: string | null;
 }) {
@@ -36,79 +34,13 @@ export function SharePlannerDialog({
         <Share2 className="size-4" aria-hidden="true" />
       </DialogTriggerButton>
       <DialogContent>
-        <DialogHeader
-          title="Share planner"
-          description="Publish your plan publicly, invite people, and manage planner members."
-        />
+        <DialogHeader title="Share planner" description="Invite people and manage planner members." />
         <div className="max-h-[75vh] space-y-4 overflow-y-auto p-4">
-          <VisibilitySection planId={planId} isPublic={isPublic} canManageMembers={canManageMembers} />
           <InviteForm planId={planId} canManageMembers={canManageMembers} />
           <MembersSection planId={planId} canManageMembers={canManageMembers} viewerUserId={viewerUserId} />
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-type Visibility = "private" | "public";
-
-const VISIBILITY_OPTIONS: ReadonlyArray<SelectMenuOption<Visibility>> = [
-  { value: "private", label: "Private" },
-  { value: "public", label: "Public" },
-];
-
-function VisibilitySection({
-  planId,
-  isPublic,
-  canManageMembers,
-}: {
-  planId: string;
-  isPublic: boolean;
-  canManageMembers: boolean;
-}) {
-  const [visibility, setVisibility] = useState<Visibility>(isPublic ? "public" : "private");
-  const visibilityMutation = trpc.viewer.plan.setVisibility.useMutation();
-  const pending = visibilityMutation.isPending;
-  const [error, setError] = useState("");
-
-  const handleChange = async (next: Visibility) => {
-    const previous = visibility;
-    setVisibility(next);
-    setError("");
-    try {
-      await visibilityMutation.mutateAsync({ planId, isPublic: next === "public" });
-    } catch {
-      setVisibility(previous);
-      setError("Could not update visibility. Please try again.");
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <p className="text-foreground text-sm font-medium">Visibility</p>
-          <p className="text-muted-foreground text-xs">Public plans are viewable by anyone with the link.</p>
-        </div>
-        <SelectMenu
-          value={visibility}
-          options={VISIBILITY_OPTIONS}
-          onChange={handleChange}
-          disabled={!canManageMembers || pending}
-          ariaLabel="Plan visibility"
-          triggerClassName="w-28 shrink-0"
-          contentClassName="w-28"
-        />
-      </div>
-      {!canManageMembers ? (
-        <p className="text-muted-foreground text-xs">Only admins can change visibility.</p>
-      ) : null}
-      {error ? (
-        <p className="text-destructive text-xs" role="alert">
-          {error}
-        </p>
-      ) : null}
-    </div>
   );
 }
 

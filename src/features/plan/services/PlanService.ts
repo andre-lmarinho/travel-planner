@@ -28,12 +28,10 @@ export interface CreateUserPlanInput {
   destination: PlannerDestination;
   startDate: string;
   endDate: string;
-  isPublic?: boolean;
 }
 
 export interface CreateUserPlanResult {
   planId: string;
-  publicSlug: string;
 }
 
 export type CreatePlannerPlanResult = CreateUserPlanResult;
@@ -45,10 +43,8 @@ export interface PlannerExperience {
   title?: string;
   viewerUserId: string | null;
   isDemo: boolean;
-  canEdit: boolean;
   isOwner: boolean;
   canManageMembers: boolean;
-  isPublic: boolean;
   initialDays?: import("@/features/activity/types").DayPlan[];
   initialBudget?: number;
   initialEntries?: Entry[];
@@ -79,27 +75,19 @@ export class PlanService {
     }
 
     const bySlug = !isUuid(trimmed);
-    const viewer = this.viewer;
-    const plan = viewer
-      ? bySlug
-        ? await this.repo.fetchPlanBySlug(trimmed)
-        : await this.repo.fetchPlanByIdWithMembers(trimmed)
-      : bySlug
-        ? await this.repo.fetchPublicPlanBySlug(trimmed)
-        : await this.repo.fetchPublicPlanById(trimmed);
+    const viewer = this.requireViewer("view a plan");
+    const plan = bySlug
+      ? await this.repo.fetchPlanBySlug(trimmed)
+      : await this.repo.fetchPlanByIdWithMembers(trimmed);
     if (!plan) {
       throw new ApplicationError("NOT_FOUND", "Planner not found.");
     }
 
     const members: PlanMemberRecord[] = "members" in plan ? (plan.members as PlanMemberRecord[]) : [];
     const isOwner = Boolean(viewer && plan.ownerId && viewer.id === plan.ownerId);
-    const memberRow = viewer ? members.find((member) => member.userId === viewer.id) : undefined;
-
-    if (!plan.isPublic && !isOwner && !memberRow) {
-      throw new ApplicationError(
-        viewer ? "FORBIDDEN" : "UNAUTHORIZED",
-        "You don't have access to this planner."
-      );
+    const memberRow = members.find((member) => member.userId === viewer.id);
+    if (!isOwner && !memberRow) {
+      throw new ApplicationError("FORBIDDEN", "You don't have access to this planner.");
     }
 
     const isAdmin = isOwner || memberRow?.tier === "admin";
@@ -114,12 +102,10 @@ export class PlanService {
       slug: bySlug ? trimmed : undefined,
       destination: dest ?? plan.destinationName ?? "Destination TBD",
       title: plan.title ?? undefined,
-      viewerUserId: viewer?.id ?? null,
+      viewerUserId: viewer.id,
       isDemo: isDemoUser(viewer?.email),
-      canEdit: isOwner || Boolean(memberRow),
       isOwner,
       canManageMembers: isAdmin,
-      isPublic: plan.isPublic,
       initialDays: snapshotDays.length > 0 ? snapshotDays : buildDaysFromRange(plan.startDate, plan.endDate),
       initialBudget: plan.budget ?? undefined,
       initialEntries: entryRows.length > 0 ? entryRows.map(mapBudgetEntry) : undefined,
@@ -139,11 +125,6 @@ export class PlanService {
     await this.repo.updatePlanTitle(planId, newTitle);
   }
 
-  async setPlanVisibility(planId: string, isPublic: boolean): Promise<void> {
-    await this.requireAdministrator(planId);
-    await this.repo.setPlanVisibility(planId, isPublic);
-  }
-
   async updatePlanDates(planId: string, from: Date, to: Date): Promise<void> {
     await this.requireMember(planId);
     await this.repo.updatePlanDates(planId, format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd"));
@@ -151,7 +132,7 @@ export class PlanService {
 
   async createUserPlan(input: CreateUserPlanInput): Promise<CreateUserPlanResult> {
     const user = this.requireViewer("create a plan");
-    const { title, destination, startDate, endDate, isPublic } = input;
+    const { title, destination, startDate, endDate } = input;
 
     const coverImagePromise = destination.placeId
       ? fetchGeoapifyPlaceDetails(destination.placeId)
@@ -165,7 +146,7 @@ export class PlanService {
           })
       : Promise.resolve(undefined);
 
-    const { id, publicSlug } = await this.repo.createPlan({
+    const { id } = await this.repo.createPlan({
       title,
       destName: destination.name,
       destLat: destination.latitude,
@@ -175,10 +156,6 @@ export class PlanService {
       endDate: endDate.slice(0, 10),
       userId: user.id,
     });
-
-    if (isPublic) {
-      await this.repo.setPlanVisibility(id, true);
-    }
 
     coverImagePromise
       .then((coverImageUrl) => {
@@ -190,7 +167,7 @@ export class PlanService {
         console.error("Failed to update cover image", { planId: id, error });
       });
 
-    return { planId: id, publicSlug };
+    return { planId: id };
   }
 
   async deletePlan(planId: string): Promise<string> {
@@ -252,20 +229,6 @@ export class PlanService {
     const isMember = plan.members.some((m) => m.userId === user.id);
     if (!isOwner && !isMember) {
       throw new ApplicationError("FORBIDDEN", "You don't have access to this planner.");
-    }
-  }
-
-  private async requireAdministrator(planId: string): Promise<void> {
-    const user = this.requireViewer("change plan visibility");
-    const plan = await this.repo.fetchPlanByIdWithMembers(planId);
-    if (!plan) {
-      throw new ApplicationError("NOT_FOUND", `Plan [${planId}] not found`);
-    }
-
-    const isOwner = plan.ownerId === user.id;
-    const member = plan.members.find((item) => item.userId === user.id);
-    if (!isOwner && member?.tier !== "admin") {
-      throw new ApplicationError("FORBIDDEN", "You don't have permission to change plan visibility.");
     }
   }
 

@@ -26,9 +26,7 @@ vi.mock("@/trpc/react", () => ({
       },
     }),
     viewer: {
-      plan: {
-        setVisibility: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
-      },
+      plan: {},
       members: {
         get: { useQuery: () => ({ data: { ownerId: "owner", members: [] }, isLoading: false, error: null }) },
         add: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) },
@@ -45,14 +43,12 @@ vi.mock("@/trpc/react", () => ({
 
 describe("SharePlannerDialog", () => {
   it("provides an accessible description", () => {
-    render(
-      <SharePlannerDialog planId="plan-1" isPublic={false} canManageMembers={true} viewerUserId={null} />
-    );
+    render(<SharePlannerDialog planId="plan-1" canManageMembers={true} viewerUserId={null} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Share planner" }));
 
     expect(screen.getByRole("dialog", { name: "Share planner" })).toHaveAccessibleDescription(
-      "Publish your plan publicly, invite people, and manage planner members."
+      "Invite people and manage planner members."
     );
   });
 });

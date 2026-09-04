@@ -20,7 +20,6 @@ import { cn } from "@/ui/utils/cn";
 
 interface TripViewProps {
   days: DayPlan[];
-  canEdit: boolean;
   onActivitySelect: (activity: Activity, dayId: string) => void;
   onDaysChange: (days: DayPlan[]) => void;
   onFallbackAdd: (dayId: string, index: number) => void;
@@ -143,7 +142,6 @@ interface TripDayProps {
   dayNumber: number;
   isCollapsed: boolean;
   onCollapsedChange: (isCollapsed: boolean) => void;
-  canEdit: boolean;
   onActivitySelect: (activity: Activity, dayId: string) => void;
   onFallbackAdd: (dayId: string, index: number) => void;
   onDayHover: (dayId: string | null) => void;
@@ -155,13 +153,12 @@ function TripDay({
   dayNumber,
   isCollapsed,
   onCollapsedChange,
-  canEdit,
   onActivitySelect,
   onFallbackAdd,
   onDayHover = () => {},
   onActivityHover = () => {},
 }: TripDayProps) {
-  const { setNodeRef, isOver } = useDroppable({ id: day.id, disabled: !canEdit });
+  const { setNodeRef, isOver } = useDroppable({ id: day.id });
   const activityIds = useMemo(() => day.activities.map((activity) => activity.id), [day.activities]);
   const insertIndex = day.activities.length;
   const handleAdd = () => {
@@ -171,7 +168,7 @@ function TripDay({
 
   return (
     <li
-      ref={canEdit ? setNodeRef : undefined}
+      ref={setNodeRef}
       className={cn("bg-background overflow-hidden border-b", isOver && "ring-primary/40 ring-2")}>
       {/* biome-ignore lint/a11y/noStaticElementInteractions: the date row is a hover target for map highlighting. */}
       <div
@@ -185,17 +182,15 @@ function TripDay({
           <h2 className="truncate text-sm font-semibold">{day.label}</h2>
         </div>
         <div className="flex items-center gap-1">
-          {canEdit ? (
-            <Tooltip content="Add activity">
-              <button
-                type="button"
-                onClick={handleAdd}
-                aria-label="Add activity"
-                className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring inline-flex size-8 cursor-pointer items-center justify-center rounded-md transition focus-visible:ring-2">
-                <Plus size={15} aria-hidden="true" />
-              </button>
-            </Tooltip>
-          ) : null}
+          <Tooltip content="Add activity">
+            <button
+              type="button"
+              onClick={handleAdd}
+              aria-label="Add activity"
+              className="text-muted-foreground hover:bg-background hover:text-foreground focus-visible:ring-ring inline-flex size-8 cursor-pointer items-center justify-center rounded-md transition focus-visible:ring-2">
+              <Plus size={15} aria-hidden="true" />
+            </button>
+          </Tooltip>
           <Tooltip content={isCollapsed ? "Expand day" : "Collapse day"}>
             <button
               type="button"
@@ -213,27 +208,16 @@ function TripDay({
       </div>
       {!isCollapsed ? (
         <div className="border-t divide-y divide-border">
-          {canEdit ? (
-            <SortableContext id={day.id} items={activityIds} strategy={verticalListSortingStrategy}>
-              {day.activities.map((activity) => (
-                <SortableTripActivity
-                  key={activity.id}
-                  activity={activity}
-                  onSelect={() => onActivitySelect(activity, day.id)}
-                  onHover={(isHovered) => onActivityHover(isHovered ? activity.id : null)}
-                />
-              ))}
-            </SortableContext>
-          ) : (
-            day.activities.map((activity) => (
-              <TripActivityCard
+          <SortableContext id={day.id} items={activityIds} strategy={verticalListSortingStrategy}>
+            {day.activities.map((activity) => (
+              <SortableTripActivity
                 key={activity.id}
                 activity={activity}
                 onSelect={() => onActivitySelect(activity, day.id)}
                 onHover={(isHovered) => onActivityHover(isHovered ? activity.id : null)}
               />
-            ))
-          )}
+            ))}
+          </SortableContext>
           {day.activities.length === 0 ? (
             <div className="bg-muted/20 px-3 py-6 text-sm">
               <p className="font-medium">Nothing planned yet</p>
@@ -248,7 +232,6 @@ function TripDay({
 
 export function TripView({
   days,
-  canEdit,
   onActivitySelect,
   onDaysChange,
   onFallbackAdd,
@@ -331,7 +314,6 @@ export function TripView({
                         return next;
                       });
                     }}
-                    canEdit={canEdit}
                     onActivitySelect={onActivitySelect}
                     onFallbackAdd={onFallbackAdd}
                     onDayHover={onDayHover}

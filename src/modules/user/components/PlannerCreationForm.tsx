@@ -81,7 +81,6 @@ export function PlannerCreationForm({ onPlanCreated }: PlannerCreationFormProps)
         },
         startDate: range.from.toISOString(),
         endDate: range.to.toISOString(),
-        isPublic: false,
       });
 
       onPlanCreated(planResult);

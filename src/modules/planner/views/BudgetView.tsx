@@ -17,10 +17,9 @@ interface Props {
   planId: string;
   days: DayPlan[];
   initialEntries?: Entry[];
-  canEdit?: boolean;
 }
 
-export function BudgetView({ planId, days, initialEntries, canEdit = true }: Props) {
+export function BudgetView({ planId, days, initialEntries }: Props) {
   const seedEntries = initialEntries ?? EMPTY_ENTRIES;
   const activitiesTotal = days.reduce(
     (sum, day: DayPlan) =>
@@ -32,7 +31,7 @@ export function BudgetView({ planId, days, initialEntries, canEdit = true }: Pro
   const [cat, setCat] = useState<CategoryKey>("transport");
   const [amount, setAmount] = useState(0);
   const [persistError, setPersistError] = useState<string | null>(null);
-  const persistEnabled = canEdit && Boolean(planId);
+  const persistEnabled = Boolean(planId);
   const utils = trpc.useUtils();
   const budgetQuery = trpc.viewer.budget.get.useQuery({ planId }, { enabled: persistEnabled });
 
@@ -68,7 +67,7 @@ export function BudgetView({ planId, days, initialEntries, canEdit = true }: Pro
   });
 
   const handleAdd = async () => {
-    if (!canEdit || !desc || amount <= 0) return;
+    if (!desc || amount <= 0) return;
     setPersistError(null);
     const entry = { description: desc, category: cat, amount };
 
@@ -85,7 +84,7 @@ export function BudgetView({ planId, days, initialEntries, canEdit = true }: Pro
   };
 
   const handleUpdate = async (index: number, entry: Entry) => {
-    if (!canEdit || index < 0 || index >= entries.length) return;
+    if (index < 0 || index >= entries.length) return;
     const previous = entries;
     setEntries((current) => current.map((item, itemIndex) => (itemIndex === index ? entry : item)));
     if (!persistEnabled) return;
@@ -98,7 +97,7 @@ export function BudgetView({ planId, days, initialEntries, canEdit = true }: Pro
   };
 
   const handleDelete = async (index: number) => {
-    if (!canEdit || index < 0 || index >= entries.length) return;
+    if (index < 0 || index >= entries.length) return;
     const entry = entries[index];
     setEntries((current) => current.filter((_, itemIndex) => itemIndex !== index));
     if (!persistEnabled) return;
@@ -123,7 +122,6 @@ export function BudgetView({ planId, days, initialEntries, canEdit = true }: Pro
             amount={amount}
             desc={desc}
             cat={cat}
-            canEdit={canEdit}
             onAdd={handleAdd}
             onDelete={handleDelete}
             onUpdate={handleUpdate}
@@ -400,7 +398,6 @@ export function ExpenseTable({
   amount,
   desc,
   cat,
-  canEdit = true,
   onAdd,
   onDelete,
   onUpdate,
@@ -412,7 +409,6 @@ export function ExpenseTable({
   amount: number;
   desc: string;
   cat: CategoryKey;
-  canEdit?: boolean;
   onAdd: () => Promise<void>;
   onDelete: (index: number) => Promise<void>;
   onUpdate: (index: number, entry: Entry) => Promise<void>;
@@ -426,7 +422,7 @@ export function ExpenseTable({
   const [editAmountInput, setEditAmountInput] = useState("");
 
   const startEdit = (index: number) => {
-    if (!canEdit || index < 0 || index >= entries.length) return;
+    if (index < 0 || index >= entries.length) return;
     setEditIndex(index);
     setEditEntry(entries[index]);
     setEditAmountInput(String(entries[index].amount));
@@ -443,7 +439,7 @@ export function ExpenseTable({
   };
 
   const renderRow = (entry: Entry, index: number) => {
-    const isEditing = canEdit && editIndex === index && editEntry;
+    const isEditing = editIndex === index && editEntry;
 
     if (isEditing) {
       const editId = `edit-${index}`;
@@ -518,20 +514,16 @@ export function ExpenseTable({
               type="button"
               onClick={() => startEdit(index)}
               aria-label="Edit entry"
-              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-              disabled={!canEdit}>
+              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
               <Pencil className="size-4" aria-hidden="true" />
             </button>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => onDelete(index)}
-                aria-label="Delete entry"
-                className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                disabled={!canEdit}>
-                <Trash2 className="size-4" aria-hidden="true" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onDelete(index)}
+              aria-label="Delete entry"
+              className="border-border bg-background text-muted-foreground hover:bg-muted/60 hover:text-foreground inline-flex size-8 cursor-pointer items-center justify-center rounded-full border transition-colors">
+              <Trash2 className="size-4" aria-hidden="true" />
+            </button>
           </div>
         </td>
       </tr>
@@ -539,8 +531,6 @@ export function ExpenseTable({
   };
 
   const renderNewRow = () => {
-    if (!canEdit) return null;
-
     const newId = "new-row";
 
     return (

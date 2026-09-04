@@ -1,11 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
   public: {
     Tables: {
       budget_entries: {
@@ -201,7 +196,6 @@ export type Database = {
           destination_name: string | null;
           end_date: string | null;
           id: string;
-          is_public: boolean;
           latitude: number | null;
           longitude: number | null;
           public_slug: string;
@@ -217,7 +211,6 @@ export type Database = {
           destination_name?: string | null;
           end_date?: string | null;
           id?: string;
-          is_public?: boolean;
           latitude?: number | null;
           longitude?: number | null;
           public_slug?: string;
@@ -233,7 +226,6 @@ export type Database = {
           destination_name?: string | null;
           end_date?: string | null;
           id?: string;
-          is_public?: boolean;
           latitude?: number | null;
           longitude?: number | null;
           public_slug?: string;

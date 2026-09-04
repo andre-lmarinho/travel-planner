@@ -11,7 +11,6 @@ export const createPlanSchema = z.object({
   }),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
-  isPublic: z.boolean().optional(),
 });
 
 export type CreatePlanInput = z.infer<typeof createPlanSchema>;

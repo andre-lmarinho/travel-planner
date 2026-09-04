@@ -17,7 +17,6 @@ interface PlannerDocumentOptions {
   initialDays?: DayPlan[];
   planId: string;
   dest?: string;
-  canEdit?: boolean;
   viewerUserId?: string | null;
 }
 
@@ -41,7 +40,6 @@ export function usePlannerDocument({
   initialDays,
   planId,
   dest,
-  canEdit = true,
   viewerUserId = null,
 }: PlannerDocumentOptions) {
   const seedDays = initialDays ?? buildInitialDays(getDefaultTripDates());
@@ -51,7 +49,7 @@ export function usePlannerDocument({
     retryPending,
     hasPendingChanges,
   } = usePlanCollaboration(planId, {
-    enabled: canEdit,
+    enabled: true,
     actorId: viewerUserId,
     initialDays: seedDays,
   });
@@ -88,9 +86,9 @@ export function usePlannerDocument({
 
   const setDays = useCallback(
     (nextDays: DayPlan[]) => {
-      if (canEdit) persistDays.mutate(nextDays);
+      persistDays.mutate(nextDays);
     },
-    [canEdit, persistDays]
+    [persistDays]
   );
 
   const currentRange = useMemo(() => {
@@ -103,12 +101,12 @@ export function usePlannerDocument({
 
   const handleRangeChange = useCallback(
     (range: DateRange | undefined) => {
-      if (!canEdit || !range?.from) return;
+      if (!range?.from) return;
 
       const syncedDays = syncDaysWithRange(days, dateRangeToArray(range));
       persistDays.mutate(syncedDays);
     },
-    [canEdit, days, persistDays]
+    [days, persistDays]
   );
 
   return {
