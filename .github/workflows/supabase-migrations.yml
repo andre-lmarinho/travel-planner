@@ -1,0 +1,33 @@
+name: Supabase Migration Validation
+
+on:
+  pull_request:
+    paths:
+      - supabase/config.toml
+      - supabase/migrations/**
+      - supabase/seed.sql
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Supabase migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: 2.105.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Rebuild database from migrations and seed
+        run: supabase db reset --local
+
+      - name: Check database for schema errors
+        run: supabase db lint --local --fail-on=error
