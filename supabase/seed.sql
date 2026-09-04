@@ -9,16 +9,20 @@
 begin;
 
 -- 1. Shared demo account (idempotent: skip if already present).
-insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous)
-values ('00000000-0000-0000-0000-000000000000', '36a3b688-e770-4656-8262-6592809b46ad', 'authenticated', 'authenticated', 'demo@turistar.me', '$2a$12$QrC4LzZ9xR0sJpKcQbY3e.40NdLtJSXKeKiHsIWSROwhpzsdcu.wS', now(), '{"provider":"email","providers":["email"]}', '{"sub":"36a3b688-e770-4656-8262-6592809b46ad","email":"demo@turistar.me","username":"demouser","email_verified":true,"phone_verified":false}', now(), now(), false, false)
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, confirmation_token, recovery_token, email_change_token_new, email_change, phone, phone_change, phone_change_token, email_change_token_current, reauthentication_token, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, is_sso_user, is_anonymous)
+values ('00000000-0000-0000-0000-000000000000', '36a3b688-e770-4656-8262-6592809b46ad', 'authenticated', 'authenticated', 'demo@turistar.me', '$2a$12$QrC4LzZ9xR0sJpKcQbY3e.40NdLtJSXKeKiHsIWSROwhpzsdcu.wS', now(), '', '', '', '', '', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"sub":"36a3b688-e770-4656-8262-6592809b46ad","email":"demo@turistar.me","username":"demouser","email_verified":true,"phone_verified":false}', now(), now(), false, false)
 on conflict (id) do nothing;
+
+update auth.users
+set confirmation_token = coalesce(confirmation_token, ''), recovery_token = coalesce(recovery_token, ''), email_change_token_new = coalesce(email_change_token_new, ''), email_change = coalesce(email_change, ''), phone = coalesce(phone, ''), phone_change = coalesce(phone_change, ''), phone_change_token = coalesce(phone_change_token, ''), email_change_token_current = coalesce(email_change_token_current, ''), reauthentication_token = coalesce(reauthentication_token, '')
+where email = 'demo@turistar.me';
 
 insert into auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id)
 values ('36a3b688-e770-4656-8262-6592809b46ad', '36a3b688-e770-4656-8262-6592809b46ad', '{"sub":"36a3b688-e770-4656-8262-6592809b46ad","email":"demo@turistar.me","username":"demouser","email_verified":false,"phone_verified":false}', 'email', now(), now(), now(), '36a3b688-e770-4656-8262-6592809b46ad')
 on conflict (provider_id, provider) do nothing;
 
 insert into public.profiles (id, slug, display_name)
-values ('36a3b688-e770-4656-8262-6592809b46ad', 'demouser', 'demouser')
+values ('36a3b688-e770-4656-8262-6592809b46ad', 'demouser', 'Demo User')
 on conflict (id) do nothing;
 
 
