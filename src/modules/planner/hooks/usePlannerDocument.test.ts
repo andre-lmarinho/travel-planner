@@ -8,23 +8,10 @@ import { usePlannerDocument } from "./usePlannerDocument";
 const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   persistDays: vi.fn(),
-  updateDates: vi.fn(),
 }));
 
 vi.mock("@/features/events/hooks/usePlanCollaboration", () => ({
   usePlanCollaboration: vi.fn(),
-}));
-
-vi.mock("@/trpc/react", () => ({
-  trpc: {
-    viewer: {
-      plan: {
-        updateDates: {
-          useMutation: () => ({ mutateAsync: mocks.updateDates }),
-        },
-      },
-    },
-  },
 }));
 
 const mockedUsePlanCollaboration = vi.mocked(usePlanCollaboration);
@@ -55,7 +42,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubGlobal("fetch", mocks.fetch);
   mocks.fetch.mockResolvedValue({ ok: false } as Response);
-  mocks.updateDates.mockResolvedValue(undefined);
   mockedUsePlanCollaboration.mockReturnValue({
     data: days,
     isLoading: false,
@@ -104,7 +90,7 @@ describe("usePlannerDocument", () => {
     expect(mocks.persistDays).toHaveBeenCalledWith(nextDays);
   });
 
-  it("syncs the selected range and persists the dates", () => {
+  it("syncs the selected range through the optimistic collaboration mutation", () => {
     const { result } = renderHook(() => usePlannerDocument({ planId: "plan-1", initialDays: days }));
     const range = {
       from: new Date("2025-01-10T00:00:00.000Z"),
@@ -118,11 +104,6 @@ describe("usePlannerDocument", () => {
       expect.objectContaining({ id: "2025-01-11" }),
       expect.objectContaining({ id: "2025-01-12" }),
     ]);
-    expect(mocks.updateDates).toHaveBeenCalledWith({
-      planId: "plan-1",
-      from: "2025-01-10T00:00:00.000Z",
-      to: "2025-01-12T00:00:00.000Z",
-    });
   });
 
   it("loads destination coordinates when editing", async () => {
@@ -153,7 +134,6 @@ describe("usePlannerDocument", () => {
     });
 
     expect(mocks.persistDays).not.toHaveBeenCalled();
-    expect(mocks.updateDates).not.toHaveBeenCalled();
     expect(mocks.fetch).toHaveBeenCalledWith(
       "/api/places/city-country?text=Salvador",
       expect.objectContaining({ signal: expect.any(AbortSignal) })

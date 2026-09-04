@@ -7,7 +7,6 @@ import type { DateRange } from "react-day-picker";
 import { buildInitialDays, syncDaysWithRange } from "@/features/activity/lib/dayOperations";
 import type { DayPlan } from "@/features/activity/types";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
-import { trpc } from "@/trpc/react";
 
 interface DestCoords {
   lat: number;
@@ -45,7 +44,6 @@ export function usePlannerDocument({
   canEdit = true,
   viewerUserId = null,
 }: PlannerDocumentOptions) {
-  const updateDatesMutation = trpc.viewer.plan.updateDates.useMutation();
   const seedDays = initialDays ?? buildInitialDays(getDefaultTripDates());
   const {
     data: days = seedDays,
@@ -108,16 +106,9 @@ export function usePlannerDocument({
       if (!canEdit || !range?.from) return;
 
       const syncedDays = syncDaysWithRange(days, dateRangeToArray(range));
-      setDays(syncedDays);
-
-      const to = range.to ?? range.from;
-      updateDatesMutation
-        .mutateAsync({ planId, from: range.from.toISOString(), to: to.toISOString() })
-        .catch((error) => {
-          console.error("Failed to persist plan dates", { planId, error });
-        });
+      persistDays.mutate(syncedDays);
     },
-    [canEdit, days, planId, setDays, updateDatesMutation]
+    [canEdit, days, persistDays]
   );
 
   return {
