@@ -1,17 +1,13 @@
 "use client";
 
 import { addDays, parseISO } from "date-fns";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { buildInitialDays, syncDaysWithRange } from "@/features/activity/lib/dayOperations";
 import type { DayPlan } from "@/features/activity/types";
 import { usePlanCollaboration } from "@/features/events/hooks/usePlanCollaboration";
-
-interface DestCoords {
-  lat: number;
-  lng: number;
-}
+import { useDestinationCoordinates } from "@/features/search/hooks/useDestinationCoordinates";
 
 interface PlannerDocumentOptions {
   initialDays?: DayPlan[];
@@ -53,36 +49,7 @@ export function usePlannerDocument({
     actorId: viewerUserId,
     initialDays: seedDays,
   });
-  const [destCoords, setDestCoords] = useState<DestCoords | null>(null);
-
-  useEffect(() => {
-    if (!dest) {
-      setDestCoords(null);
-      return;
-    }
-
-    const controller = new AbortController();
-    const fetchCoords = async () => {
-      try {
-        const params = new URLSearchParams({ text: dest });
-        const response = await fetch(`/api/places/city-country?${params}`, { signal: controller.signal });
-        if (!response.ok) return;
-
-        const data = (await response.json()) as {
-          results?: Array<{ latitude?: number; longitude?: number }>;
-        };
-        const first = data.results?.[0];
-        if (first?.latitude != null && first.longitude != null) {
-          setDestCoords({ lat: first.latitude, lng: first.longitude });
-        }
-      } catch {
-        // Ignore abort errors and network failures.
-      }
-    };
-
-    void fetchCoords();
-    return () => controller.abort();
-  }, [dest]);
+  const destCoords = useDestinationCoordinates(dest);
 
   const setDays = useCallback(
     (nextDays: DayPlan[]) => {
