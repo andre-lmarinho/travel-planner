@@ -2,6 +2,8 @@ import { BudgetRepository } from "@/features/budget/repositories/BudgetRepositor
 import { PlanRepository } from "@/features/plan/repositories/PlanRepository";
 import { PlanService } from "@/features/plan/services/PlanService";
 import { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
+import { SnapshotsRepository } from "@/features/snapshots/repositories/SnapshotsRepository";
+import { SnapshotsService } from "@/features/snapshots/services/SnapshotsService";
 
 import type { AuthedTRPCContext } from "../../../createContext";
 import type { CreatePlanInput } from "./create.schema";
@@ -11,6 +13,7 @@ export async function createPlanHandler({ ctx, input }: { ctx: AuthedTRPCContext
     new PlanRepository(ctx.supabase),
     new BudgetRepository(ctx.supabase),
     new ProfileRepository(ctx.supabase),
+    new SnapshotsService(new SnapshotsRepository(ctx.supabase)),
     ctx.viewer
   );
   return service.createUserPlan(input);

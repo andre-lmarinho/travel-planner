@@ -9,7 +9,7 @@ import { isDemoUser } from "@/features/demo/lib/demo";
 import type { ProfileRepository } from "@/features/profile/repositories/ProfileRepository";
 import { fetchGeoapifyPlaceDetails } from "@/features/search/services/GeoapifyService";
 import { fetchWikidataImage } from "@/features/search/services/WikidataService";
-import { mapSnapshot, SnapshotRowSchema } from "@/features/snapshots/repositories/snapshotSchemas";
+import type { SnapshotsService } from "@/features/snapshots/services/SnapshotsService";
 import { ApplicationError } from "@/lib/errors";
 import { isUuid } from "@/lib/uuid";
 import { buildDaysFromRange } from "../lib/helpers";
@@ -68,6 +68,7 @@ export class PlanService {
     private readonly repo: PlanRepository,
     private readonly budgetRepo: BudgetRepository,
     private readonly profileRepo: ProfileRepository,
+    private readonly snapshots: SnapshotsService,
     private readonly viewer: Viewer | null = null
   ) {}
 
@@ -102,11 +103,11 @@ export class PlanService {
     }
 
     const isAdmin = isOwner || memberRow?.tier === "admin";
-    const [snapshotRow, entryRows] = await Promise.all([
-      this.repo.fetchLatestSnapshot(plan.id),
+    const [snapshot, entryRows] = await Promise.all([
+      this.snapshots.fetchSnapshot(plan.id),
       this.fetchBudgetEntries(plan.id),
     ]);
-    const snapshotDays = snapshotRow ? mapSnapshot(SnapshotRowSchema.parse(snapshotRow)).days : [];
+    const snapshotDays = snapshot.days;
 
     return {
       planId: plan.id,

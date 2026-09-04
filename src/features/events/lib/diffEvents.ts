@@ -1,50 +1,16 @@
 import { isPlaceholder, sanitizeTitle } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import { generateId } from "@/lib/generateId";
-import { isFiniteNumber } from "@/lib/typeGuards";
-
-import { midpoint } from "../lib/gapOrdering";
 import type { EventInsert } from "../types";
-
-function cloneActivity(activity: Activity): Activity {
-  return { ...activity };
-}
-
-function sanitizeActivity(activity: Activity): Activity {
-  const { latitude, longitude, ...base } = {
-    ...activity,
-    title: sanitizeTitle(activity.title),
-  };
-
-  return {
-    ...base,
-    ...(isFiniteNumber(latitude) ? { latitude } : {}),
-    ...(isFiniteNumber(longitude) ? { longitude } : {}),
-  };
-}
-
-function ensurePositions<T extends { position?: string }>(items: T[]): T[] {
-  let needsClone = false;
-  const result: T[] = items.map((item, index) => {
-    if (item.position != null && item.position !== "") return item;
-    needsClone = true;
-    return { ...item, position: String((index + 1) * 1024) };
-  });
-  return needsClone ? result : items;
-}
-
-function toNumber(position?: string): number | null {
-  if (position == null) return null;
-  const num = Number(position);
-  return isFiniteNumber(num) ? num : null;
-}
+import { cloneActivity, sanitizeActivity } from "./activityState";
+import { midpoint, normalizePositions, parsePosition } from "./gapOrdering";
 
 function isBetween(position: string | undefined, left?: string, right?: string): boolean {
-  const value = toNumber(position);
+  const value = parsePosition(position);
   if (value == null) return false;
 
-  const leftNum = toNumber(left);
-  const rightNum = toNumber(right);
+  const leftNum = parsePosition(left);
+  const rightNum = parsePosition(right);
   const effectiveRight = rightNum == null || (leftNum != null && leftNum >= rightNum) ? null : rightNum;
 
   if (leftNum != null && value <= leftNum) return false;
@@ -88,12 +54,12 @@ export function diffEvents(
 ): EventInsert[] {
   const events: EventInsert[] = [];
   const removedDayEvents: EventInsert[] = [];
-  const prevDaysWithPositions = ensurePositions(previousDays);
+  const prevDaysWithPositions = normalizePositions(previousDays);
   const prevDayMap = new Map(prevDaysWithPositions.map((day) => [day.id, day]));
   const prevActivityMap = new Map<string, { dayId: string; activity: Activity }>();
 
   for (const day of prevDaysWithPositions) {
-    for (const activity of ensurePositions(day.activities)) {
+    for (const activity of normalizePositions(day.activities)) {
       if (isPlaceholder(activity)) continue;
       prevActivityMap.set(activity.id, { dayId: day.id, activity });
     }
@@ -115,7 +81,7 @@ export function diffEvents(
   const resolvedDayPositions = new Map<string, string>();
   const nextDaysWithPositions = nextDays.map((day) => ({
     ...day,
-    activities: ensurePositions(day.activities).map(cloneActivity),
+    activities: normalizePositions(day.activities).map(cloneActivity),
   }));
 
   const nextActivityMap = new Map<string, { dayId: string; activity: Activity }>();
@@ -162,7 +128,7 @@ export function diffEvents(
             label: day.label,
             position: finalPosition,
             activities: day.activities.map((activity) => ({
-              ...sanitizeActivity(activity),
+              ...sanitizeActivity(activity, { dropInvalidCoordinates: true }),
               position: activity.position ?? midpoint(undefined, undefined),
             })),
           },
@@ -230,7 +196,7 @@ export function diffEvents(
           payload: {
             dayId: day.id,
             activity: {
-              ...sanitizeActivity(activity),
+              ...sanitizeActivity(activity, { dropInvalidCoordinates: true }),
               id: activity.id,
               position,
             },
@@ -263,7 +229,9 @@ export function diffEvents(
       }
 
       if (!activityEquals(activity, prevActivity.activity)) {
-        const { position: _position, ...patch } = sanitizeActivity(activity);
+        const { position: _position, ...patch } = sanitizeActivity(activity, {
+          dropInvalidCoordinates: true,
+        });
         events.push({
           id: generateId(),
           planId,

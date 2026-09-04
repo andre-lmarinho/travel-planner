@@ -1,34 +1,12 @@
-import { sanitizeTitle } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
 import type { Snapshot } from "@/features/snapshots/types";
-
 import type { EventRecord, EventState } from "../types";
-
-// Alias for backwards compatibility
-const sanitizeActivityTitle = sanitizeTitle;
-
-function cloneActivity(activity: Activity): Activity {
-  return { ...activity };
-}
-
-function cloneDay(day: DayPlan): DayPlan {
-  return {
-    ...day,
-    activities: day.activities.map(cloneActivity),
-  };
-}
-
-function sanitizeActivity(activity: Activity): Activity {
-  const sanitized: Activity = cloneActivity(activity);
-  sanitized.title = sanitizeActivityTitle(activity.title);
-  if (!sanitized.color) sanitized.color = "bg-[var(--color-1)]";
-  return sanitized;
-}
+import { cloneDay, sanitizeActivity } from "./activityState";
+import { parsePosition } from "./gapOrdering";
 
 function toPositionNumber(position?: string): number {
   if (!position) return Number.MAX_SAFE_INTEGER;
-  const numeric = Number(position);
-  return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
+  return parsePosition(position) ?? Number.MAX_SAFE_INTEGER;
 }
 
 function ensureDay(days: DayPlan[], dayId: string, label: string): { days: DayPlan[]; day: DayPlan } {
@@ -46,7 +24,7 @@ function applySingleEvent(days: DayPlan[], event: EventRecord): DayPlan[] {
     case "activity.created": {
       const { dayId, activity, position } = event.payload;
       const { days: ensuredDays, day } = ensureDay(days.map(cloneDay), dayId, activity.title);
-      const sanitized = sanitizeActivity(activity);
+      const sanitized = sanitizeActivity(activity, { defaultColor: "bg-[var(--color-1)]" });
       sanitized.position = position;
       const exists = day.activities.find((a) => a.id === sanitized.id);
       if (exists) {
@@ -68,7 +46,7 @@ function applySingleEvent(days: DayPlan[], event: EventRecord): DayPlan[] {
           ...activity,
           ...patch,
         };
-        updated.title = sanitizeActivityTitle(updated.title, activity.title);
+        updated.title = sanitizeActivity(updated, { fallbackTitle: activity.title }).title;
         Object.assign(activity, updated);
         return nextDays;
       }
@@ -120,7 +98,9 @@ function applySingleEvent(days: DayPlan[], event: EventRecord): DayPlan[] {
       const sanitizedDay: DayPlan = {
         id: day.id,
         label: day.label,
-        activities: day.activities.map(sanitizeActivity),
+        activities: day.activities.map((activity) =>
+          sanitizeActivity(activity, { defaultColor: "bg-[var(--color-1)]" })
+        ),
         position: day.position,
       };
       if (insertIdx === -1) next.push(sanitizedDay);

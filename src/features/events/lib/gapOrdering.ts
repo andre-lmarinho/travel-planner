@@ -1,14 +1,14 @@
 const SCALE = 1024;
 
-function toNumber(position?: string): number {
-  if (!position) return 0;
+export function parsePosition(position?: string): number | null {
+  if (!position?.trim()) return null;
   const num = Number(position);
-  return Number.isFinite(num) ? num : 0;
+  return Number.isFinite(num) ? num : null;
 }
 
 export function midpoint(left?: string, right?: string): string {
-  const leftVal = toNumber(left);
-  const rightVal = toNumber(right);
+  const leftVal = parsePosition(left) ?? 0;
+  const rightVal = parsePosition(right) ?? 0;
   if (!right && !left) return String(SCALE);
   if (!right) return String(leftVal + SCALE);
   if (!left) return String(rightVal / 2 || SCALE);

@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-
+import { SnapshotsRepository } from "@/features/snapshots/repositories/SnapshotsRepository";
 import { formatSupabaseError } from "@/lib/errors";
 import { isUuid } from "@/lib/uuid";
 import type { Database } from "@/supabase/types";
@@ -29,13 +29,6 @@ export type PlanRecord = {
 
 export type PlanWithMembersRecord = PlanRecord & {
   members: PlanMemberRecord[];
-};
-
-export type SnapshotRowRecord = {
-  plan_id: string;
-  version: number;
-  state: unknown;
-  updated_at: string;
 };
 
 export type UserPlannerSummary = {
@@ -111,7 +104,11 @@ function countSnapshotActivities(state: unknown): number {
 }
 
 export class PlanRepository {
-  constructor(private readonly client: SupabaseClient<Database>) {}
+  private readonly snapshots: SnapshotsRepository;
+
+  constructor(private readonly client: SupabaseClient<Database>) {
+    this.snapshots = new SnapshotsRepository(client);
+  }
 
   async fetchPlanIdentityById(planId: string): Promise<PlanIdentity | null> {
     const { data, error } = await this.client
@@ -201,23 +198,6 @@ export class PlanRepository {
     return data ? mapPlanRow(data) : null;
   }
 
-  async fetchLatestSnapshot(planId: string): Promise<SnapshotRowRecord | null> {
-    const { data, error } = await this.client
-      .from("plan_snapshots")
-      .select("plan_id, version, state, updated_at")
-      .eq("plan_id", planId)
-      .order("version", { ascending: false })
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchLatestSnapshot", identifiers: { planId }, error });
-    }
-
-    return data ?? null;
-  }
-
   async updatePlanTitle(planId: string, newTitle: string): Promise<void> {
     const { error } = await this.client.rpc("update_plan_title", {
       _plan_id: planId,
@@ -286,7 +266,7 @@ export class PlanRepository {
       (data ?? []).map(async (row) => {
         const name = row.destination_name?.trim();
         if (!name) return null;
-        const snapshot = await this.fetchLatestSnapshot(row.id);
+        const snapshot = await this.snapshots.fetchSnapshot(row.id);
         return {
           planId: row.id,
           planTitle: row.title?.trim() || "Untitled trip",
