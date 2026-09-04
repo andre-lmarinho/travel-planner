@@ -82,7 +82,22 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and the feature documentation under
    pnpm install
    ```
 
-3. Create your local environment file from [`.env.example`](.env.example) and configure:
+3. Start the local Supabase stack and create your environment file from [`.env.example`](.env.example):
+
+   ```bash
+   supabase start
+   cp .env.example .env.local
+   ```
+
+   The public Supabase values in `.env.example` target the local stack. If server-only operations need the service-role key, copy `SERVICE_ROLE_KEY` from:
+
+   ```bash
+   supabase status -o env
+   ```
+
+   Keep the local service-role key only in `.env.local`.
+
+   Configure any remaining service keys as needed:
 
    | Variable | Scope | Purpose |
    | --- | --- | --- |
@@ -103,7 +118,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) and the feature documentation under
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev` | Start the Next.js development server. |
+| `pnpm dev` | Start/reuse local Supabase, apply pending migrations, and start Next.js. |
+| `pnpm db:migrate` | Apply pending local migrations without resetting data. |
+| `pnpm db:reset` | Recreate the local database and apply migrations plus `supabase/seed.sql`. |
+| `pnpm db:stop` | Stop the local Supabase stack while preserving its data. |
 | `pnpm build` | Create a production build. |
 | `pnpm start` | Run the production build locally. |
 | `pnpm lint` | Check the repository with Biome. |
