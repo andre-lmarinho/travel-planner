@@ -3,7 +3,8 @@
 import React from "react";
 
 import type { SuggestionHook } from "@/features/search/hooks/createGeoapifySuggestionHook";
-import { useDebouncedQuery } from "@/features/search/hooks/useDebouncedQuery";
+import { useDebounce } from "@/features/search/hooks/useDebounce";
+import { GEOAPIFY_MIN_QUERY_LENGTH } from "@/features/search/lib/geoapify/config";
 import type { AutocompletePlace, PlaceSelection } from "@/features/search/types";
 
 import type { SuggestionOption } from "./SuggestionCombobox";
@@ -39,7 +40,8 @@ export function LocationSearchInput({
   onBlur,
 }: LocationSearchInputProps) {
   const [open, setOpen] = React.useState(false);
-  const { debounced, canSearch } = useDebouncedQuery(value);
+  const debounced = useDebounce(value);
+  const canSearch = debounced.trim().length >= GEOAPIFY_MIN_QUERY_LENGTH;
   const openState = open && canSearch;
 
   const { results, loading, error } = autocompleteHook(debounced, {

@@ -1,6 +1,5 @@
 import { isPlaceholder, sanitizeTitle } from "@/features/activity/lib/placeholders";
 import type { Activity, DayPlan } from "@/features/activity/types";
-import { generateId } from "@/lib/generateId";
 import type { EventInsert } from "../types";
 import { cloneActivity, sanitizeActivity } from "./activityState";
 import { midpoint, normalizePositions, parsePosition } from "./gapOrdering";
@@ -69,7 +68,7 @@ export function diffEvents(
   for (const day of prevDaysWithPositions) {
     if (!nextDayIds.has(day.id)) {
       removedDayEvents.push({
-        id: generateId(),
+        id: crypto.randomUUID(),
         planId,
         type: "day.removed",
         payload: { dayId: day.id },
@@ -119,7 +118,7 @@ export function diffEvents(
 
     if (!prev) {
       events.push({
-        id: generateId(),
+        id: crypto.randomUUID(),
         planId,
         type: "day.created",
         payload: {
@@ -140,7 +139,7 @@ export function diffEvents(
 
     if (prev.label !== day.label) {
       events.push({
-        id: generateId(),
+        id: crypto.randomUUID(),
         planId,
         type: "day.updated",
         payload: { dayId: day.id, patch: { label: day.label } },
@@ -150,7 +149,7 @@ export function diffEvents(
 
     if (prev.position !== finalPosition) {
       events.push({
-        id: generateId(),
+        id: crypto.randomUUID(),
         planId,
         type: "day.reordered",
         payload: { dayId: day.id, position: finalPosition },
@@ -169,7 +168,7 @@ export function diffEvents(
         if (isPlaceholder(activity)) continue;
         if (!nextActivityMap.has(activity.id)) {
           events.push({
-            id: generateId(),
+            id: crypto.randomUUID(),
             planId,
             type: "activity.deleted",
             payload: { activityId: activity.id },
@@ -190,7 +189,7 @@ export function diffEvents(
           computeRightNeighborPosition(activityOrder, index, neighborPositionMap)
         );
         events.push({
-          id: generateId(),
+          id: crypto.randomUUID(),
           planId,
           type: "activity.created",
           payload: {
@@ -215,7 +214,7 @@ export function diffEvents(
       if (!isBetween(position, leftPos, rightPos) || day.id !== prevDayId) {
         position = midpoint(leftPos, rightPos);
         events.push({
-          id: generateId(),
+          id: crypto.randomUUID(),
           planId,
           type: "activity.moved",
           payload: {
@@ -233,7 +232,7 @@ export function diffEvents(
           dropInvalidCoordinates: true,
         });
         events.push({
-          id: generateId(),
+          id: crypto.randomUUID(),
           planId,
           type: "activity.updated",
           payload: {

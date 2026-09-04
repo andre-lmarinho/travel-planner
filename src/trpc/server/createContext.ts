@@ -3,7 +3,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { getViewer, type Viewer } from "@/features/auth/lib/session";
-import { createRequestCtx } from "@/lib/errors/requestCtx";
 import { createSupabaseServerClient } from "@/supabase/server";
 import type { Database } from "@/supabase/types";
 
@@ -29,7 +28,7 @@ export function createRequestMeta(request: Request): TRPCRequestMeta {
 
   return {
     ip: ip || null,
-    requestId: createRequestCtx(request.headers).requestId,
+    requestId: request.headers.get("x-request-id")?.trim() || crypto.randomUUID(),
     userAgent: request.headers.get("user-agent"),
   };
 }
