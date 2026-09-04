@@ -91,19 +91,6 @@ export function removeActivity(days: DayPlan[], activityId: string): DayPlan[] {
 }
 
 /**
- * Add an activity to a specific day at the end.
- */
-export function addActivity(days: DayPlan[], dayId: string, activity: Activity): DayPlan[] {
-  const result = cloneDays(days);
-  const day = result.find((d) => d.id === dayId);
-
-  if (!day) return days;
-
-  day.activities.push(activity);
-  return result;
-}
-
-/**
  * Add an activity to a specific day at a specific index.
  */
 export function addActivityAtIndex(
@@ -120,13 +107,6 @@ export function addActivityAtIndex(
   const targetIndex = Math.max(0, Math.min(index, day.activities.length));
   day.activities.splice(targetIndex, 0, activity);
   return result;
-}
-
-/**
- * Find which day contains a specific activity.
- */
-export function findActivityDay(days: DayPlan[], activityId: string): DayPlan | undefined {
-  return days.find((day) => day.activities.some((a) => a.id === activityId));
 }
 
 /**

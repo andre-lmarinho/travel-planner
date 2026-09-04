@@ -49,13 +49,6 @@ export type UserPlannerSummary = {
   coverImage: string | null;
 };
 
-export type PublicPlanSummary = {
-  id: string;
-  title: string;
-  coverImage: string | null;
-  publicSlug: string;
-};
-
 export type UserDestination = {
   planId: string;
   planTitle: string;
@@ -225,16 +218,6 @@ export class PlanRepository {
     return data ?? null;
   }
 
-  async fetchPlanTitle(planId: string): Promise<string | null> {
-    const { data, error } = await this.client.from("plans").select("title").eq("id", planId).single();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchPlanTitle", identifiers: { planId }, error });
-    }
-
-    return data?.title ?? null;
-  }
-
   async updatePlanTitle(planId: string, newTitle: string): Promise<void> {
     const { error } = await this.client.rpc("update_plan_title", {
       _plan_id: planId,
@@ -270,25 +253,6 @@ export class PlanRepository {
         coverImage: row.cover_image,
       };
     });
-  }
-
-  async getPublicPlans(): Promise<PublicPlanSummary[]> {
-    const { data, error } = await this.client
-      .from("plans")
-      .select("id, title, cover_image, public_slug")
-      .eq("is_public", true)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      throw formatSupabaseError({ operation: "getPublicPlans", error });
-    }
-
-    return (data ?? []).map((row) => ({
-      id: row.id,
-      title: row.title ?? "Untitled trip",
-      coverImage: row.cover_image,
-      publicSlug: row.public_slug,
-    }));
   }
 
   async getUserDestinations(userId: string): Promise<UserDestination[]> {

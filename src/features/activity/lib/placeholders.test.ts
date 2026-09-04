@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createBlankActivity,
-  generateActivityId,
-  generatePlaceholderId,
-  isPlaceholder,
-  sanitizeTitle,
-} from "./placeholders";
+import { createBlankActivity, generateActivityId, isPlaceholder, sanitizeTitle } from "./placeholders";
 
 describe("generateActivityId", () => {
   it("generates unique IDs", () => {
@@ -19,21 +13,6 @@ describe("generateActivityId", () => {
     const id = generateActivityId();
 
     expect(id.startsWith("act-")).toBe(true);
-  });
-});
-
-describe("generatePlaceholderId", () => {
-  it("generates unique IDs", () => {
-    const id1 = generatePlaceholderId();
-    const id2 = generatePlaceholderId();
-
-    expect(id1).not.toBe(id2);
-  });
-
-  it("prefixes with blank-", () => {
-    const id = generatePlaceholderId();
-
-    expect(id.startsWith("blank-")).toBe(true);
   });
 });
 

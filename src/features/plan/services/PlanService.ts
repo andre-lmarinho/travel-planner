@@ -133,15 +133,6 @@ export class PlanService {
     return this.repo.getUserDestinations(this.requireViewer("view destinations").id);
   }
 
-  async getPublicPlans() {
-    try {
-      return await this.repo.getPublicPlans();
-    } catch (error) {
-      console.warn("getPublicPlans failed; showing no recommendations", error);
-      return [];
-    }
-  }
-
   async updatePlanTitle(planId: string, newTitle: string): Promise<void> {
     await this.requireMember(planId);
     await this.repo.updatePlanTitle(planId, newTitle);
@@ -155,10 +146,6 @@ export class PlanService {
   async updatePlanDates(planId: string, from: Date, to: Date): Promise<void> {
     await this.requireMember(planId);
     await this.repo.updatePlanDates(planId, format(from, "yyyy-MM-dd"), format(to, "yyyy-MM-dd"));
-  }
-
-  async updatePlanCoverImage(planId: string, coverImageUrl: string): Promise<void> {
-    await this.repo.updatePlanCoverImage(planId, coverImageUrl);
   }
 
   async createUserPlan(input: CreateUserPlanInput): Promise<CreateUserPlanResult> {
