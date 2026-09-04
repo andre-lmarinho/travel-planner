@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'andre-lmarinho/travel-planner'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Detect release version
+        id: version
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ "${BEFORE_SHA}" = "0000000000000000000000000000000000000000" ] || [ -z "${BEFORE_SHA}" ]; then
+            BEFORE_SHA="$(git rev-parse HEAD^)"
+          fi
+
+          if git diff --quiet "${BEFORE_SHA}" "${GITHUB_SHA}" -- package.json; then
+            echo "package.json version did not change; nothing to release."
+            echo "should_release=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          VERSION="$(node -p "require('./package.json').version")"
+          if ! printf '%s' "${VERSION}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::Invalid package version: ${VERSION}"
+            exit 1
+          fi
+
+          TAG="v${VERSION}"
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "::error::Tag ${TAG} already exists."
+            exit 1
+          fi
+
+          LATEST_TAG="$(git tag -l 'v[0-9]*' --sort=-version:refname | head -1)"
+          if [ -n "${LATEST_TAG}" ]; then
+            LATEST_VERSION="${LATEST_TAG#v}"
+            LOWEST="$(printf '%s\n' "${LATEST_VERSION}" "${VERSION}" | sort -V | head -1)"
+            if [ "${LOWEST}" != "${LATEST_VERSION}" ]; then
+              echo "::error::${VERSION} is older than the latest release ${LATEST_TAG}."
+              exit 1
+            fi
+          fi
+
+          echo "should_release=true" >> "${GITHUB_OUTPUT}"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create tag and GitHub Release
+        if: steps.version.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git tag -a "${TAG}" "${GITHUB_SHA}" -m "Release ${TAG}"
+          git push origin "${TAG}"
+          gh release create "${TAG}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --target "${GITHUB_SHA}" \
+            --title "${TAG}" \
+            --generate-notes
