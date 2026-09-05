@@ -15,7 +15,7 @@ function createCaller() {
       supabase: createMockSupabaseClient({
         fromData: {
           budget_entries: [{ amount: 120, category: "food", description: "Lunch", id: "entry-1" }],
-          plans: { budget: 500 },
+          plans: { id: "plan-1", user_id: USER_ID, budget: 500 },
           profiles: { avatar_url: null, display_name: "Ada", id: USER_ID, slug: "ada" },
         },
       }),
@@ -24,6 +24,9 @@ function createCaller() {
 }
 
 describe("appRouter", () => {
+  it("returns the authenticated landing route after leaving a plan", async () => {
+    await expect(createCaller().viewer.members.leave({ planIdOrSlug: "plan-1" })).resolves.toBe("/");
+  });
   it("reads the viewer profile through ProfileService and ProfileRepository", async () => {
     await expect(createCaller().viewer.profile.get({})).resolves.toMatchObject({
       slug: "ada",

@@ -44,4 +44,14 @@ test.describe("Planner Members", () => {
 
     await expect(shareDialog.first()).not.toBeVisible();
   });
+  test("invites a member and shows the new member", async ({ page }) => {
+    const shareDialog = await openShareDialog(page);
+    const emailInput = shareDialog.getByRole("textbox", { name: /email/i });
+
+    await emailInput.fill("new-member@example.com");
+    await shareDialog.getByRole("button", { name: "Share", exact: true }).click();
+
+    await expect(shareDialog.getByText("Member added.")).toBeVisible();
+    await expect(shareDialog.getByText("new-member", { exact: true })).toBeVisible();
+  });
 });

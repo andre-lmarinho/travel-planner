@@ -19,7 +19,6 @@ import { cn } from "@/ui/utils/cn";
 
 interface BoardProps {
   days: DayPlan[];
-  canEdit?: boolean;
   onActivitySelect?: (activity: Activity, dayId: string) => void;
   onDaysChange?: (days: DayPlan[]) => void;
   onFallbackAdd?: (dayId: string, index: number) => void;
@@ -28,7 +27,6 @@ interface BoardProps {
 interface DayColumnProps {
   day: DayPlan;
   dayNumber?: number;
-  canEdit?: boolean;
   onActivitySelect?: (activity: Activity, dayId: string) => void;
   onFallbackAdd?: (dayId: string, index: number) => void;
 }
@@ -41,7 +39,6 @@ const isInteractiveElement = (el: EventTarget | null): boolean =>
 
 export const BoardView = memo(function Board({
   days,
-  canEdit = true,
   onActivitySelect,
   onDaysChange,
   onFallbackAdd,
@@ -121,7 +118,6 @@ export const BoardView = memo(function Board({
             <DayColumn
               day={day}
               dayNumber={dayIndex + 1}
-              canEdit={canEdit}
               onActivitySelect={onActivitySelect}
               onFallbackAdd={onFallbackAdd}
             />
@@ -129,13 +125,11 @@ export const BoardView = memo(function Board({
         ))}
       </ul>
 
-      {canEdit && (
-        <DragOverlay>
-          {activeActivity && (
-            <DraggableCard id={activeActivity.id} activity={activeActivity} dragOverlay aria-grabbed="true" />
-          )}
-        </DragOverlay>
-      )}
+      <DragOverlay>
+        {activeActivity && (
+          <DraggableCard id={activeActivity.id} activity={activeActivity} dragOverlay aria-grabbed="true" />
+        )}
+      </DragOverlay>
     </DndContext>
   );
 });
@@ -286,13 +280,11 @@ export const DraggableCard = memo(function DraggableCard({
 export const DayColumn = memo(function DayColumn({
   day,
   dayNumber,
-  canEdit = true,
   onActivitySelect,
   onFallbackAdd,
 }: DayColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: day.id,
-    disabled: !canEdit,
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -307,10 +299,10 @@ export const DayColumn = memo(function DayColumn({
 
   return (
     <section
-      ref={canEdit ? setNodeRef : undefined}
+      ref={setNodeRef}
       className={cn(
         "bg-card flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-xl border shadow-sm transition-shadow motion-reduce:transition-none",
-        isOver && canEdit && "ring-primary/40 shadow-md ring-2"
+        isOver && "ring-primary/40 shadow-md ring-2"
       )}>
       <div className="flex items-center justify-between gap-3 border-b px-3 py-3">
         <div className="flex min-w-0 items-center gap-2">
@@ -333,38 +325,28 @@ export const DayColumn = memo(function DayColumn({
         ref={scrollRef}
         data-testid="day-scroll"
         className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto space-y-3 px-2 py-2 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1">
-        {canEdit ? (
-          <SortableContext id={day.id} items={activityIds} strategy={verticalListSortingStrategy}>
-            {day.activities.map((activity) => (
-              <DraggableCard
-                key={activity.id}
-                id={activity.id}
-                activity={activity}
-                onSelect={() => onActivitySelect?.(activity, day.id)}
-                bgColor={activity.color}
-              />
-            ))}
-          </SortableContext>
-        ) : (
-          day.activities.map((activity) => (
-            <div key={activity.id} className="mb-3 last:mb-0">
-              <ActivityCard activity={activity} bgColor={activity.color} />
-            </div>
-          ))
-        )}
+        <SortableContext id={day.id} items={activityIds} strategy={verticalListSortingStrategy}>
+          {day.activities.map((activity) => (
+            <DraggableCard
+              key={activity.id}
+              id={activity.id}
+              activity={activity}
+              onSelect={() => onActivitySelect?.(activity, day.id)}
+              bgColor={activity.color}
+            />
+          ))}
+        </SortableContext>
       </div>
 
-      {canEdit ? (
-        <div className="border-t px-2 py-2">
-          <button
-            type="button"
-            onClick={() => onFallbackAdd?.(day.id, day.activities.length)}
-            className="bg-background hover:bg-muted text-foreground flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed px-3 py-2 text-left text-sm font-medium transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100">
-            <Plus size={18} aria-hidden="true" />
-            <span>{"Add activity"}</span>
-          </button>
-        </div>
-      ) : null}
+      <div className="border-t px-2 py-2">
+        <button
+          type="button"
+          onClick={() => onFallbackAdd?.(day.id, day.activities.length)}
+          className="bg-background hover:bg-muted text-foreground flex min-h-11 w-full cursor-pointer items-center gap-2 rounded-xl border border-dashed px-3 py-2 text-left text-sm font-medium transition active:scale-[0.99] motion-reduce:transition-none motion-reduce:active:scale-100">
+          <Plus size={18} aria-hidden="true" />
+          <span>{"Add activity"}</span>
+        </button>
+      </div>
     </section>
   );
 });

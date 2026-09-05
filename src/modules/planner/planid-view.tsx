@@ -34,7 +34,6 @@ const MapView = dynamic(() => import("@/modules/planner/views/MapView"), {
 
 function PlannerContent({
   title: initialTitle,
-  canEdit,
   isDemo,
   initialEntries,
   planId,
@@ -43,10 +42,8 @@ function PlannerContent({
   viewerUserId,
   isOwner,
   canManageMembers,
-  isPublic,
 }: {
   title: string;
-  canEdit: boolean;
   isDemo: boolean;
   initialEntries?: Entry[];
   planId: string;
@@ -55,7 +52,6 @@ function PlannerContent({
   viewerUserId: string | null;
   isOwner: boolean;
   canManageMembers: boolean;
-  isPublic: boolean;
 }) {
   const [mode, setMode] = useState<PlannerMode>("overview");
   const {
@@ -65,7 +61,7 @@ function PlannerContent({
     currentRange,
     handleRangeChange,
     destCoords,
-  } = usePlannerDocument({ initialDays, planId, dest: destination, canEdit, viewerUserId });
+  } = usePlannerDocument({ initialDays, planId, dest: destination, viewerUserId });
   const [selectedActivity, setSelectedActivity] = useState<(Activity & { dayId: string }) | null>(null);
   const [hoveredDayId, setHoveredDayId] = useState<string | null>(null);
   const [hoveredActivityId, setHoveredActivityId] = useState<string | null>(null);
@@ -134,7 +130,7 @@ function PlannerContent({
       setTitle(initialTitle);
       return;
     }
-    if (canEdit) await updateTitleMutation.mutateAsync({ planId: documentPlanId, title: title.trim() });
+    await updateTitleMutation.mutateAsync({ planId: documentPlanId, title: title.trim() });
   };
 
   return (
@@ -157,22 +153,19 @@ function PlannerContent({
             onChange={(event) => setTitle(event.target.value)}
             onBlur={handleTitleBlur}
             onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
-            readOnly={!canEdit}
-            disabled={!canEdit}
             className="focus-visible:border-border focus-visible:bg-background focus-visible:ring-ring absolute inset-0 cursor-pointer rounded-md border-2 border-transparent bg-transparent px-2 py-1 transition-colors outline-none focus:cursor-text focus-visible:ring-2 focus-visible:ring-offset-2"
           />
         </h1>
         <div className="flex flex-none items-center gap-1 self-end md:self-end">
-          <DateRangePickerIcon value={currentRange} onChange={handleRangeChange} disabled={!canEdit} />
-          {canEdit && !isDemo ? (
+          <DateRangePickerIcon value={currentRange} onChange={handleRangeChange} />
+          <DeletePlanDialog planId={documentPlanId} isOwner={isOwner} isDemo={isDemo} />
+          {!isDemo ? (
             <SharePlannerDialog
               planId={documentPlanId}
-              isPublic={isPublic}
               canManageMembers={canManageMembers}
               viewerUserId={viewerUserId}
             />
           ) : null}
-          <DeletePlanDialog planId={documentPlanId} isOwner={isOwner} isDemo={isDemo} />
           <div className="hidden pl-2 xl:inline">
             <ModeToggleButton
               value={mode === "map" ? "overview" : mode}
@@ -202,7 +195,6 @@ function PlannerContent({
             <div className={`absolute inset-0 z-10 xl:hidden ${mode === "map" ? "hidden" : ""}`}>
               <BoardView
                 days={days}
-                canEdit={canEdit}
                 onActivitySelect={selectActivity}
                 onDaysChange={setDays}
                 onFallbackAdd={handleFallbackAdd}
@@ -211,7 +203,6 @@ function PlannerContent({
             <div className="pointer-events-none absolute inset-0 z-10 hidden xl:block">
               <TripView
                 days={days}
-                canEdit={canEdit}
                 onActivitySelect={selectActivity}
                 onDaysChange={setDays}
                 onFallbackAdd={handleFallbackAdd}
@@ -224,7 +215,6 @@ function PlannerContent({
           <div className="absolute inset-0">
             <BoardView
               days={days}
-              canEdit={canEdit}
               onActivitySelect={selectActivity}
               onDaysChange={setDays}
               onFallbackAdd={handleFallbackAdd}
@@ -232,12 +222,7 @@ function PlannerContent({
           </div>
         ) : (
           <div className="absolute inset-0">
-            <BudgetView
-              planId={documentPlanId}
-              days={days}
-              initialEntries={initialEntries}
-              canEdit={canEdit}
-            />
+            <BudgetView planId={documentPlanId} days={days} initialEntries={initialEntries} />
           </div>
         )}
       </div>
@@ -283,7 +268,6 @@ export function PlanIdView({ experience }: { experience: PlannerExperience }) {
   return (
     <PlannerContent
       title={title}
-      canEdit={experience.canEdit}
       isDemo={experience.isDemo}
       initialEntries={experience.initialEntries}
       planId={experience.planId}
@@ -292,7 +276,6 @@ export function PlanIdView({ experience }: { experience: PlannerExperience }) {
       viewerUserId={experience.viewerUserId}
       isOwner={experience.isOwner}
       canManageMembers={experience.canManageMembers}
-      isPublic={experience.isPublic}
     />
   );
 }

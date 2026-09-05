@@ -58,7 +58,6 @@ describe("TripView", () => {
     render(
       <TripView
         days={days}
-        canEdit
         onActivitySelect={onActivitySelect}
         onDaysChange={vi.fn()}
         onFallbackAdd={vi.fn()}
@@ -71,13 +70,7 @@ describe("TripView", () => {
   });
   it("hides and restores the itinerary", () => {
     render(
-      <TripView
-        days={days}
-        canEdit
-        onActivitySelect={vi.fn()}
-        onDaysChange={vi.fn()}
-        onFallbackAdd={vi.fn()}
-      />
+      <TripView days={days} onActivitySelect={vi.fn()} onDaysChange={vi.fn()} onFallbackAdd={vi.fn()} />
     );
     fireEvent.click(screen.getByRole("button", { name: "Hide itinerary" }));
     expect(screen.getByRole("button", { name: "Show itinerary" })).toBeInTheDocument();
@@ -87,13 +80,7 @@ describe("TripView", () => {
   it("collapses all days and delegates adding", () => {
     const onFallbackAdd = vi.fn();
     render(
-      <TripView
-        days={days}
-        canEdit
-        onActivitySelect={vi.fn()}
-        onDaysChange={vi.fn()}
-        onFallbackAdd={onFallbackAdd}
-      />
+      <TripView days={days} onActivitySelect={vi.fn()} onDaysChange={vi.fn()} onFallbackAdd={onFallbackAdd} />
     );
     fireEvent.click(screen.getByRole("button", { name: "Collapse all days" }));
     expect(screen.queryByText("Museum")).not.toBeInTheDocument();

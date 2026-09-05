@@ -48,16 +48,18 @@ test.describe("Budget Management", () => {
     await expect(addButton).toBeEnabled();
     await addButton.click();
 
-    await expect(expensesSection.getByRole("rowheader", { name: "Hotel" })).toBeVisible();
-    await expect(expensesSection.getByRole("cell", { name: "Lodging", exact: true })).toBeVisible();
+    await expect(expensesSection.getByRole("rowheader", { name: "Hotel" }).first()).toBeVisible();
+    await expect(expensesSection.getByRole("cell", { name: "Lodging", exact: true }).first()).toBeVisible();
   });
 
-  test("has add expense button enabled when amount is filled", async ({ page }) => {
+  test("has add expense button enabled when description and amount are filled", async ({ page }) => {
     const expensesSection = page.getByRole("region", { name: /expenses/i });
 
     const addButton = expensesSection.getByRole("button", { name: /add expense/i });
+    const descriptionInput = expensesSection.getByRole("textbox", { name: /description/i }).first();
     const amountInput = expensesSection.getByRole("textbox", { name: /amount/i }).first();
 
+    await descriptionInput.fill("Train ticket");
     await amountInput.fill("100");
     await expect(addButton).toBeEnabled();
   });

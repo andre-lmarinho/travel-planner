@@ -29,9 +29,9 @@ on conflict (id) do nothing;
 -- 2. The two curated demo plans, owned by the demo account (fixed UUIDs so the app/repo
 --    URLs and the reset stay stable). Rome is pushed ~30 days out to be the upcoming trip;
 --    Boipeba stays in the past. snapshot days keep the curated content as-is.
-insert into public.plans (id, user_id, title, start_date, end_date, created_at, budget, public_slug, cover_image, is_public, destination_name, destination_country, latitude, longitude) values
-  ('555386c3-df5b-4032-a4bc-03fdfa952105', '36a3b688-e770-4656-8262-6592809b46ad', 'A 4 day trip to Rome', current_date + 30, current_date + 33, now(), '4000', 'xGAJQ3na6Zlh', 'https://commons.wikimedia.org/wiki/Special:FilePath/Rome%20Skyline%20(8012016319).jpg?width=400', true, 'Rome', 'IT', 41.8933203, 12.4829321),
-  ('564b630b-4aad-439c-9dde-c28d538ab4ea', '36a3b688-e770-4656-8262-6592809b46ad', 'A weekend in Boipeba', current_date - 31, current_date - 29, now(), '700', 'QMXjVVskVsFb', null, false, 'Boipeba', 'BR', -13.5824298, -38.9294512)
+insert into public.plans (id, user_id, title, start_date, end_date, created_at, budget, public_slug, cover_image, destination_name, destination_country, latitude, longitude) values
+  ('555386c3-df5b-4032-a4bc-03fdfa952105', '36a3b688-e770-4656-8262-6592809b46ad', 'A 4 day trip to Rome', current_date + 30, current_date + 33, now(), '4000', 'xGAJQ3na6Zlh', 'https://commons.wikimedia.org/wiki/Special:FilePath/Rome%20Skyline%20(8012016319).jpg?width=400', 'Rome', 'IT', 41.8933203, 12.4829321),
+  ('564b630b-4aad-439c-9dde-c28d538ab4ea', '36a3b688-e770-4656-8262-6592809b46ad', 'A weekend in Boipeba', current_date - 31, current_date - 29, now(), '700', 'QMXjVVskVsFb', null, 'Boipeba', 'BR', -13.5824298, -38.9294512)
 on conflict (id) do nothing;
 
 insert into public.plan_snapshots (plan_id, version, state, updated_at) values
@@ -61,7 +61,7 @@ delete from public.demo_baseline;
 insert into public.demo_baseline (plan_id, plan, snapshot, budget)
 select pl.id,
        jsonb_build_object('title', pl.title, 'start_date', pl.start_date, 'end_date', pl.end_date,
-                          'budget', pl.budget, 'is_public', pl.is_public, 'cover_image', pl.cover_image),
+                          'budget', pl.budget, 'cover_image', pl.cover_image),
        jsonb_build_object('version', s.version, 'state', s.state),
        coalesce(jsonb_agg(jsonb_build_object('id', be.id, 'description', be.description, 'category', be.category, 'amount', be.amount)) filter (where be.id is not null), '[]'::jsonb)
 from public.plans pl

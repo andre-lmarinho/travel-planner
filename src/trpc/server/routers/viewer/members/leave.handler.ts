@@ -12,5 +12,6 @@ export async function leavePlanHandler({ ctx, input }: { ctx: AuthedTRPCContext;
     new PlanRepository(ctx.supabase),
     new ProfileRepository(ctx.supabase)
   );
-  return service.leavePlan(input.planIdOrSlug);
+  await service.leavePlan(input.planIdOrSlug);
+  return "/";
 }

@@ -3,7 +3,6 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SnapshotsRepository } from "@/features/snapshots/repositories/SnapshotsRepository";
 import { formatSupabaseError } from "@/lib/errors";
-import { isUuid } from "@/lib/uuid";
 import type { Database } from "@/supabase/types";
 
 export type PlanIdentity = {
@@ -23,7 +22,6 @@ export type PlanRecord = {
   budget: number | null;
   startDate: string | null;
   endDate: string | null;
-  isPublic: boolean;
   destinationName: string | null;
 };
 
@@ -38,7 +36,6 @@ export type UserPlannerSummary = {
   startDate: string | null;
   endDate: string | null;
   updatedAt: string | null;
-  publicSlug: string;
   coverImage: string | null;
 };
 
@@ -63,7 +60,6 @@ type PlanRow = {
   budget: number | null;
   start_date: string | null;
   end_date: string | null;
-  is_public: boolean;
   destination_name: string | null;
 };
 
@@ -80,7 +76,6 @@ function mapPlanRow(row: PlanRow): PlanRecord {
     budget: row.budget,
     startDate: row.start_date,
     endDate: row.end_date,
-    isPublic: row.is_public,
     destinationName: row.destination_name,
   };
 }
@@ -142,7 +137,7 @@ export class PlanRepository {
     const { data, error } = await this.client
       .from("plans")
       .select(
-        "id, title, user_id, budget, start_date, end_date, is_public, destination_name, plan_members!left(user_id, tier)"
+        "id, title, user_id, budget, start_date, end_date, destination_name, plan_members!left(user_id, tier)"
       )
       .eq("id", planId)
       .maybeSingle();
@@ -158,7 +153,7 @@ export class PlanRepository {
     const { data, error } = await this.client
       .from("plans")
       .select(
-        "id, title, user_id, budget, start_date, end_date, is_public, destination_name, plan_members!left(user_id, tier)"
+        "id, title, user_id, budget, start_date, end_date, destination_name, plan_members!left(user_id, tier)"
       )
       .eq("public_slug", slug)
       .maybeSingle();
@@ -168,34 +163,6 @@ export class PlanRepository {
     }
 
     return data ? { ...mapPlanRow(data), members: mapMembers(data.plan_members) } : null;
-  }
-
-  async fetchPublicPlanById(planId: string): Promise<PlanRecord | null> {
-    const { data, error } = await this.client
-      .from("plans")
-      .select("id, title, user_id, budget, start_date, end_date, is_public, destination_name")
-      .eq("id", planId)
-      .maybeSingle();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchPublicPlanById", identifiers: { planId }, error });
-    }
-
-    return data ? mapPlanRow(data) : null;
-  }
-
-  async fetchPublicPlanBySlug(slug: string): Promise<PlanRecord | null> {
-    const { data, error } = await this.client
-      .from("plans")
-      .select("id, title, user_id, budget, start_date, end_date, is_public, destination_name")
-      .eq("public_slug", slug)
-      .maybeSingle();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchPublicPlanBySlug", identifiers: { slug }, error });
-    }
-
-    return data ? mapPlanRow(data) : null;
   }
 
   async updatePlanTitle(planId: string, newTitle: string): Promise<void> {
@@ -229,7 +196,6 @@ export class PlanRepository {
         startDate: row.start_date,
         endDate: row.end_date,
         updatedAt,
-        publicSlug: row.public_slug,
         coverImage: row.cover_image,
       };
     });
@@ -284,18 +250,6 @@ export class PlanRepository {
     return destinations.filter((destination): destination is UserDestination => destination !== null);
   }
 
-  async setPlanVisibility(planId: string, isPublic: boolean): Promise<void> {
-    const { error } = await this.client.from("plans").update({ is_public: isPublic }).eq("id", planId);
-
-    if (error) {
-      throw formatSupabaseError({
-        operation: "setPlanVisibility",
-        identifiers: { planId, isPublic: String(isPublic) },
-        error,
-      });
-    }
-  }
-
   async updatePlanDates(planId: string, startDate: string, endDate: string): Promise<void> {
     const { error } = await this.client.rpc("update_plan_dates", {
       _plan_id: planId,
@@ -341,7 +295,7 @@ export class PlanRepository {
     endDate: string;
     userId?: string;
     coverImage?: string;
-  }): Promise<{ id: string; publicSlug: string }> {
+  }): Promise<{ id: string }> {
     const { data, error } = await this.client.rpc("create_full_plan", {
       _title: params.title,
       _dest_name: params.destName,
@@ -362,34 +316,14 @@ export class PlanRepository {
       );
     }
 
-    const row = (Array.isArray(data) ? data[0] : data) as
-      | { result_plan_id?: string | null; result_public_slug?: string | null }
-      | undefined;
+    const row = (Array.isArray(data) ? data[0] : data) as { result_plan_id?: string | null } | undefined;
 
-    if (!row?.result_plan_id || !row.result_public_slug) {
+    if (!row?.result_plan_id) {
       throw new Error(
         `Failed to create plan: operation=createPlan title="${params.title}" destination="${params.destName}" userId=${params.userId ?? "null"} error=RPC returned no plan identifiers`
       );
     }
 
-    const { result_plan_id, result_public_slug } = row;
-
-    return { id: result_plan_id, publicSlug: result_public_slug };
-  }
-
-  async fetchPlanMetadata(
-    identifier: string
-  ): Promise<{ title: string | null; destinationName: string | null }> {
-    const { data, error } = await this.client
-      .from("plans")
-      .select("title, destination_name")
-      .eq(isUuid(identifier) ? "id" : "public_slug", identifier)
-      .maybeSingle();
-
-    if (error) {
-      throw formatSupabaseError({ operation: "fetchPlanMetadata", identifiers: { identifier }, error });
-    }
-
-    return { title: data?.title ?? null, destinationName: data?.destination_name ?? null };
+    return { id: row.result_plan_id };
   }
 }

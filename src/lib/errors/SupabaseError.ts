@@ -1,3 +1,5 @@
+import { isRecord, readString } from "@/lib/typeGuards";
+
 import { ApplicationError } from "./ApplicationError";
 
 export type ErrorIdentifierValue = string | number | boolean | null | undefined;
@@ -9,14 +11,6 @@ function formatIdentifiers(identifiers?: ErrorIdentifiers): string {
     .filter(([, value]) => value !== undefined)
     .map(([key, value]) => `${key}=${value ?? "null"}`);
   return parts.length ? ` (${parts.join(" ")})` : "";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readString(value: unknown): string | null {
-  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function formatCause(cause: unknown): string | null {

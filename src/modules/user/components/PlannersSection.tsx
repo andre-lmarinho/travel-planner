@@ -20,7 +20,7 @@ function CreateTripDialog() {
 
   function handlePlanCreated(plan: CreatePlannerPlanResult) {
     setOpen(false);
-    router.push(`/p/${plan.publicSlug ?? plan.planId}`);
+    router.push(`/p/${plan.planId}`);
   }
 
   return (
@@ -64,7 +64,7 @@ export function PlannersSection({ plans }: PlannersSectionProps) {
         {plans.map((plan) => (
           <Card
             key={plan.id}
-            href={`/p/${plan.publicSlug}`}
+            href={`/p/${plan.id}`}
             title={plan.destination ?? plan.title}
             description={plan.destination ? plan.title : undefined}
             image={plan.coverImage ?? DEFAULT_PLAN_COVER_IMAGE}

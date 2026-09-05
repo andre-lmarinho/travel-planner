@@ -1,5 +1,3 @@
-import { generateId } from "@/lib/generateId";
-
 import { getDefaultColor } from "../constants";
 import type { Activity } from "../types";
 
@@ -9,7 +7,7 @@ const PLACEHOLDER_PREFIX = "blank-";
  * Generate a unique activity ID.
  */
 export function generateActivityId(): string {
-  return generateId("act-");
+  return `act-${crypto.randomUUID()}`;
 }
 
 /**

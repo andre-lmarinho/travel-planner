@@ -28,5 +28,5 @@ Uses React Query with React hooks for client-side state:
 - **useBudget**: Main hook managing budget data, entries, and mutations
 - **Optimistic updates**: UI updates immediately, rolls back on error
 - **Persistence**: Optional local-only mode or server persistence
-- **Permissions**: `canEdit` prop controls editing capabilities
+- **Permissions**: access is restricted to authenticated plan members and owners
 

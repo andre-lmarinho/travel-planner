@@ -51,7 +51,6 @@ CREATE TABLE public.plans (
   budget numeric,
   public_slug text NOT NULL DEFAULT translate(encode(gen_random_bytes(9), 'base64'::text), '/+'::text, '_-'::text) UNIQUE,
   cover_image text,
-  is_public boolean NOT NULL DEFAULT false,
   destination_name text,
   destination_country text,
   latitude double precision,
